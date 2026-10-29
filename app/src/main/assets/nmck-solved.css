@@ -20,20 +20,20 @@
 .excel-quick-button{background:#205b61;color:#effffd;border:1px solid #73a6a9;border-radius:9px;padding:9px 12px;font-size:12px;min-height:42px}
 #work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid th.excel-col,
 #work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid td{
- min-width:calc(110px * var(--exam-scale,1))!important;
- width:calc(110px * var(--exam-scale,1))!important;
- max-width:calc(110px * var(--exam-scale,1))!important;
- height:calc(35px * var(--exam-scale,1));
- padding:calc(6px * var(--exam-scale,1));
- font-size:calc(11px * var(--exam-scale,1))!important;
+ min-width:var(--exam-cell-w,110px)!important;
+ width:var(--exam-cell-w,110px)!important;
+ max-width:var(--exam-cell-w,110px)!important;
+ height:var(--exam-row-h,35px);
+ padding:var(--exam-padding,6px);
+ font-size:var(--exam-font,11px)!important;
 }
 #work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid th.excel-row,
 #work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid th.excel-corner{
- min-width:calc(37px * var(--exam-scale,1));width:calc(37px * var(--exam-scale,1));max-width:calc(37px * var(--exam-scale,1));
- font-size:calc(11px * var(--exam-scale,1));
+ min-width:var(--exam-index-w,37px);width:var(--exam-index-w,37px);max-width:var(--exam-index-w,37px);
+ font-size:var(--exam-font,11px);
 }
 #work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody td:nth-child(3){
- min-width:calc(265px * var(--exam-scale,1))!important;width:calc(265px * var(--exam-scale,1))!important;max-width:calc(265px * var(--exam-scale,1))!important;
+ min-width:var(--exam-name-w,265px)!important;width:var(--exam-name-w,265px)!important;max-width:var(--exam-name-w,265px)!important;
  text-align:left;
 }
 #work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody td[colspan]{
@@ -41,14 +41,14 @@
  white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word;
 }
 #work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody tr:nth-child(-n+3) td[colspan]{
- background:#25436b!important;color:#f0f6ff;font-size:calc(12px * var(--exam-scale,1))!important;
- height:calc(43px * var(--exam-scale,1));font-weight:700;
+ background:#25436b!important;color:#f0f6ff;font-size:var(--exam-title-font,12px)!important;
+ height:var(--exam-title-h,43px);font-weight:700;
 }
 #work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody tr:nth-child(4) td,
 #work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody tr:nth-child(5) td{
  background:#315782!important;color:#fff!important;white-space:normal!important;overflow-wrap:break-word!important;
- height:calc(100px * var(--exam-scale,1));text-align:center;line-height:1.25;
- font-size:calc(11px * var(--exam-scale,1))!important;
+ height:var(--exam-head-h,100px);text-align:center;line-height:1.25;
+ font-size:var(--exam-font,11px)!important;
 }
 #work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody tr:nth-child(n+6) td.excel-editable{
  background:#fff0b0;color:#30260f;
