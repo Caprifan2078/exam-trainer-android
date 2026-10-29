@@ -57,3 +57,14 @@
 #work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody td.excel-fail{background:#ffd5d5!important}
 #work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody td.excel-pass{background:#caf3d8!important}
 @media(max-width:440px){.sheet-zoom{gap:6px}.sheet-zoom-caption{font-size:9px}.nmck-condition{padding:12px}.condition-prices{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Compact spreadsheet navigation for one-handed mobile learning. */
+.nmck-navigation{display:flex;align-items:center;gap:7px;background:#213c58;padding:9px 8px;margin:6px 0 5px;border:1px solid #41617a;border-radius:11px;position:sticky;top:52px;z-index:13}
+.nmck-navigation[hidden]{display:none!important}
+.nmck-navigation .nmck-nav-center{min-width:0;flex:1;display:flex;flex-direction:column;line-height:1.28;gap:2px}
+.nmck-nav-step{font-size:12px;color:#fcf6d9}
+.nmck-nav-detail{font-size:10px;color:#c2dded;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.nmck-nav-button{flex:none;min-width:73px;padding:8px 9px;min-height:43px;background:#285e70;color:#f2fff9;border:1px solid #71a4b8;border-radius:8px;font-weight:700;font-size:12px}
+.nmck-nav-button:disabled{opacity:.43}
+@media(max-width:390px){.nmck-navigation{gap:4px;padding:6px 5px}.nmck-nav-button{min-width:65px;padding:8px 5px;font-size:11px}}
