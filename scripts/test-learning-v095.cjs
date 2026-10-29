@@ -15,6 +15,8 @@ assert(ui.includes('function updateProgress()') && ui.includes('progressBar.valu
 assert(ui.includes('function jumpTo(t)') && ui.includes('Перейти к исправлению'),'Error navigation missing');
 assert(ui.includes("input.value.slice(0,pos)+a+input.value.slice(pos)"),'Tap-to-reference must insert address at caret');
 assert(ui.includes('const history=[];') && ui.includes('↶'),'One-step undo unavailable');
+assert(ui.includes('flush();active=t.sheet;selected=t.addr;renderGrid();'),'Error navigation must save pending edits before changing the active cell');
+assert(ui.includes("editDirty=false;input.value=String(item.raw??'');active=item.sheet"),'Undo must discard pending editor state before changing the selected cell');
 assert(nmck.includes("'Позиция № '"),'Procurement positions should be labeled accurately');
 const E=require(path.join(root,'engine.js'));
 require(path.join(root,'upgrade.js'));
