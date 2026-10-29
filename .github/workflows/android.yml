@@ -1,4 +1,4 @@
-name: Android APK: build and emulator check
+name: "Android APK: build and emulator check"
 on:
   push:
     branches: [main]
