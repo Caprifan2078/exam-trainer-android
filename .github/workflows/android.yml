@@ -39,6 +39,8 @@ jobs:
           for file in app/src/main/assets/*.js; do node --check "$file"; done
       - name: Verify NMCK 3/4/5 offers with 1080 spreadsheet scenarios
         run: node scripts/test-nmck-v09.cjs
+      - name: Verify solved NMCK spreadsheet across 540 randomized variants
+        run: node scripts/test-nmck-template.cjs
       - name: Build real debug APK with Gradle
         run: gradle --no-daemon --stacktrace assembleDebug
       - name: Verify signing and Android manifest
