@@ -5,7 +5,8 @@ PKG="io.github.caprifan2078.examtrainer.training09"
 APK="app/build/outputs/apk/debug/app-debug.apk"
 "$ADB" install -r "$APK"
 "$ADB" logcat -c
-"$ADB" shell am start -W -n "$PKG/.MainActivity"
+ACTIVITY="io.github.caprifan2078.examtrainer.MainActivity"
+"$ADB" shell am start -W -n "$PKG/$ACTIVITY"
 sleep 10
 PID=$("$ADB" shell pidof "$PKG" | tr -d "\r" || true)
 if [ -z "$PID" ]; then
