@@ -87,9 +87,11 @@ function suggestion(t,col,row){
 function showQuick(){
  quick.replaceChildren();
  const t=getTask(),label=document.querySelector('.excel-addr'),field=document.querySelector('.excel-input');
- if(!t||t.kind!=='nmck'||$('work').hidden||!label||!field||field.disabled){quick.hidden=true;return;}
- const match=/^НМЦК!([A-Z]+)(\d+)$/.exec(label.textContent);
- const choices=match?suggestion(t,match[1],Number(match[2])):[];
+ if(!t||$('work').hidden||!label||!field||field.disabled){quick.hidden=true;return;}
+ const match=/^([^!]+)!([A-Z]+)(\d+)$/.exec(label.textContent);
+ let choices=[];
+ if(match&&t.kind==='nmck'&&match[1]==='НМЦК')choices=suggestion(t,match[2],Number(match[3]));
+ if(match&&t.kind==='financial'&&window.ExamFinanceHints)choices=window.ExamFinanceHints.suggest(t,match[1],match[2],Number(match[3]),window.ExamEngine);
  quick.hidden=!choices.length;
  if(!choices.length)return;
  quick.append(mk('span','Вставить формулу для выбранной ячейки:','excel-quick-label'));
