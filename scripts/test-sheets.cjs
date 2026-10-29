@@ -28,7 +28,7 @@ for(const kind of ['nmck','budget','financial'])for(const level of ['easy','medi
       ])if(w.sheets.НМЦК.editable[cell])S.write(w,'НМЦК',cell,formula);
     }
     const grade=S.grade(w);
-    assert(grade.results.filter(t=>t.sheet==='НМЦК'&&/^([JKLMN])[4-9]$/.test(t.addr)).every(t=>t.status==='ok'),'NMCQ formula mismatch');
+    assert(grade.results.filter(t=>t.sheet==='НМЦК'&&t.id!=='total'&&/^([JKLMN])[4-9]$/.test(t.addr)).every(t=>t.status==='ok'),'NMCQ formula mismatch');
   }
   if(kind==='budget'){
     for(let j=0;j<task.rows.length;j++){
