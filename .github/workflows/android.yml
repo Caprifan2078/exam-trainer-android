@@ -32,6 +32,8 @@ jobs:
         run: node scripts/test-engine.cjs
       - name: Verify enriched budget, NMCK and reporting codes (900 cases)
         run: node scripts/test-upgrade.cjs
+      - name: Verify Excel-like spreadsheet formulas (1080 workbooks)
+        run: node scripts/test-sheets.cjs
       - name: Build real debug APK with Gradle
         run: gradle --no-daemon --stacktrace assembleDebug
       - name: Verify signing and Android manifest
