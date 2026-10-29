@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ADB="$ANDROID_HOME/platform-tools/adb"
-PKG="io.github.caprifan2078.examtrainer.training09"
+PKG="io.github.caprifan2078.examtrainer.training094"
 APK="app/build/outputs/apk/debug/app-debug.apk"
 "$ADB" install -r "$APK"
 "$ADB" logcat -c
