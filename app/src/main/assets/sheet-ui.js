@@ -1,5 +1,13 @@
 /* ExamTrainer v0.8: mobile spreadsheet as the primary, not a form quiz. */
 (function(){'use strict';
+/* Android System WebView compatibility: replaceChildren() is absent in older builds. */
+if(typeof Element.prototype.replaceChildren!=='function'){
+ Element.prototype.replaceChildren=function(...children){
+   while(this.firstChild)this.removeChild(this.firstChild);
+   for(const x of children)this.appendChild(typeof x==='string'?document.createTextNode(x):x);
+ };
+}
+
 const $=id=>document.getElementById(id),E=window.ExamEngine,S=window.ExamSheets;
 S.setEngine(E);
 let task=null,w=null,active='',selected='',checked=null,editDirty=false;
