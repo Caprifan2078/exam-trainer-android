@@ -75,6 +75,10 @@ function newBudget(level){
   ...expenseItems.map(([name,category,min,max])=>({name,category,kind:'Расход',plan:rand(Math.ceil(min/50),Math.floor(max/50))*50}))
  ]);
  // Amounts are thousand rubles. Both deficit and surplus scenarios are possible.
+ const plannedExpense=rows.filter(r=>r.kind==='Расход').reduce((s,r)=>s+r.plan,0);
+ const plannedIncome=rows.filter(r=>r.kind==='Доход').reduce((s,r)=>s+r.plan,0);
+ const targetIncome=plannedExpense*rand(82,118)/100;
+ for(const r of rows)if(r.kind==='Доход')r.plan=Math.max(50,Math.round(r.plan*targetIncome/plannedIncome/50)*50);
  for(const r of rows)r.actual=Math.max(0,Math.round(r.plan*rand(80,116)/100));
  const questions=[],summary={Доход:{plan:0,actual:0},Расход:{plan:0,actual:0}};
  rows.forEach((r,i)=>{
