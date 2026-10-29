@@ -12,7 +12,7 @@ function suggestions(task,sheet,cell){
  if(sheet==='НМЦК'){
   const n=task.rows.length,offers=task.rows[0].prices.length,end=String.fromCharCode(69+offers-1),range='E'+r+':'+end+r;
   if(r>=4&&r<=n+3){
-   const formulas={J:['Σ Сумма','=SUM('+range+')],K:['Средняя','=AVERAGE('+range+')],L:['СКО','=STDEV.S('+range+')],M:['Вариация, %','=L'+r+'/K'+r+'*100'],N:['Стоимость','=ROUND(K'+r+';2)*D'+r],O:['Однородность','=IF(M'+r+'<=33;"Однородны";"Неоднородны")']};
+   const formulas={J:['Σ Сумма','=SUM('+range+')'],K:['Средняя','=AVERAGE('+range+')'],L:['СКО','=STDEV.S('+range+')'],M:['Вариация, %','=L'+r+'/K'+r+'*100'],N:['Стоимость','=ROUND(K'+r+';2)*D'+r],O:['Однородность','=IF(M'+r+'<=33;"Однородны";"Неоднородны")']};
    return formulas[c]?[formulas[c]]:[];
   }
   if(c==='N'&&r===n+5)return[['НМЦК итого','=SUM(N4:N'+(n+3)+')']];
