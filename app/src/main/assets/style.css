@@ -12,3 +12,41 @@
 #sources .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 #sources table{min-width:280px}
 #sources th,#sources td{white-space:normal;overflow-wrap:anywhere}
+
+
+/* Excel-like workbook editing on narrow Android screens, v0.8. */
+.excel-tool{margin:14px 0 24px;min-width:0;width:100%}
+.excel-tabs{display:flex;gap:5px;overflow-x:auto;padding:8px 0;scrollbar-width:thin}
+.excel-tab{border:1px solid #364c67;border-bottom:3px solid transparent;border-radius:9px 9px 3px 3px;padding:11px 15px;color:#d9e6f9;background:#182b46;min-width:65px;flex-shrink:0}
+.excel-tab.is-active{color:#fff;border-color:#789cd8;border-bottom:3px solid #9adeca;background:#284d76;font-weight:700}
+.excel-formula-bar{display:flex;gap:6px;align-items:center;position:sticky;top:0;z-index:15;background:#111e32;padding:10px 3px 8px;border-bottom:1px solid #415572;box-shadow:0 4px 12px #06102055}
+.excel-addr{flex-shrink:0;font-size:11px;max-width:112px;min-width:57px;overflow:hidden;text-overflow:ellipsis;background:#243c5b;padding:12px 7px;border-radius:6px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.excel-fx{font-weight:800;color:#a1d9d0;font-style:italic;font-size:16px}
+.excel-input{min-width:0;flex:1;padding:12px 9px;background:#f7fafb!important;color:#0f2742!important;border:1px solid #9ab0cc!important;border-radius:5px!important;font-family:monospace;font-size:14px}
+.excel-input:disabled{opacity:.65}
+.excel-commit{min-height:44px;min-width:44px;border-radius:8px;background:#3d8a7b;color:white;font-weight:800}
+.excel-commit:disabled{opacity:.3}
+.excel-grid-box{width:100%;max-height:65vh;overflow:auto;overscroll-behavior:contain;border:1px solid #556a83;border-radius:7px;background:#f0f3f8;-webkit-overflow-scrolling:touch}
+.excel-grid{border-collapse:separate;border-spacing:0;table-layout:fixed;width:max-content!important;min-width:100%;font-size:12px;color:#172a3c}
+.excel-grid th,.excel-grid td{border-right:1px solid #b8c5d0;border-bottom:1px solid #c8d2db;min-width:114px;width:114px;max-width:114px;min-height:33px;height:33px;vertical-align:middle;padding:6px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;font-variant-numeric:tabular-nums}
+.excel-grid th.excel-corner,.excel-grid th.excel-row{position:sticky;left:0;min-width:34px;width:34px;max-width:34px;z-index:2;background:#d7e3f0;text-align:center;color:#33546f;font-weight:600}
+.excel-grid th.excel-col{position:sticky;top:0;z-index:3;background:#d7e3f0;color:#33546f;text-align:center}
+.excel-grid th.excel-corner{z-index:4;top:0}
+.excel-grid td.excel-locked{background:#e7f1ff;color:#173654}
+.excel-grid td.excel-blank{background:#f4f5f8;color:#4d5f70}
+.excel-grid td.excel-editable{background:#fff0b0;color:#352811;cursor:pointer}
+.excel-grid td.excel-header{background:#25476d;color:#fff;text-align:center;font-weight:700}
+.excel-grid td:nth-child(3){width:270px;min-width:270px;max-width:270px;text-align:left}
+.excel-grid td.excel-selected{outline:3px solid #197a6f;outline-offset:-3px;position:relative;z-index:1}
+.excel-grid td.excel-pass{background:#c6f1cf}
+.excel-grid td.excel-fail{background:#ffd5d5}
+.excel-grid td.excel-needs{background:#ffe3a9}
+.excel-info{background:#1c304d;color:#dae6f3;font-size:12px;line-height:1.5;padding:11px 13px;border-radius:0 0 10px 10px;margin:6px 0 12px;overflow-wrap:anywhere}
+.excel-controls{display:flex;flex-wrap:wrap;gap:6px}
+.excel-controls button{flex:1 1 105px;padding:10px 8px;font-size:12px;min-height:40px}
+.excel-help{margin:13px 0;padding:11px 15px;background:#193555;border-left:3px solid #97c6ed;color:#e2eaf8;font-size:13px;line-height:1.55}
+.excel-help p{margin:9px 0}
+.excel-check-help{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.excel-err-button{background:#593848;border:1px solid #bd6b6b;border-radius:8px;padding:8px 10px;font-size:12px;color:#fff}
+.excel-answer{margin:9px 0;padding:8px 10px;border-bottom:1px solid #405675;font-size:13px;overflow-wrap:anywhere}
+@media(max-width:480px){.excel-grid td:nth-child(3){min-width:235px;width:235px;max-width:235px}.excel-grid th,.excel-grid td{font-size:11px}.excel-grid-box{max-height:60vh}}
