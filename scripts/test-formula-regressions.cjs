@@ -47,4 +47,23 @@ for(const [expression,expected] of [
  S.write(roundWorkbook,cell.sheet,cell.addr,expression);
  assert.equal(S.value(roundWorkbook,cell.sheet,cell.addr),expected,'Excel ROUND mismatch: '+expression);
 }
+
+const localeTask=E.generate('nmck','easy',{offers:3,lots:1});
+const localeWorkbook=S.create(localeTask),localeTarget=localeWorkbook.targets[0];
+for(const [expression,expected] of [
+ ['=1,25*2',2.5],
+ ['=ОКРУГЛ(1,235;2)',1.24],
+ ['=SUM(1,2)',3],
+ ['=IF(1=1;0,5;1/0)',0.5],
+ ['=ЕСЛИ(0;1/0;2,25)',2.25]
+]){
+ S.write(localeWorkbook,localeTarget.sheet,localeTarget.addr,expression);
+ assert.equal(S.value(localeWorkbook,localeTarget.sheet,localeTarget.addr),expected,'Decimal comma formula failed: '+expression);
+}
+for(const expression of ['=Q1','=R20','=E999','=SUM(E6:Z6)','=SUM(E6:E999)']){
+ S.write(localeWorkbook,localeTarget.sheet,localeTarget.addr,expression);
+ assert.equal(S.value(localeWorkbook,localeTarget.sheet,localeTarget.addr),'#REF!','Out-of-sheet reference must be an error: '+expression);
+}
+S.write(localeWorkbook,localeTarget.sheet,localeTarget.addr,'=SUM(E6:G6)');
+assert.equal(S.value(localeWorkbook,localeTarget.sheet,localeTarget.addr),localeTask.rows[0].prices.reduce((a,b)=>a+b,0));
 console.log('PASS:',runs,'NMCK variants and budget: IF lazy evaluation, source formulas, genuine mistakes');
