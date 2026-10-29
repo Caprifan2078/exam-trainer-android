@@ -28,6 +28,9 @@ public final class MainActivity extends Activity {
         WebSettings s=webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
+        s.setSupportZoom(true);
+        s.setBuiltInZoomControls(true);
+        s.setDisplayZoomControls(false);
         s.setDefaultTextEncodingName("UTF-8");
         s.setAllowUniversalAccessFromFileURLs(false);
         s.setAllowFileAccessFromFileURLs(false);
