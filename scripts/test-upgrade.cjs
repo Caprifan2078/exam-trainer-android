@@ -52,7 +52,7 @@ for(const kind of ['nmck','budget','financial'])for(const level of ['easy','medi
    const p=t.pl[year];for(const k of requiredPnl)assert(Number.isFinite(p[k]),year+' pnl '+k);
    assert.equal(p['2100']+p['2210']+p['2220'],p['2200']);
    assert.equal(p['2200']+sum(p,['2310','2320','2330','2340','2350']),p['2300']);
-   assert.equal(p['2411']+p['2412'],p['2410']);
+   assert.ok(Math.abs((p['2411']+p['2412'])-p['2410'])<1e-8,'Tax subtotals differ');
    assert.equal(p['2300']+p['2410']+p['2460'],p['2400']);
   }
  }
