@@ -41,6 +41,8 @@ jobs:
         run: node scripts/test-nmck-v09.cjs
       - name: Verify solved NMCK spreadsheet across 540 randomized variants
         run: node scripts/test-nmck-template.cjs
+      - name: Test lazy IF, genuine Excel formulas and 450 random NMCK cases
+        run: node scripts/test-formula-regressions.cjs
       - name: Build real debug APK with Gradle
         run: gradle --no-daemon --stacktrace assembleDebug
       - name: Verify signing and Android manifest
