@@ -101,7 +101,7 @@ case 'SUM':case 'СУММ':return nums.reduce((a,b)=>a+b,0);
 case 'AVERAGE':case 'СРЗНАЧ':if(!nums.length)throw Error('#ДЕЛ/0!');return nums.reduce((a,b)=>a+b,0)/nums.length;
 case 'STDEVS':case 'СТАНДОТКЛОНВ':if(nums.length<2)throw Error('#ДЕЛ/0!');{const avg=nums.reduce((a,b)=>a+b,0)/nums.length;return Math.sqrt(nums.reduce((a,b)=>a+(b-avg)**2,0)/(nums.length-1));}
 case 'SQRT':case 'КОРЕНЬ':return Math.sqrt(v(0));
-case 'ROUND':case 'ОКРУГЛ':{let digits=v(1);if(!Number.isInteger(digits)||Math.abs(digits)>10)throw Error('#ЗНАЧ!');const n=v(0);return Math.round((n+Number.EPSILON)*10**digits)/10**digits;}
+case 'ROUND':case 'ОКРУГЛ':{let digits=v(1);if(!Number.isInteger(digits)||Math.abs(digits)>10)throw Error('#ЗНАЧ!');const n=v(0);return Math.sign(n)*Math.round((Math.abs(n)+Number.EPSILON)*10**digits)/10**digits;}
 case 'ABS':case 'ABSOLUTE':case 'АБС':return Math.abs(v(0));
 case 'COUNT':case 'СЧЁТ':return nums.length;
 case 'MIN':case 'МИН':return Math.min(...nums);
