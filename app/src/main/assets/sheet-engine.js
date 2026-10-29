@@ -79,10 +79,10 @@ function windowOrEngine(){return _engine||(typeof globalThis!=='undefined'?globa
 function setEngine(e){_engine=e;}
 function sheetCell(sh,a){return sh.values[a]||{raw:'',locked:!sh.editable[a]};}
 function write(w,sheet,a,raw){const sh=w.sheets[sheet],pos=decode(a);if(!sh||!pos||pos.c>=sh.cols||pos.r>=sh.rows)throw Error('#REF!');const cel=sheetCell(sh,a);if(cel.locked)throw Error('Исходные данные менять нельзя');if(String(raw).length>300)throw Error('Слишком длинная формула');sh.values[a]={raw:String(raw),locked:false};}
-function lex(src){const out=[];let i=0;while(i<src.length){if(/\s/.test(src[i])){i++;continue;}const rem=src.slice(i);
+function lex(src){const localDecimals=src.includes(';')||!/[A-ZА-ЯЁ_][A-ZА-ЯЁ_0-9.]*\(/i.test(src);const out=[];let i=0;while(i<src.length){if(/\s/.test(src[i])){i++;continue;}const rem=src.slice(i);
 let m;if(src[i]==='"'){let j=i+1,text='';while(j<src.length){if(src[j]==='"'){if(src[j+1]==='"'){text+='"';j+=2;continue;}break;}text+=src[j++];}if(j>=src.length)throw Error('#ФОРМУЛА!');out.push({t:'str',v:text});i=j+1;continue;}
 if(src[i]==="'"){let j=src.indexOf("'",i+1);if(j<0)throw Error('#ФОРМУЛА!');out.push({t:'ident',v:src.slice(i+1,j)});i=j+1;continue;}
-if((m=/^(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?/.exec(rem))){out.push({t:'num',v:Number(m[0])});i+=m[0].length;continue;}
+if((m=(localDecimals?/^(?:\d+(?:[.,]\d+)?|\.\d+)(?:[eE][+-]?\d+)?/:/^(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?/).exec(rem))){out.push({t:'num',v:Number(m[0].replace(',','.'))});i+=m[0].length;continue;}
 if((m=/^[A-ZА-ЯЁ_\$][A-ZА-ЯЁ_0-9.$]*/i.exec(rem))){out.push({t:'ident',v:m[0]});i+=m[0].length;continue;}
 if(rem.startsWith('>=')||rem.startsWith('<=')||rem.startsWith('<>')){out.push({t:rem.slice(0,2)});i+=2;continue;}
 if('+-*/^(),;:!<>=%.'.includes(src[i])){out.push({t:src[i]});i++;continue;}
@@ -110,8 +110,8 @@ case 'IF':case 'ЕСЛИ':return args[0]?args[1]:args[2];
 case 'SUMIF':case 'СУММЕСЛИ':{if(!Array.isArray(args[0])||!Array.isArray(args[2]))throw Error('#ЗНАЧ!');const criteria=String(args[1]);return args[0].reduce((s,x,i)=>s+(String(x).toLowerCase()===criteria.toLowerCase()?num(args[2][i]||0):0),0);}
 case 'COUNTIF':case 'СЧЁТЕСЛИ':{if(!Array.isArray(args[0]))throw Error('#ЗНАЧ!');return args[0].filter(x=>String(x).toLowerCase()===String(args[1]).toLowerCase()).length;}
 default:throw Error('#ИМЯ?');}}
-function ref(shName,cell){const p=decode(cell);if(!p||p.c>=MAX_COLS||p.r>=MAX_ROWS||!w.sheets[shName])throw Error('#REF!');return calc(w,shName,addr(p.c,p.r),stack);}
-function range(shName,from,to){const a=decode(from),b=decode(to);if(!a||!b||!w.sheets[shName])throw Error('#REF!');if(a.r>b.r||a.c>b.c||(b.r-a.r+1)*(b.c-a.c+1)>500)throw Error('#REF!');const data=[];for(let r=a.r;r<=b.r;r++)for(let c=a.c;c<=b.c;c++){const key=addr(c,r),item=w.sheets[shName].values[key];data.push(item&&String(item.raw).trim()!==''?ref(shName,key):null);}return data;}
+function ref(shName,cell){const p=decode(cell);if(!p||!w.sheets[shName]||p.c>=w.sheets[shName].cols||p.r>=w.sheets[shName].rows)throw Error('#REF!');return calc(w,shName,addr(p.c,p.r),stack);}
+function range(shName,from,to){const a=decode(from),b=decode(to);if(!a||!b||!w.sheets[shName]||a.r>=w.sheets[shName].rows||b.r>=w.sheets[shName].rows||a.c>=w.sheets[shName].cols||b.c>=w.sheets[shName].cols)throw Error('#REF!');if(a.r>b.r||a.c>b.c||(b.r-a.r+1)*(b.c-a.c+1)>500)throw Error('#REF!');const data=[];for(let r=a.r;r<=b.r;r++)for(let c=a.c;c<=b.c;c++){const key=addr(c,r),item=w.sheets[shName].values[key];data.push(item&&String(item.raw).trim()!==''?ref(shName,key):null);}return data;}
 function primary(){if(peek()==='-'){take('-');return -num(primary());}if(peek()==='+'){take('+');return num(primary());}if(peek()==='('){take('(');const v=expression();take(')');return v;}
 if(peek()==='num')return take('num').v;if(peek()==='str')return take('str').v;
 if(peek()==='ident'){
