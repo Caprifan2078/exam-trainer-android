@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ADB="$ANDROID_HOME/platform-tools/adb"
-PKG="io.github.caprifan2078.examtrainer.training094"
+PKG="$(sed -n "s/.*applicationId '[^']*'.*/&/p" app/build.gradle | grep -oE "applicationId '[^']+'" | head -1 | cut -d"'" -f2)"
+if [ -z "$PKG" ]; then echo "FAIL: Could not determine applicationId"; exit 1; fi
 APK="app/build/outputs/apk/debug/app-debug.apk"
 "$ADB" install -r "$APK"
 "$ADB" logcat -c
