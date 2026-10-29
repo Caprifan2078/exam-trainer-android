@@ -68,6 +68,7 @@ const tbody=node('tbody');for(let r=0;r<sh.rows;r++){
    const a=S.addr(c,r),raw=sh.values[a],editable=!!sh.editable[a];
    const td=node('td',raw?fmt(S.value(w,active,a)):'',editable?'excel-editable':raw?'excel-locked':'excel-blank');
    td.dataset.addr=a;td.title=raw?.raw?.toString()||a;
+   const colspan=sh.spans&&sh.spans[a];if(Number.isInteger(colspan)&&colspan>1){td.colSpan=colspan;c+=colspan-1;}
    if(r===0)td.classList.add('excel-header');
    if(selected===a)td.classList.add('excel-selected');
    td.addEventListener('click',()=>select(a));tr.appendChild(td);
