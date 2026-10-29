@@ -57,7 +57,7 @@ function drawCondition(t){
  condition.append(mk('p','Метод: сопоставимых рыночных цен (анализа рынка). По каждому предложению указана цена за одну единицу товара или услуги.'));
  t.rows.forEach((r,i)=>{
   const block=mk('div',undefined,'condition-lot');
-  block.append(mk('strong','Лот № '+(i+1)+': '+r.name));
+  block.append(mk('strong','Позиция № '+(i+1)+': '+r.name));
   block.append(mk('p','Единица измерения: штуки. Количество: '+r.quantity+'. Коммерческих предложений: '+r.prices.length+'.'));
   const sub=mk('div',undefined,'condition-prices');
   r.prices.forEach((p,j)=>{const label=mk('span','КП №'+(j+1));const price=mk('b',fmt(p)+' ₽');const item=mk('div',undefined,'condition-price');item.append(label,price);sub.append(item);});
