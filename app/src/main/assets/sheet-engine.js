@@ -52,11 +52,11 @@ function create(task){
          c===7?'=E'+(r+1)+'/D'+(r+1)+'*100':`=SUMIF(F4:F${task.rows.length+3};"${k}";${c===3?'D':'E'}4:${c===3?'D':'E'}${task.rows.length+3})`,q.label,q.id);
      }
    }
-   input(sh,1,start+3,'САЛЬДО БЮДЖЕТА');const b=task.questions.find(q=>q.id==='balance');
-   target(sh,4,start+3,b.answer,`Факт доходов − факт расходов: =E${start+1}-E${start+2}`,b.label,b.id);
-   input(sh,1,start+4,'Дефицит / профицит');const st=task.questions.find(q=>q.id==='status');
-   target(sh,4,start+4,st.answer,'Плюс = Профицит, минус = Дефицит, ноль = Сбалансирован. Можно использовать =IF(E'+(start+4)+'>0;"Профицит";"Дефицит")',st.label,st.id,false);
-   sh.rows=start+7;
+   input(sh,1,start+3,'ДЕФИЦИТ / ПРОФИЦИТ');const st=task.questions.find(q=>q.id==='status');
+   target(sh,4,start+3,st.answer,
+     'Сравни доходы и расходы: =IF(E'+(start+1)+'>E'+(start+2)+';"Профицит";IF(E'+(start+1)+'<E'+(start+2)+';"Дефицит";"Сбалансирован"))',
+     st.label,st.id,false);
+   sh.rows=start+6;
  }else if(task.kind==='financial'){
    for(const [name,codes,data,years] of [['Баланс',windowOrEngine().bnames,task.balance,['2025','2024','2023']],['ОФР',windowOrEngine().pnames,task.pl,['2025','2024']]]){
      const sh=add(name,years.length+2,codes.length+4);

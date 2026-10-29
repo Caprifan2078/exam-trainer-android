@@ -46,8 +46,8 @@ for(const kind of ['nmck','budget','financial'])for(const level of ['easy','medi
       const r=j+4,group=task.rows[j].kind==='Доход'?start:start+1;
       S.write(w,'Бюджет','G'+r,'=E'+r+'/E'+group+'*100');
     }
-    S.write(w,'Бюджет','E'+(start+3),'=E'+start+'-E'+(start+1));
-    assert(S.grade(w).results.every(x=>x.status==='ok'||x.id==='status'),'Budget formulas mismatch');
+    S.write(w,'Бюджет','E'+(start+3),'=IF(E'+start+'>E'+(start+1)+';"Профицит";IF(E'+start+'<E'+(start+1)+';"Дефицит";"Сбалансирован"))');
+    assert(S.grade(w).results.every(x=>x.status==='ok'),'Budget formulas mismatch');
   }
   if(kind==='financial'){
     for(const q of task.questions){const t=w.targets.find(x=>x.id===q.id);assert(t);S.write(w,t.sheet,t.addr,'='+q.answer);}

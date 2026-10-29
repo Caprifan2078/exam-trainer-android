@@ -45,6 +45,8 @@ jobs:
         run: node scripts/test-formula-regressions.cjs
       - name: Verify v0.9.5 learning interface and all 3 modules
         run: node scripts/test-learning-v095.cjs
+      - name: Verify 0.9.6 finance and budget syllabus (450 scenarios)
+        run: node scripts/test-syllabus-v096.cjs
       - name: Build real debug APK with Gradle
         run: gradle --no-daemon --stacktrace assembleDebug
       - name: Verify signing and Android manifest

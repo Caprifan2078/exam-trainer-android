@@ -38,8 +38,10 @@ jobs:
           node scripts/test-nmck-v09.cjs
           node scripts/test-nmck-template.cjs
           node scripts/test-formula-regressions.cjs
-      - name: Verify v0.9.5 learning interface
+      - name: Verify v0.9.6 learning interface
         run: node scripts/test-learning-v095.cjs
+      - name: Verify 0.9.6 finance and budget syllabus
+        run: node scripts/test-syllabus-v096.cjs
       - name: Build signed debug APK
         run: gradle --no-daemon assembleDebug
       - name: Verify APK signature
@@ -52,10 +54,10 @@ jobs:
           set -euo pipefail
           APK="app/build/outputs/apk/debug/app-debug.apk"
           test -s "$APK"
-          RELEASE_APK="ExamTrainer_v0.9.5.apk"
+          RELEASE_APK="ExamTrainer_v0.9.6.apk"
           cp "$APK" "$RELEASE_APK"
-          if gh release view "v0.9.5" >/dev/null 2>&1; then
-            gh release upload "v0.9.5" "$RELEASE_APK" --clobber
+          if gh release view "v0.9.6" >/dev/null 2>&1; then
+            gh release upload "v0.9.6" "$RELEASE_APK" --clobber
           else
-            gh release create "v0.9.5" "$RELEASE_APK" --target "$GITHUB_SHA" --title "Экзаменатор 0.9.5 — улучшенный тренажёр Android" --notes "Тренажёр демоэкзамена: НМЦК, бюджет и финансовый анализ. Новое: прогресс заполнения, отмена изменения, вставка ссылок на ячейки касанием, адресная проверка ошибок. Офлайн-тестовая APK для Android." --latest=false
+            gh release create "v0.9.6" "$RELEASE_APK" --target "$GITHUB_SHA" --title "Экзаменатор 0.9.6 — улучшенный тренажёр Android" --notes "Тренажёр демоэкзамена: НМЦК, бюджет и финансовый анализ. Новое: коэффициенты финансовой устойчивости, ROA/ROS/ROE, начало анализа с ликвидности и бюджет без строки сальдо. Офлайн-тестовая APK для Android." --latest=false
           fi

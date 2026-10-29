@@ -33,7 +33,9 @@ for(const kind of ['nmck','budget','financial'])for(const level of ['easy','medi
      assert.equal(t.summary[type].plan,rows.reduce((a,r)=>a+r.plan,0));
      assert.equal(t.summary[type].actual,rows.reduce((a,r)=>a+r.actual,0));
    }
-   assert.equal(t.questions.find(q=>q.id==='balance').answer,t.summary.Доход.actual-t.summary.Расход.actual);
+   assert.equal(t.questions.some(q=>q.id==='balance'),false,'Budget saldo must not be a separate task');
+   const saldo=t.summary.Доход.actual-t.summary.Расход.actual;
+   assert.equal(t.questions.find(q=>q.id==='status').answer,saldo>0?'Профицит':saldo<0?'Дефицит':'Сбалансирован');
  }
  if(kind==='financial'){
    for(const y of ['2023','2024','2025']){

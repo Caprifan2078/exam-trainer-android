@@ -33,7 +33,8 @@ for(const kind of ['nmck','budget','financial'])for(const level of ['easy','medi
    assert.equal(rows.reduce((x,r)=>x+r.actual,0),t.summary[side].actual);
   }
   const saldo=t.summary.Доход.actual-t.summary.Расход.actual;
-  assert.equal(t.questions.find(q=>q.id==='balance').answer,saldo);
+  assert.equal(t.questions.some(q=>q.id==='balance'),false,'No budget saldo question');
+  assert.equal(t.questions.find(q=>q.id==='status').answer,saldo>0?'Профицит':saldo<0?'Дефицит':'Сбалансирован');
   if(saldo<0)deficit++;if(saldo>0)surplus++;
   assert.equal(new Set(t.rows.map(r=>r.name)).size,t.rows.length);
  }
