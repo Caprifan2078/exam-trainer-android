@@ -50,3 +50,13 @@
 .excel-err-button{background:#593848;border:1px solid #bd6b6b;border-radius:8px;padding:8px 10px;font-size:12px;color:#fff}
 .excel-answer{margin:9px 0;padding:8px 10px;border-bottom:1px solid #405675;font-size:13px;overflow-wrap:anywhere}
 @media(max-width:480px){.excel-grid td:nth-child(3){min-width:235px;width:235px;max-width:235px}.excel-grid th,.excel-grid td{font-size:11px}.excel-grid-box{max-height:60vh}}
+
+/* v0.9: readable NMCK controls and one-tap formula snippets */
+.nmck-options{margin:14px 0;padding:13px;background:#152942;border:1px solid #455d7c;border-radius:12px}
+.nmck-options[hidden],.excel-quick[hidden]{display:none!important}
+.nmck-options label{display:block;font-size:13px;margin:6px 0;color:#e2ebfb}
+.nmck-options select{width:100%;min-height:44px;margin-bottom:10px}
+.excel-quick{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:9px 4px 13px}
+.excel-quick-label{flex-basis:100%;font-size:12px;color:#b6daed}
+.excel-quick-button{min-height:44px;padding:9px 13px;border-radius:9px;border:1px solid #7bb2b4;background:#215e69;color:#f5ffff;font-size:13px;font-weight:700}
+.excel-quick-button:active{background:#377e86}
