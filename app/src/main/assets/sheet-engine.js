@@ -26,6 +26,8 @@ function create(task){
      for(const [c,suffix,hint] of [[9,'sum','Сложи все цены: =SUM('+range+')'],[10,'avg','Среднее: =AVERAGE('+range+') или =J'+(r+1)+'/'+offerCount],[11,'sd','Выборочное отклонение: =STDEV.S('+range+')'],[12,'cv','Коэффициент вариации: =L'+(r+1)+'/K'+(r+1)+'*100'],[13,'amount','Стоимость: =ROUND(K'+(r+1)+';2)*D'+(r+1)]]){
        const q=get(suffix);if(q)target(sh,c,r,q.answer,hint,q.label,q.id);
      }
+     const hom=task.questions.find(q=>q.id===id+'uniformity');
+     if(hom)target(sh,14,r,hom.answer,'Однородность: =IF(M'+(r+1)+'<=33;"Однородны";"Неоднородны")',hom.label,hom.id);
    });
    const tr=task.rows.length+4;input(sh,1,tr,'ВСЕГО НМЦК, руб.');const total=task.questions.find(q=>q.id==='total');
    target(sh,13,tr,total.answer,'Сложи стоимости всех позиций: =SUM(N4:N'+(task.rows.length+3)+')','Итог НМЦК','total');
@@ -91,8 +93,8 @@ function calc(w,sheet,a,stack){const sh=w.sheets[sheet];if(!sh)throw Error('#REF
 const raw=cell.raw;if(typeof raw==='number')return raw;if(typeof raw!=='string'||!raw.startsWith('=')){const n=Number(raw.trim().replace(/\s/g,'').replace(',','.'));return raw.trim()!==''&&Number.isFinite(n)?n:raw;}
 const key=sheet+'!'+a;if(stack.includes(key))throw Error('#ЦИКЛ!');if(stack.length>75)throw Error('#ЦИКЛ!');stack.push(key);
 try{const tokens=lex(raw.slice(1));let ix=0;const peek=()=>tokens[ix].t;const take=t=>{if(peek()!==t)throw Error('#ФОРМУЛА!');return tokens[ix++];};
-function val(v){if(Array.isArray(v))return v.flat(Infinity).map(val);if(v===null||v==='')return 0;if(typeof v==='number')return v;if(typeof v==='string'){const n=Number(v.replace(',','.'));return Number.isFinite(n)?n:v;}return v;}
-function num(v){v=val(v);if(typeof v!=='number'||!Number.isFinite(v))throw Error('#ЗНАЧ!');return v;}
+function val(v){if(Array.isArray(v))return v.flat(Infinity).map(val);if(v===null||v==='')return null;if(typeof v==='number')return v;if(typeof v==='string'){const n=Number(v.replace(',','.'));return Number.isFinite(n)?n:v;}return v;}
+function num(v){v=val(v);if(v===null)return 0;if(typeof v!=='number'||!Number.isFinite(v))throw Error('#ЗНАЧ!');return v;}
 function apply(name,args){const fn=name.toUpperCase().replace(/\./g,'');const flatten=args.flat(Infinity).map(val);const nums=flatten.filter(n=>typeof n==='number'&&Number.isFinite(n));const v=i=>num(args[i]??0);
 switch(fn){
 case 'SUM':case 'СУММ':return nums.reduce((a,b)=>a+b,0);
@@ -109,7 +111,7 @@ case 'SUMIF':case 'СУММЕСЛИ':{if(!Array.isArray(args[0])||!Array.isArray
 case 'COUNTIF':case 'СЧЁТЕСЛИ':{if(!Array.isArray(args[0]))throw Error('#ЗНАЧ!');return args[0].filter(x=>String(x).toLowerCase()===String(args[1]).toLowerCase()).length;}
 default:throw Error('#ИМЯ?');}}
 function ref(shName,cell){const p=decode(cell);if(!p||p.c>=MAX_COLS||p.r>=MAX_ROWS||!w.sheets[shName])throw Error('#REF!');return calc(w,shName,addr(p.c,p.r),stack);}
-function range(shName,from,to){const a=decode(from),b=decode(to);if(!a||!b||!w.sheets[shName])throw Error('#REF!');if(a.r>b.r||a.c>b.c||(b.r-a.r+1)*(b.c-a.c+1)>500)throw Error('#REF!');const data=[];for(let r=a.r;r<=b.r;r++)for(let c=a.c;c<=b.c;c++)data.push(ref(shName,addr(c,r)));return data;}
+function range(shName,from,to){const a=decode(from),b=decode(to);if(!a||!b||!w.sheets[shName])throw Error('#REF!');if(a.r>b.r||a.c>b.c||(b.r-a.r+1)*(b.c-a.c+1)>500)throw Error('#REF!');const data=[];for(let r=a.r;r<=b.r;r++)for(let c=a.c;c<=b.c;c++){const key=addr(c,r),item=w.sheets[shName].values[key];data.push(item&&String(item.raw).trim()!==''?ref(shName,key):null);}return data;}
 function primary(){if(peek()==='-'){take('-');return -num(primary());}if(peek()==='+'){take('+');return num(primary());}if(peek()==='('){take('(');const v=expression();take(')');return v;}
 if(peek()==='num')return take('num').v;if(peek()==='str')return take('str').v;
 if(peek()==='ident'){
