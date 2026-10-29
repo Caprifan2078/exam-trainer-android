@@ -112,8 +112,9 @@ function select(a,focus=false){if(editDirty)flush();selected=a;const sh=w.sheets
  if(focus&&!input.disabled)input.focus();updateProgress();}
 function flush(){if(!w||!active||!selected||!editDirty)return;try{
  const previous=w.sheets[active].values[selected]?.raw??'';
+ S.write(w,active,selected,input.value);
  if(String(previous)!==String(input.value)){history.push({sheet:active,addr:selected,raw:previous});if(history.length>30)history.shift();}
- S.write(w,active,selected,input.value);undo.disabled=!history.length;
+ undo.disabled=!history.length;
  editDirty=false;invalidateCheck();refreshValues();saveDraft();updateProgress();info.textContent='Формула сохранена. Выбери следующую ячейку или проверь работу.';}catch(e){info.textContent=e.message;}}
 function refreshValues(){if(!w)return;for(const cell of gridbox.querySelectorAll('td[data-addr]')){const v=w.sheets[active].values[cell.dataset.addr];cell.textContent=v?fmt(S.value(w,active,cell.dataset.addr)):'';cell.classList.remove('excel-pass','excel-fail','excel-needs');}
  if(checked)for(const r of checked.results)if(r.sheet===active){const el=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(x=>x.dataset.addr===r.addr);if(el)el.classList.add(r.status==='ok'?'excel-pass':r.status==='need-formula'?'excel-needs':'excel-fail');}}
@@ -149,7 +150,7 @@ function showWork(){$('work').hidden=false;$('home').hidden=true;$('task-title')
  $('task-meta').textContent=task.questions.length+' исходных вопросов · '+w.targets.length+' ячеек для проверки · '+w.order.length+' лист(а)';
  $('task-notes').textContent='Жёлтые ячейки — ввод формул. Таблицы работают автономно. Числа не подставляются в расчёты.';
  $('results').hidden=true;checked=null;footer.replaceChildren();renderGrid();updateProgress();window.scrollTo(0,0);}
-function start(){if(w&&Object.values(S.save(w)).some(x=>Object.keys(x).length)&&!confirm('Создать новый вариант? Черновик предыдущего будет заменён.'))return;
+function start(){if(w)flush();if(w&&Object.values(S.save(w)).some(x=>Object.keys(x).length)&&!confirm('Создать новый вариант? Черновик предыдущего будет заменён.'))return;
  try{task=E.generate($('kind').value,$('level').value);w=S.create(task);history.length=0;undo.disabled=true;active=w.order[w.order.length-1];selected='';showWork();saveDraft();}catch(e){alert('Ошибка создания таблицы: '+e.message);}}
 input.addEventListener('input',()=>{editDirty=true;});input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();flush();input.blur();}else if(e.key==='Escape'){e.preventDefault();select(selected);}});
 commit.addEventListener('click',flush);
