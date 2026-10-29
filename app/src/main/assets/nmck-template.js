@@ -10,7 +10,9 @@ function render(task){
  if(n<3||n>5)throw Error('Ожидается 3–5 коммерческих предложений');
  // A:D identity/quantity; E.. offers; then avg, SD, coefficient, calculation, price per item, final amount.
  const avg=4+n,sd=avg+1,cv=avg+2,calc=avg+3,unit=avg+4,amount=avg+5;
- const name='НМЦК',sh={name,cols:amount+1,rows:Math.max(17,task.rows.length+13),values:{},editable:{}};
+ const name='НМЦК',sh={name,cols:amount+1,rows:Math.max(17,task.rows.length+13),values:{},editable:{},spans:{}};
+ sh.spans.A1=sh.cols;sh.spans.A2=sh.cols;sh.spans.A3=sh.cols;
+ sh.spans.E4=n;sh.spans[letter(avg)+'4']=3;sh.spans[letter(calc)+'4']=3;
  const w={kind:'nmck',id:task.id,task,order:[name],sheets:{[name]:sh},targets:[],hintMap:{},template:'nmck-solved'};
  function fixed(c,r,value){if(value!==null&&value!==undefined)sh.values[S.addr(c,r)]={raw:value,locked:true};}
  function editable(c,r,value,label,hint,id){const a=S.addr(c,r);sh.editable[a]=true;w.targets.push({sheet:name,addr:a,answer:value,label,hint,id,formula:true});w.hintMap[name+'!'+a]=hint;}
@@ -46,6 +48,8 @@ function render(task){
   editable(amount,r,total.answer,'НМЦК позиции','='+letter(unit)+R+'*D'+R,id+'amount');
  });
  const footer=task.rows.length+5,R=footer+1;
+ sh.spans['B'+R]=sh.cols-2;
+ for(const rr of [footer+4,footer+5,footer+6,footer+7,footer+8])sh.spans['B'+rr]=sh.cols-1;
  fixed(1,footer,'В результате проведённого расчёта Н(М)ЦК составляет, руб.:');
  const total=task.questions.find(x=>x.id==='total');
  if(!total)throw Error('Не найден итог НМЦК');
