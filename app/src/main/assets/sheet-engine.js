@@ -116,7 +116,20 @@ function primary(){if(peek()==='-'){take('-');return -num(primary());}if(peek()=
 if(peek()==='num')return take('num').v;if(peek()==='str')return take('str').v;
 if(peek()==='ident'){
  const id=take('ident').v;
- if(peek()==='('){take('(');const args=[];if(peek()!==')')do{args.push(expression());if(peek()!==';'&&peek()!==',')break;ix++;}while(true);take(')');return apply(id,args);}
+ if(peek()==='('){
+  take('(');
+  // Excel IF/ЕСЛИ evaluates only the branch selected by the condition.
+  if(id.toUpperCase()==='IF'||id.toUpperCase()==='ЕСЛИ'){
+    function separator(){if(peek()!==';'&&peek()!==',')throw Error('#ФОРМУЛА!');ix++;}
+    function skipBranch(){let depth=0;while(true){const t=peek();if(t==='end')throw Error('#ФОРМУЛА!');if(depth===0&&(t===')'||t===';'||t===','))return;if(t==='(')depth++;else if(t===')')depth--;ix++;}}
+    const condition=expression();separator();let chosen;
+    if(condition){chosen=expression();}else skipBranch();
+    separator();
+    if(condition)skipBranch();else chosen=expression();
+    take(')');return chosen;
+  }
+  const args=[];if(peek()!==')')do{args.push(expression());if(peek()!==';'&&peek()!==',')break;ix++;}while(true);take(')');return apply(id,args);
+ }
  let s=sheet,cell=id;
  if(peek()==='!'){take('!');s=id;cell=take('ident').v;}
  if(!decode(cell))throw Error('#ИМЯ?');
@@ -131,7 +144,7 @@ function expression(){let x=additive();while(['=','>','<','>=','<=','<>'].includ
 const result=expression();if(peek()!=='end')throw Error('#ФОРМУЛА!');if(typeof result==='number'&&!Number.isFinite(result))throw Error('#ЗНАЧ!');return result;
 }finally{stack.pop();}}
 function value(w,s,a){try{return calc(w,s,a,[]);}catch(e){return /^#/.test(e.message)?e.message:'#ОШИБКА!';}}
-function grade(w){let passed=0;const results=[];for(const t of w.targets){const cel=w.sheets[t.sheet].values[t.addr],raw=cel?.raw||'',v=value(w,t.sheet,t.addr);let status='empty';if(String(raw).trim()){if(typeof v==='string'&&v.startsWith('#'))status='bad';else{const good=typeof t.answer==='number'?typeof v==='number'&&Math.abs(v-t.answer)<=Math.max(.011,Math.abs(t.answer)*1e-9):String(v).trim().toLowerCase().replace(/ё/g,'е')===String(t.answer).toLowerCase().replace(/ё/g,'е');status=good?(t.formula&&!String(raw).startsWith('=')?'need-formula':'ok'):'bad';}}
+function grade(w){let passed=0;const results=[];for(const t of w.targets){const cel=w.sheets[t.sheet].values[t.addr],raw=cel?.raw||'',v=value(w,t.sheet,t.addr);let status='empty';if(String(raw).trim()){if(typeof v==='string'&&v.startsWith('#'))status='bad';else{const good=typeof t.answer==='number'?typeof v==='number'&&Math.abs(v-t.answer)<=Math.max(.011,Math.abs(t.answer)*1e-9):String(v).trim().toLowerCase().replace(/ё/g,'е')===String(t.answer).toLowerCase().replace(/ё/g,'е');status=good?(t.formula&&(!String(raw).startsWith('=')||!/\$?[A-Z]{1,2}\$?[1-9][0-9]{0,2}(?![0-9])/i.test(String(raw)))?'need-formula':'ok'):'bad';}}
  if(status==='ok')passed++;results.push({...t,value:v,status,raw});}
  return{passed,total:w.targets.length,percent:Math.round(passed/w.targets.length*100),results};}
 function save(w){const entries={};for(const name of w.order){const sh=w.sheets[name];entries[name]=Object.fromEntries(Object.entries(sh.values).filter(([k,v])=>!v.locked).map(([k,v])=>[k,v.raw]));}return entries;}
