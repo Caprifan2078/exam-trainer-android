@@ -89,7 +89,15 @@ const tbody=node('tbody');for(let r=0;r<sh.rows;r++){
    const colspan=sh.spans&&sh.spans[a];if(Number.isInteger(colspan)&&colspan>1){td.colSpan=colspan;c+=colspan-1;}
    if(r===0)td.classList.add('excel-header');
    if(selected===a)td.classList.add('excel-selected');
-   td.addEventListener('click',()=>select(a));tr.appendChild(td);
+   td.addEventListener('click',()=>{
+    if(editDirty && !input.disabled && selected!==a && input.value.trim().startsWith('=')){
+      const pos=input.selectionStart===null?input.value.length:input.selectionStart;
+      input.value=input.value.slice(0,pos)+a+input.value.slice(pos);
+      editDirty=true;input.focus();
+      input.setSelectionRange(pos+a.length,pos+a.length);
+      info.textContent='Добавлена ссылка '+a+'. Продолжи формулу и нажми ✓ для сохранения.';
+    }else select(a);
+   });tr.appendChild(td);
  }tbody.appendChild(tr);}
  table.appendChild(tbody);gridbox.replaceChildren(table);
  select(selected||firstEditable(sh),false);}
