@@ -5,7 +5,9 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'../app/src/main/assets');
 const read=n=>fs.readFileSync(path.join(root,n),'utf8');
 const html=read('index.html'),ui=read('sheet-ui.js'),nmck=read('nmck-practice-ui.js');
-assert(html.includes('<small>0.9.5</small>'),'Version must match APK');
+const build=fs.readFileSync(path.resolve(__dirname,'../app/build.gradle'),'utf8');
+const version=build.match(/versionName\s+'([^']+)'/)?.[1];
+assert(version&&html.includes('<small>'+version+'</small>'),'Displayed version must match Android versionName');
 for(const script of [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map(m=>m[1])){
  assert(fs.existsSync(path.join(root,script)),'Missing app script '+script);
 }
