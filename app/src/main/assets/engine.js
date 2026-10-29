@@ -30,9 +30,9 @@ const metricNames=[
 ['Финансовая устойчивость','Коэффициент финансовой зависимости','Активы / капитал'],
 ['Финансовая устойчивость','Соотношение заёмных и собственных средств','Обязательства / капитал'],
 ['Финансовая устойчивость','Маневренность собственного капитала','(Капитал − внеоборотные активы) / капитал'],
-['Рентабельность','Рентабельность активов, %','Чистая прибыль / средние активы × 100'],
-['Рентабельность','Рентабельность продаж, %','Чистая прибыль / выручка × 100'],
-['Рентабельность','Рентабельность собственного капитала, %','Чистая прибыль / капитал × 100']
+['Рентабельность','ROA — рентабельность активов, %','Чистая прибыль / средние активы × 100'],
+['Рентабельность','ROS — рентабельность продаж, %','Чистая прибыль / выручка × 100'],
+['Рентабельность','ROE — рентабельность собственного капитала, %','Чистая прибыль / собственный капитал × 100']
 ];
 const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a, pick=a=>a[rand(0,a.length-1)], round=(n,d=2)=>Math.round((n+Number.EPSILON)*Math.pow(10,d))/Math.pow(10,d);
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){let j=rand(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -77,8 +77,7 @@ function budget(level){
    if(level!=='easy')questions.push(question(kind+'pct',kind+'ы — исполнение, %',100*summary[kind].actual/summary[kind].plan,'Факт / план × 100','Итоги'));
  }
  const saldo=summary.Доход.actual-summary.Расход.actual;
- questions.push(question('balance','Сальдо бюджета, тыс. руб.',saldo,'Фактические доходы − фактические расходы','Итоги'));
- questions.push(question('status','Состояние бюджета',saldo>0?'Профицит':saldo<0?'Дефицит':'Сбалансирован','Знак сальдо бюджета','Итоги'));
+ questions.push(question('status','Дефицит или профицит',saldo>0?'Профицит':saldo<0?'Дефицит':'Сбалансирован','Сравни доходы и расходы (без отдельного показателя сальдо)','Итоги'));
  return {kind:'budget',title:'Муниципальный бюджет',company:'Муниципальный район «'+pick(pre)+'»',rows,summary,questions,notes:'План и исполнение даны в тысячах рублей. Статьи и числа вымышлены; коды бюджетной классификации не подставляются.'};
 }
 function financial(level){
@@ -92,11 +91,9 @@ function financial(level){
    const A=balance[yr]['1600'],rev=round(A*rand(96,205)/100,0),cost=-round(rev*rand(52,77)/100,0),gross=rev+cost,comm=-round(rev*rand(8,19)/100,0),sale=gross+comm,interestIn=round(rev*rand(1,12)/1000,0),interestOut=-round(rev*rand(3,30)/1000,0),otherIn=round(rev*rand(1,15)/1000,0),otherOut=-round(rev*rand(4,25)/1000,0),pretax=sale+interestIn+interestOut+otherIn+otherOut,tax=-round(Math.max(0,pretax)*0.2,0);
    pl[yr]={'2110':rev,'2120':cost,'2100':gross,'2220':comm,'2200':sale,'2320':interestIn,'2330':interestOut,'2340':otherIn,'2350':otherOut,'2300':pretax,'2410':tax,'2400':pretax+tax};
  }
- const questions=[],metrics=[],avgs=[['1600','Средние активы'],['1200','Средние оборотные активы'],['1230','Средняя дебиторская задолженность'],['1520','Средняя кредиторская задолженность'],['1210','Средние запасы'],['1150','Средние основные средства']];
- if(level!=='easy')for(const [code,name] of avgs)for(const yr of ['2025','2024']){
-   let p=String(Number(yr)-1);questions.push(question('avg'+code+yr,name+' — '+yr,(balance[yr][code]+balance[p][code])/2,'Среднее на конец двух соседних лет','Средние величины'));
- }
- for(let m=0;m<(level==='easy'?6:level==='medium'?14:23);m++){
+ const questions=[],metrics=[];
+ // Средние величины нужны внутри формул, но не являются самостоятельными заданиями.
+ for(let m=0;m<metricNames.length;m++){
    const meta=metricNames[m],values={};
    for(const yr of ['2025','2024']){
      const b=balance[yr],prev=balance[String(Number(yr)-1)],p=pl[yr],A=b['1600'],CA=b['1200'],CL=b['1500'],EQ=b['1300'],NCA=b['1100'],REV=p['2110'],NET=p['2400'],short=b['1240'],cash=b['1250'],AR=b['1230'],LD=b['1400'],av=c=>(b[c]+prev[c])/2;
