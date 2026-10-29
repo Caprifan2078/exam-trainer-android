@@ -26,6 +26,7 @@ let scale=1;
 try{scale=clamp(Number(localStorage.getItem('exam-nmck-zoom'))||1);}catch(e){}
 function scaleTo(x){
  scale=clamp(x);grid.style.setProperty('--exam-scale',String(scale));
+ for(const [name,pixels] of [['--exam-cell-w',110],['--exam-row-h',35],['--exam-font',11],['--exam-padding',6],['--exam-index-w',37],['--exam-name-w',265],['--exam-title-font',12],['--exam-title-h',43],['--exam-head-h',100]])grid.style.setProperty(name,Math.round(pixels*scale*10)/10+'px');
  reset.textContent=Math.round(scale*100)+'%';
  try{localStorage.setItem('exam-nmck-zoom',String(scale));}catch(e){}
 }
