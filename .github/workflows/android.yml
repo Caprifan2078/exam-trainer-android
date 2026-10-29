@@ -30,6 +30,8 @@ jobs:
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
       - name: Verify math and generated tasks
         run: node scripts/test-engine.cjs
+      - name: Verify enriched budget, NMCK and reporting codes (900 cases)
+        run: node scripts/test-upgrade.cjs
       - name: Build real debug APK with Gradle
         run: gradle --no-daemon --stacktrace assembleDebug
       - name: Verify signing and Android manifest
