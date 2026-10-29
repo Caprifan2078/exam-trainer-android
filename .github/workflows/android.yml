@@ -34,6 +34,9 @@ jobs:
         run: node scripts/test-upgrade.cjs
       - name: Verify Excel-like spreadsheet formulas (1080 workbooks)
         run: node scripts/test-sheets.cjs
+      - name: Check syntax of every application JavaScript file
+        run: |
+          for file in app/src/main/assets/*.js; do node --check "$file"; done
       - name: Verify NMCK 3/4/5 offers with 1080 spreadsheet scenarios
         run: node scripts/test-nmck-v09.cjs
       - name: Build real debug APK with Gradle
