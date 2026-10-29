@@ -1,0 +1,59 @@
+/* Layout patterned after the supplied solved NMCK spreadsheets; mobile zoom is grid-only. */
+.nmck-condition{margin:6px 0 14px;padding:16px;background:#182c46;border:1px solid #56718d;border-radius:15px;color:#edf5ff}
+.nmck-condition[hidden],.excel-quick[hidden],.nmck-options[hidden]{display:none!important}
+.nmck-condition .condition-eyebrow{font-size:11px;letter-spacing:1.2px;color:#8ce0c8;font-weight:800}
+.nmck-condition h3{font-size:18px;margin:7px 0 10px}
+.nmck-condition p{font-size:13px;margin:6px 0 10px;line-height:1.48}
+.condition-lot{padding:11px 0;border-top:1px solid #405874}
+.condition-lot>strong{display:block;font-size:14px}
+.condition-prices{display:grid;grid-template-columns:repeat(auto-fit,minmax(98px,1fr));gap:7px}
+.condition-price{background:#28405f;border-radius:8px;padding:9px;display:flex;flex-direction:column;gap:1px}
+.condition-price span{font-size:11px;color:#c1d0e5}
+.condition-price b{font-size:14px;color:#fff;font-variant-numeric:tabular-nums}
+.condition-instruction{border-left:3px solid #72dbb2;padding:9px 10px;background:#243e58}
+.sheet-zoom{display:flex;align-items:center;gap:9px;padding:9px 3px 11px;position:relative}
+.sheet-zoom-caption{font-size:10px;color:#bbd1ea;letter-spacing:.5px;font-weight:700;margin-right:auto}
+.sheet-zoom-button,.sheet-zoom-reset{min-width:44px;height:42px;min-height:42px;border-radius:9px;border:1px solid #7ba7c3;color:#f1f8ff;background:#234b65;padding:6px 10px;font-size:19px}
+.sheet-zoom-reset{min-width:67px;font-size:14px}
+.excel-quick{display:flex;flex-wrap:wrap;gap:7px;padding:8px 0 12px}
+.excel-quick-label{width:100%;font-size:12px;color:#bbd8f4}
+.excel-quick-button{background:#205b61;color:#effffd;border:1px solid #73a6a9;border-radius:9px;padding:9px 12px;font-size:12px;min-height:42px}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid th.excel-col,
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid td{
+ min-width:calc(110px * var(--exam-scale,1))!important;
+ width:calc(110px * var(--exam-scale,1))!important;
+ max-width:calc(110px * var(--exam-scale,1))!important;
+ height:calc(35px * var(--exam-scale,1));
+ padding:calc(6px * var(--exam-scale,1));
+ font-size:calc(11px * var(--exam-scale,1))!important;
+}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid th.excel-row,
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid th.excel-corner{
+ min-width:calc(37px * var(--exam-scale,1));width:calc(37px * var(--exam-scale,1));max-width:calc(37px * var(--exam-scale,1));
+ font-size:calc(11px * var(--exam-scale,1));
+}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody td:nth-child(3){
+ min-width:calc(265px * var(--exam-scale,1))!important;width:calc(265px * var(--exam-scale,1))!important;max-width:calc(265px * var(--exam-scale,1))!important;
+ text-align:left;
+}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody td[colspan]{
+ width:auto!important;max-width:none!important;min-width:0!important;text-align:left;
+ white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word;
+}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody tr:nth-child(-n+3) td[colspan]{
+ background:#25436b!important;color:#f0f6ff;font-size:calc(12px * var(--exam-scale,1))!important;
+ height:calc(43px * var(--exam-scale,1));font-weight:700;
+}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody tr:nth-child(4) td,
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody tr:nth-child(5) td{
+ background:#315782!important;color:#fff!important;white-space:normal!important;overflow-wrap:break-word!important;
+ height:calc(100px * var(--exam-scale,1));text-align:center;line-height:1.25;
+ font-size:calc(11px * var(--exam-scale,1))!important;
+}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody tr:nth-child(n+6) td.excel-editable{
+ background:#fff0b0;color:#30260f;
+}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody td.excel-selected{outline:3px solid #28a98e!important;outline-offset:-3px}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody td.excel-fail{background:#ffd5d5!important}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody td.excel-pass{background:#caf3d8!important}
+@media(max-width:440px){.sheet-zoom{gap:6px}.sheet-zoom-caption{font-size:9px}.nmck-condition{padding:12px}.condition-prices{grid-template-columns:repeat(2,minmax(0,1fr))}}
