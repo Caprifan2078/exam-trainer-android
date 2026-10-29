@@ -54,7 +54,7 @@ function updateProgress(){
 function invalidateCheck(){checked=null;$('results').hidden=true;footer.replaceChildren();}
 function jumpTo(t){
  if(!t||!w.sheets[t.sheet])return;
- active=t.sheet;selected=t.addr;renderGrid();
+ flush();active=t.sheet;selected=t.addr;renderGrid();
  const cell=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(x=>x.dataset.addr===t.addr);
  if(cell)cell.scrollIntoView({block:'nearest',inline:'center'});
  sheetRoot.scrollIntoView({block:'start'});
@@ -158,7 +158,7 @@ undo.addEventListener('click',()=>{
  if(!w||!history.length)return;
  const item=history.pop();if(!w.sheets[item.sheet]?.editable[item.addr])return;
  S.write(w,item.sheet,item.addr,item.raw);undo.disabled=!history.length;invalidateCheck();
- active=item.sheet;selected=item.addr;renderGrid();refreshValues();saveDraft();updateProgress();
+ editDirty=false;input.value=String(item.raw??'');active=item.sheet;selected=item.addr;renderGrid();refreshValues();saveDraft();updateProgress();
  info.textContent='Последнее изменение отменено. Можно ввести другую формулу.';
 });
 $('start').addEventListener('click',start);$('again').addEventListener('click',start);$('check').addEventListener('click',check);
