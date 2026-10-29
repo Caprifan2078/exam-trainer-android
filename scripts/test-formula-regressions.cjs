@@ -37,4 +37,14 @@ const budget=E.generate('budget','medium'),book=S.create(budget),any=book.target
 S.write(book,any.sheet,any.addr,'=ЕСЛИ(1=0;1/0;7)');
 assert.equal(S.value(book,any.sheet,any.addr),7);
 assert.notEqual(S.value(book,any.sheet,any.addr),'#ДЕЛ/0!');
+
+const roundTask=E.generate('nmck','medium',{offers:3,lots:1});
+const roundWorkbook=S.create(roundTask),cell=roundWorkbook.targets[0];
+for(const [expression,expected] of [
+ ['=ROUND(-1.5;0)',-2],['=ROUND(-2.5;0)',-3],
+ ['=ОКРУГЛ(-1.005;2)',-1.01],['=ROUND(1.005;2)',1.01]
+]){
+ S.write(roundWorkbook,cell.sheet,cell.addr,expression);
+ assert.equal(S.value(roundWorkbook,cell.sheet,cell.addr),expected,'Excel ROUND mismatch: '+expression);
+}
 console.log('PASS:',runs,'NMCK variants and budget: IF lazy evaluation, source formulas, genuine mistakes');
