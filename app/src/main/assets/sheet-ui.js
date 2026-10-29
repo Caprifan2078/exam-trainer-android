@@ -11,6 +11,7 @@ if(typeof Element.prototype.replaceChildren!=='function'){
 const $=id=>document.getElementById(id),E=window.ExamEngine,S=window.ExamSheets;
 S.setEngine(E);
 let task=null,w=null,active='',selected='',checked=null,editDirty=false;
+const history=[];
 const fmt=n=>typeof n==='number'?new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(n):String(n??'');
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=String(text);if(cls)e.className=cls;return e;};
 const sheetRoot=$('sources');
@@ -28,7 +29,8 @@ const fx=node('span','fx','excel-fx');
 const input=node('input',undefined,'excel-input');input.type='text';input.autocomplete='off';input.spellcheck=false;input.placeholder='Выбери ячейку и введи формулу =…';
 input.setAttribute('aria-label','Ввод формул');
 const commit=node('button','✓','excel-commit');commit.type='button';commit.setAttribute('aria-label','Применить формулу');
-bar.append(address,fx,input,commit);
+const undo=node('button','↶','excel-undo');undo.type='button';undo.setAttribute('aria-label','Отменить последнюю формулу');undo.disabled=true;
+bar.append(address,fx,input,undo,commit);
 const gridbox=node('div',undefined,'excel-grid-box');gridbox.tabIndex=0;
 const info=node('div','Выбирай жёлтую ячейку, вводи =формулу в строку fx. Синие значения — исходные.','excel-info');
 const controls=node('div',undefined,'excel-controls');
@@ -108,7 +110,11 @@ function select(a,focus=false){if(editDirty)flush();selected=a;const sh=w.sheets
  for(const el of gridbox.querySelectorAll('.excel-selected'))el.classList.remove('excel-selected');
  const chosen=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(e=>e.dataset.addr===a);if(chosen)chosen.classList.add('excel-selected');
  if(focus&&!input.disabled)input.focus();updateProgress();}
-function flush(){if(!w||!active||!selected||!editDirty)return;try{S.write(w,active,selected,input.value);editDirty=false;invalidateCheck();refreshValues();saveDraft();updateProgress();info.textContent='Формула сохранена. Выбери следующую ячейку или проверь работу.';}catch(e){info.textContent=e.message;}}
+function flush(){if(!w||!active||!selected||!editDirty)return;try{
+ const previous=w.sheets[active].values[selected]?.raw??'';
+ if(String(previous)!==String(input.value)){history.push({sheet:active,addr:selected,raw:previous});if(history.length>30)history.shift();}
+ S.write(w,active,selected,input.value);undo.disabled=!history.length;
+ editDirty=false;invalidateCheck();refreshValues();saveDraft();updateProgress();info.textContent='Формула сохранена. Выбери следующую ячейку или проверь работу.';}catch(e){info.textContent=e.message;}}
 function refreshValues(){if(!w)return;for(const cell of gridbox.querySelectorAll('td[data-addr]')){const v=w.sheets[active].values[cell.dataset.addr];cell.textContent=v?fmt(S.value(w,active,cell.dataset.addr)):'';cell.classList.remove('excel-pass','excel-fail','excel-needs');}
  if(checked)for(const r of checked.results)if(r.sheet===active){const el=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(x=>x.dataset.addr===r.addr);if(el)el.classList.add(r.status==='ok'?'excel-pass':r.status==='need-formula'?'excel-needs':'excel-fail');}}
 function check(){
@@ -144,9 +150,17 @@ function showWork(){$('work').hidden=false;$('home').hidden=true;$('task-title')
  $('task-notes').textContent='Жёлтые ячейки — ввод формул. Таблицы работают автономно. Числа не подставляются в расчёты.';
  $('results').hidden=true;checked=null;footer.replaceChildren();renderGrid();updateProgress();window.scrollTo(0,0);}
 function start(){if(w&&Object.values(S.save(w)).some(x=>Object.keys(x).length)&&!confirm('Создать новый вариант? Черновик предыдущего будет заменён.'))return;
- try{task=E.generate($('kind').value,$('level').value);w=S.create(task);active=w.order[w.order.length-1];selected='';showWork();saveDraft();}catch(e){alert('Ошибка создания таблицы: '+e.message);}}
+ try{task=E.generate($('kind').value,$('level').value);w=S.create(task);history.length=0;undo.disabled=true;active=w.order[w.order.length-1];selected='';showWork();saveDraft();}catch(e){alert('Ошибка создания таблицы: '+e.message);}}
 input.addEventListener('input',()=>{editDirty=true;});input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();flush();input.blur();}else if(e.key==='Escape'){e.preventDefault();select(selected);}});
-commit.addEventListener('click',flush);$('start').addEventListener('click',start);$('again').addEventListener('click',start);$('check').addEventListener('click',check);
+commit.addEventListener('click',flush);
+undo.addEventListener('click',()=>{
+ if(!w||!history.length)return;
+ const item=history.pop();if(!w.sheets[item.sheet]?.editable[item.addr])return;
+ S.write(w,item.sheet,item.addr,item.raw);undo.disabled=!history.length;invalidateCheck();
+ active=item.sheet;selected=item.addr;renderGrid();refreshValues();saveDraft();updateProgress();
+ info.textContent='Последнее изменение отменено. Можно ввести другую формулу.';
+});
+$('start').addEventListener('click',start);$('again').addEventListener('click',start);$('check').addEventListener('click',check);
 $('hints-button').addEventListener('click',showAnswers);
 $('back').addEventListener('click',()=>{flush();saveDraft();$('work').hidden=true;$('home').hidden=false;window.scrollTo(0,0);});
 helpButton.addEventListener('click',()=>{flush();if(sheetHelp.hidden)showHelp(kindGuides[task.kind]);else sheetHelp.hidden=true;});
