@@ -1,14 +1,14 @@
 <!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0d1423"><title>Экзаменатор</title><link rel="stylesheet" href="style.css"></head><body>
-<header><div class="logo">∑</div><div><div class="eyebrow">ТРЕНАЖЁР ДЕМОЭКЗАМЕНА</div><h1>Экзаменатор <small>0.7</small></h1></div></header>
+<header><div class="logo">∑</div><div><div class="eyebrow">ТРЕНАЖЁР ДЕМОЭКЗАМЕНА</div><h1>Экзаменатор <small>0.8</small></h1></div></header>
 <main>
 <section id="home"><div class="hero"><p class="eyebrow">РАСЧЁТЫ ВЫПОЛНЯЕШЬ САМ · ПОДСКАЗКИ ПО ЖЕЛАНИЮ</p><h2>Учись решать.<br><em>Проверяй себя.</em></h2><p>Новые компании, показатели и суммы для каждого задания. Формулы вводишь ты — приложение только проверяет готовую таблицу.</p></div>
 <div class="panel"><label for="kind">Тип задания</label><select id="kind"><option value="nmck">НМЦК — коммерческие предложения</option><option value="budget">Муниципальный бюджет</option><option value="financial">Финансовый анализ</option></select>
 <label for="level">Сложность</label><select id="level"><option value="easy">Лёгкая</option><option value="medium" selected>Обычная</option><option value="hard">Сложная</option></select><button class="primary" id="start">Создать случайный вариант →</button></div>
 <p class="note">Данные учебные, без реальных предприятий. Интернет и регистрация не нужны.</p><div class="stats" id="stats"></div></section>
 <section id="work" hidden><button class="back" id="back">‹ К выбору задания</button><div class="hero"><p class="eyebrow">ПРАКТИЧЕСКОЕ ЗАДАНИЕ</p><h2 id="task-title"></h2><p id="task-org"></p><p id="task-meta" class="muted"></p></div>
-<h3>01 · Исходные данные</h3><div id="sources"></div><p class="note" id="task-notes"></p>
-<h3>02 · Твои расчёты</h3><p class="muted">Вводи числа вручную. Можно использовать запятую. Правильные ответы не подставляются.</p><div id="questions"></div>
+<h3>01 · Таблица Excel</h3><div id="sources"></div><p class="note" id="task-notes"></p>
+<h3>02 · Проверка таблицы</h3><p class="muted">Выбирай жёлтые ячейки и вписывай формулы в поле fx. Готовых решений нет.</p><div id="questions"></div>
 <button class="primary" id="check">Проверить ответы ✓</button><button class="secondary" id="again">Новый случайный вариант ↻</button>
 <div id="results" hidden><h3 id="score"></h3><p id="message"></p><button id="hints-button" class="secondary">Показать правильные ответы и формулы</button><div id="hints" hidden></div></div></section>
 </main>
-<script src="engine.js"></script><script src="upgrade.js"></script><script src="app.js"></script><script src="upgrade-ui.js"></script></body></html>
+<script src="engine.js"></script><script src="upgrade.js"></script><script src="sheet-engine.js"></script><script src="xlsx-export.js"></script><script src="sheet-ui.js"></script></body></html>
