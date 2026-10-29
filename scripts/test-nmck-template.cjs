@@ -6,6 +6,7 @@ require('../app/src/main/assets/nmck-advanced.js');
 const S=require('../app/src/main/assets/sheet-engine.js');
 require('../app/src/main/assets/nmck-template.js');
 S.setEngine(E);
+const X=require('../app/src/main/assets/xlsx-export.js');
 let count=0;
 for(const offers of [3,4,5])for(const lots of [1,2,3])for(let i=0;i<60;i++){
  const t=E.generate('nmck','hard',{offers,lots});
@@ -39,6 +40,11 @@ for(const offers of [3,4,5])for(const lots of [1,2,3])for(let i=0;i<60;i++){
  const grade=S.grade(w);
  assert.equal(grade.passed,grade.total,JSON.stringify(grade.results.filter(r=>r.status!=='ok')));
  assert.equal(grade.percent,100);
+ const rawXlsx=Buffer.from(X.exportBytes(w)).toString('utf8');
+ assert(rawXlsx.includes('<mergeCells count=\"'), 'Missing Excel merged NMCK headings');
+ assert(rawXlsx.includes('Обоснование начальной'), 'Missing Excel NMCK title');
+ assert(rawXlsx.includes('<cellXfs count=\"4\">'), 'Missing style block');
+ assert(!rawXlsx.includes('</cellXfs><xf '), 'Malformed XLSX styles XML');
  assert.throws(()=>S.write(w,'НМЦК','E6','=1+1'));
  const restored=S.create(t);S.load(restored,S.save(w));
  assert.equal(S.grade(restored).passed,restored.targets.length);
