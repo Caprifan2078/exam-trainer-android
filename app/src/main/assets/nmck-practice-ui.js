@@ -30,19 +30,27 @@ function drawCondition(t){
  condition.replaceChildren();
  if(!t||t.kind!=='nmck'){condition.hidden=true;document.getElementById('work').dataset.nmckSheet='no';return;}
  condition.hidden=false;document.getElementById('work').dataset.nmckSheet='yes';
- condition.append(mk('div','УСЛОВИЕ ЗАДАНИЯ','condition-eyebrow'));
- condition.append(mk('h3','Обоснование начальной (максимальной) цены контракта'));
- condition.append(mk('p','Заказчик: '+t.company));
- condition.append(mk('p','Метод: сопоставимых рыночных цен (анализа рынка). По каждому предложению указана цена за одну единицу товара или услуги.'));
+ const top=mk('div',undefined,'condition-heading');
+ top.append(mk('div','УСЛОВИЕ ЗАДАНИЯ · '+t.rows.length+' поз.','condition-eyebrow'));
+ const btn=mk('button',undefined,'condition-toggle');btn.type='button';
+ const content=mk('div',undefined,'condition-body');
+ let collapsed=false;
+ try{collapsed=localStorage.getItem('exam-condition-collapsed')==='true';}catch(e){}
+ const update=()=>{content.hidden=collapsed;btn.textContent=collapsed?'Развернуть условия ↓':'Свернуть условия ↑';btn.setAttribute('aria-expanded',String(!collapsed));};
+ btn.addEventListener('click',()=>{collapsed=!collapsed;update();try{localStorage.setItem('exam-condition-collapsed',String(collapsed));}catch(e){}});
+ top.append(btn);condition.append(top,content);update();
+ content.append(mk('h3','Обоснование начальной (максимальной) цены контракта'));
+ content.append(mk('p','Заказчик: '+t.company));
+ content.append(mk('p','Метод: сопоставимых рыночных цен (анализа рынка). По каждому предложению указана цена за одну единицу товара или услуги.'));
  t.rows.forEach((r,i)=>{
   const block=mk('div',undefined,'condition-lot');
   block.append(mk('strong','Позиция № '+(i+1)+': '+r.name));
   block.append(mk('p','Единица измерения: штуки. Количество: '+r.quantity+'. Коммерческих предложений: '+r.prices.length+'.'));
   const sub=mk('div',undefined,'condition-prices');
   r.prices.forEach((p,j)=>{const label=mk('span','КП №'+(j+1));const price=mk('b',fmt(p)+' ₽');const item=mk('div',undefined,'condition-price');item.append(label,price);sub.append(item);});
-  block.append(sub);condition.append(block);
+  block.append(sub);content.append(block);
  });
- condition.append(mk('p','Задача: самостоятельно заполнить расчётную таблицу ниже формулами Excel. Определить среднюю цену, среднее квадратичное отклонение, коэффициент вариации, цену за единицу и НМЦК. Порог вариации для учебного задания — 33%.','condition-instruction'));
+ content.append(mk('p','Задача: самостоятельно заполнить расчётную таблицу ниже формулами Excel. Определить среднюю цену, среднее квадратичное отклонение, коэффициент вариации, цену за единицу и НМЦК. Порог вариации для учебного задания — 33%.','condition-instruction'));
 }
 function suggestion(t,col,row){
  const n=t.rows.length,offers=t.rows[0].prices.length;
