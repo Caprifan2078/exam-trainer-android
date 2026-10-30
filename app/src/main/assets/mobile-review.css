@@ -1,0 +1,49 @@
+/* v0.9.9 review: keep spreadsheet visible without two phone screens of introductions. */
+body.exam-solving > header{padding:6px 15px;min-height:44px;gap:8px}
+body.exam-solving > header .logo{font-size:18px;padding:3px 9px;border-radius:8px}
+body.exam-solving > header .eyebrow{display:none}
+body.exam-solving > header h1{font-size:15px;line-height:1.2}
+body.exam-solving main{padding-top:5px}
+body.exam-solving #work>.back{margin:0 0 3px;padding:5px 0;min-height:30px;font-size:12px}
+body.exam-solving #work>.hero{background:none;border:0;padding:2px 0 5px;margin:0 0 5px;border-radius:0}
+body.exam-solving #work>.hero .eyebrow{display:none}
+body.exam-solving #work>.hero h2{font-size:16px;line-height:1.3;margin:0;color:#e9f3ff;font-weight:800}
+body.exam-solving #work>.hero #task-org{font-size:11px;margin:2px 0;color:#bacde5}
+body.exam-solving #work>.hero #task-meta{display:none}
+body.exam-solving #work>h3:first-of-type{display:none}
+body.exam-solving #work>#task-notes{display:none}
+body.exam-solving #work .excel-tool{margin:4px 0 14px}
+body.exam-solving #work .excel-progress{padding:6px 9px;margin:0 0 4px;gap:3px;border-radius:8px}
+body.exam-solving #work .excel-progress-label{font-size:11px;line-height:1.25}
+body.exam-solving #work .excel-progress progress{height:6px}
+body.exam-solving #work .excel-tabs{padding:4px 0;gap:5px}
+body.exam-solving #work .excel-tab{min-height:35px;padding:6px 12px;font-size:12px}
+body.exam-solving #work .excel-formula-bar{padding:5px 2px;gap:5px}
+body.exam-solving #work .excel-addr{padding:9px 5px;font-size:11px}
+body.exam-solving #work .excel-input{padding:9px 6px;min-height:40px;font-size:13px}
+body.exam-solving #work .excel-undo,body.exam-solving #work .excel-commit{height:40px;min-height:40px;min-width:39px;padding:6px}
+body.exam-solving #work .nmck-navigation{padding:5px 7px;margin:4px 0;border-radius:8px;top:44px}
+body.exam-solving #work .nmck-nav-button{min-height:38px;padding:6px 7px;font-size:12px}
+body.exam-solving #work .nmck-nav-step{font-size:11px}
+body.exam-solving #work .nmck-nav-detail{font-size:10px}
+body.exam-solving #work .sheet-zoom{padding:5px 7px;margin:4px 0 0;gap:5px}
+body.exam-solving #work .sheet-zoom-caption{font-size:10px;line-height:1.2}
+body.exam-solving #work .sheet-zoom-button,body.exam-solving #work .sheet-zoom-percent,body.exam-solving #work .sheet-zoom-fit{min-height:37px;height:37px;padding:5px}
+body.exam-solving #work .sheet-zoom-hint{display:none}
+body.exam-solving #work .excel-grid-box{max-height:70vh}
+body.exam-solving #work .excel-info{margin:4px 0 7px;padding:7px 9px;font-size:11px;line-height:1.35}
+body.exam-solving #work .excel-controls button{min-height:36px}
+body.exam-solving #work .nmck-condition{padding:9px 11px;margin:5px 0 7px;border-radius:10px}
+body.exam-solving #work .condition-heading{gap:8px}
+body.exam-solving #work .condition-eyebrow{font-size:10px}
+body.exam-solving #work .condition-toggle{font-size:11px;min-height:33px;padding:5px 8px}
+body.exam-solving #work .condition-preview{margin-top:5px}
+body.exam-solving #work .condition-preview-row{display:flex;flex-direction:column;gap:0;margin:0;padding:3px 0;border-top:1px solid #2b4763;line-height:1.4;font-size:11px}
+body.exam-solving #work .condition-preview-row b{font-size:11px}
+body.exam-solving #work .condition-preview-row span{color:#bfd7e8;overflow-wrap:anywhere;font-size:11px}
+body.exam-solving #work .condition-preview-row:first-child{border-top:0}
+body.exam-solving #work .condition-preview[hidden]{display:none!important}
+body.exam-solving #work .condition-body{margin-top:8px}
+body.exam-solving #work .condition-body h3{font-size:15px}
+body.exam-solving #work .condition-body p{font-size:12px}
+@media(max-width:390px){body.exam-solving main{padding-left:11px;padding-right:11px}body.exam-solving #work .sheet-zoom{grid-template-columns:38px minmax(32px,1fr) 38px 60px 62px}body.exam-solving #work .sheet-zoom-button{min-width:38px;width:38px}}
