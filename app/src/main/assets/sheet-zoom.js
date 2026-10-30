@@ -60,6 +60,18 @@
   function widthFit(){
    const columns=grid.querySelectorAll('thead th.excel-col').length;
    apply(fitScale(grid.clientWidth,columns),{persist:true});
+   // Column headers and longer text can make the real table wider than the
+   // mathematical estimate. Measure the actual layout and refine downward.
+   const table=grid.querySelector?.('.excel-grid');
+   if(!table)return;
+   for(let n=0;n<48;n++){
+    const width=table.getBoundingClientRect().width;
+    if(!Number.isFinite(width)||width<=grid.clientWidth+1||scale<=MIN)break;
+    apply(scale-.05);
+   }
+   fit.title=scale<=MIN&&table.getBoundingClientRect().width>grid.clientWidth+1
+    ?'Минимальный масштаб достигнут; прокручивай таблицу вправо'
+    :'Таблица вписана в экран';
   }
   minus.addEventListener('click',()=>apply(scale-.1));
   plus.addEventListener('click',()=>apply(scale+.1));
