@@ -12,6 +12,9 @@ assert(ui.includes("document.body.classList.add('exam-solving')"));
 assert(ui.includes("document.body.classList.remove('exam-solving')"));
 assert(ui.includes("String(v.raw??'').trim()!==''"),'Cleared cells must not display spurious zero after undo');
 assert(ui.includes('shown(active,a,raw)')&&ui.includes('shown(active,cell.dataset.addr,v)'),'Both initial and updated table render must preserve blank cells');
+assert(ui.includes('К расчётам ↓')&&ui.includes("cell.scrollIntoView({block:'center'"),'Calculator shortcut must jump to selected spreadsheet cell');
+assert(css.includes('body.exam-solving #work .excel-progress')||css.includes('exam-solving #work .excel-progress'));
+
 assert(css.includes('body.exam-solving #work>.hero'));
 assert(css.includes('body.exam-solving #work .excel-tool'));
 assert(css.includes('body.exam-solving #work .condition-preview-row'));
