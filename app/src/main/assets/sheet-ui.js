@@ -146,9 +146,9 @@ function showAnswers(){const box=$('hints');box.replaceChildren();for(const r of
 function saveDraft(){try{localStorage.setItem('examSheetsDraft',JSON.stringify({task,entries:S.save(w),active}));}catch(e){}}
 function restoreDraft(){try{const v=JSON.parse(localStorage.getItem('examSheetsDraft')||'null');if(!v?.task?.kind||!Array.isArray(v.task.questions))return;task=v.task;w=S.create(task);S.load(w,v.entries);active=w.sheets[v.active]?v.active:w.order[0];showWork();}catch(e){}}
 function saveStats(pct){try{const old=JSON.parse(localStorage.getItem('examStats')||'{"count":0,"best":0}');old.count++;old.best=Math.max(old.best,pct);localStorage.setItem('examStats',JSON.stringify(old));$('stats').textContent=`Проверено работ: ${old.count} · Лучший результат ${old.best}%`;}catch(e){}}
-function showWork(){$('work').hidden=false;$('home').hidden=true;$('task-title').textContent=task.title+' · Таблицы';$('task-org').textContent=task.company;
+function showWork(){$('work').hidden=false;$('home').hidden=true;document.body.classList.add('exam-solving');$('task-title').textContent=task.title+' · Таблицы';$('task-org').textContent=task.company;
  $('task-meta').textContent=task.questions.length+' исходных вопросов · '+w.targets.length+' ячеек для проверки · '+w.order.length+' лист(а)';
- $('task-notes').textContent='Жёлтые ячейки — ввод формул. Таблицы работают автономно. Числа не подставляются в расчёты.';
+ $('task-notes').textContent='Жёлтые ячейки — ввод формул. Исходные данные защищены.';
  $('results').hidden=true;checked=null;footer.replaceChildren();renderGrid();updateProgress();window.scrollTo(0,0);}
 function start(){if(w)flush();if(w&&Object.values(S.save(w)).some(x=>Object.keys(x).length)&&!confirm('Создать новый вариант? Черновик предыдущего будет заменён.'))return;
  try{task=E.generate($('kind').value,$('level').value);w=S.create(task);history.length=0;undo.disabled=true;active=w.order[w.order.length-1];selected='';showWork();saveDraft();}catch(e){alert('Ошибка создания таблицы: '+e.message);}}
@@ -163,7 +163,7 @@ undo.addEventListener('click',()=>{
 });
 $('start').addEventListener('click',start);$('again').addEventListener('click',start);$('check').addEventListener('click',check);
 $('hints-button').addEventListener('click',showAnswers);
-$('back').addEventListener('click',()=>{flush();saveDraft();$('work').hidden=true;$('home').hidden=false;window.scrollTo(0,0);});
+$('back').addEventListener('click',()=>{flush();saveDraft();$('work').hidden=true;$('home').hidden=false;document.body.classList.remove('exam-solving');window.scrollTo(0,0);});
 helpButton.addEventListener('click',()=>{flush();if(sheetHelp.hidden)showHelp(kindGuides[task.kind]);else sheetHelp.hidden=true;});
 formulaExample.addEventListener('click',()=>showHelp(['Доступные функции: SUM/СУММ, AVERAGE/СРЗНАЧ, STDEV.S/СТАНДОТКЛОН.В, ROUND/ОКРУГЛ, SQRT/КОРЕНЬ, IF/ЕСЛИ, SUMIF/СУММЕСЛИ, COUNT/СЧЁТ, MIN, MAX, ABS.',
 'Поддерживаются ссылки на одну ячейку, диапазон A1:C8 и другие листы: =Баланс!C5+Баланс!D5. В формулах используй ; между аргументами.',
