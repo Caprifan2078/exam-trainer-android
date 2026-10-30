@@ -34,9 +34,16 @@ function drawCondition(t){
  top.append(mk('div','УСЛОВИЕ ЗАДАНИЯ · '+t.rows.length+' поз.','condition-eyebrow'));
  const btn=mk('button',undefined,'condition-toggle');btn.type='button';
  const content=mk('div',undefined,'condition-body');
- let collapsed=false;
- try{collapsed=localStorage.getItem('exam-condition-collapsed')==='true';}catch(e){}
- const update=()=>{content.hidden=collapsed;btn.textContent=collapsed?'Развернуть условия ↓':'Свернуть условия ↑';btn.setAttribute('aria-expanded',String(!collapsed));};
+ const preview=mk('div',undefined,'condition-preview');
+ for(const [i,row] of t.rows.entries()){
+  const item=mk('p',undefined,'condition-preview-row');
+  item.append(mk('b',(i+1)+'. '+row.name+' · '+row.quantity+' шт.'));
+  item.append(mk('span','КП: '+row.prices.map(fmt).join(' / ')+' ₽'));
+  preview.append(item);
+ }
+ let collapsed=true;
+ try{collapsed=localStorage.getItem('exam-condition-collapsed')!=='false';}catch(e){}
+ const update=()=>{content.hidden=collapsed;preview.hidden=!collapsed;btn.textContent=collapsed?'Подробнее ↓':'Скрыть подробности ↑';btn.setAttribute('aria-expanded',String(!collapsed));};
  btn.addEventListener('click',()=>{collapsed=!collapsed;update();try{localStorage.setItem('exam-condition-collapsed',String(collapsed));}catch(e){}});
  const goTable=mk('button','К таблице ↓','condition-jump');
  goTable.type='button';
@@ -44,7 +51,7 @@ function drawCondition(t){
   const formula=document.querySelector('.excel-formula-bar');
   if(formula)formula.scrollIntoView({block:'start',behavior:'smooth'});
  });
- top.append(btn,goTable);condition.append(top,content);update();
+ top.append(btn,goTable);condition.append(top,preview,content);update();
  content.append(mk('h3','Обоснование начальной (максимальной) цены контракта'));
  content.append(mk('p','Заказчик: '+t.company));
  content.append(mk('p','Метод: сопоставимых рыночных цен (анализа рынка). По каждому предложению указана цена за одну единицу товара или услуги.'));
