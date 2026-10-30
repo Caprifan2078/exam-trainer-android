@@ -55,3 +55,8 @@
  #work .sheet-zoom-fit{min-width:60px}
  #work .condition-prices{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+#work .condition-heading{display:flex;flex-wrap:wrap;gap:6px}
+#work .condition-heading .condition-eyebrow{flex:1 0 100%}
+#work .condition-heading button{flex:1;min-width:108px;min-height:34px;font-size:11px;padding:5px 8px}
+#work .condition-jump{color:#10253e;background:#9ee5ca;border:1px solid #caf5e5;border-radius:8px;font-weight:800}
