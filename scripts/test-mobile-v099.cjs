@@ -17,6 +17,8 @@ assert(ui.includes('updateCellContext();'),'Context is not refreshed when select
 assert(ui.includes('viewMemory[active]'),'Sheet-specific scroll position absent');
 assert(ui.includes("selected:viewMemory")===false);
 assert(ui.includes('Object.assign(viewMemory,v.viewMemory||{})'),'Restore per-sheet scroll state from draft');
+assert(ui.includes("raw&&String(raw.raw).trim()!==''?fmt("),'Blank cells must not display a synthetic zero during table rendering');
+assert(ui.includes("v&&String(v.raw).trim()!==''?fmt("),'Blank cells must not display a synthetic zero after undo/refresh');
 assert(ui.includes('bar.scrollIntoView({block:\'start\'});'),'Error navigation must show formula editor, not NMCK instructions');
 assert(ui.includes('savedView=viewMemory[active]?.selected===selected'),'Do not restore stale viewport onto different cell');
 assert(nmck.includes('К таблице ↓'),'Long instructions need direct table navigation');
