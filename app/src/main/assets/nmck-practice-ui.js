@@ -38,7 +38,13 @@ function drawCondition(t){
  try{collapsed=localStorage.getItem('exam-condition-collapsed')==='true';}catch(e){}
  const update=()=>{content.hidden=collapsed;btn.textContent=collapsed?'Развернуть условия ↓':'Свернуть условия ↑';btn.setAttribute('aria-expanded',String(!collapsed));};
  btn.addEventListener('click',()=>{collapsed=!collapsed;update();try{localStorage.setItem('exam-condition-collapsed',String(collapsed));}catch(e){}});
- top.append(btn);condition.append(top,content);update();
+ const goTable=mk('button','К таблице ↓','condition-jump');
+ goTable.type='button';
+ goTable.addEventListener('click',()=>{
+  const formula=document.querySelector('.excel-formula-bar');
+  if(formula)formula.scrollIntoView({block:'start',behavior:'smooth'});
+ });
+ top.append(btn,goTable);condition.append(top,content);update();
  content.append(mk('h3','Обоснование начальной (максимальной) цены контракта'));
  content.append(mk('p','Заказчик: '+t.company));
  content.append(mk('p','Метод: сопоставимых рыночных цен (анализа рынка). По каждому предложению указана цена за одну единицу товара или услуги.'));

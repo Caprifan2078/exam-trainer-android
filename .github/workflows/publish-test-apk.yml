@@ -38,14 +38,16 @@ jobs:
           node scripts/test-nmck-v09.cjs
           node scripts/test-nmck-template.cjs
           node scripts/test-formula-regressions.cjs
-      - name: Verify v0.9.8 learning interface
+      - name: Verify v0.9.9 learning interface
         run: node scripts/test-learning-v095.cjs
       - name: Verify 0.9.6 finance and budget syllabus
         run: node scripts/test-syllabus-v096.cjs
-      - name: Verify 0.9.8 financial stability and ROA/ROS/ROE formulas
+      - name: Verify 0.9.9 financial stability and ROA/ROS/ROE formulas
         run: node scripts/test-finance-v097.cjs
       - name: Verify universal zoom 15-250 percent, pinch and 3 workbook modules
         run: node scripts/test-zoom-v098.cjs
+      - name: Verify 0.9.9 mobile usability and data-safety regressions
+        run: node scripts/test-mobile-v099.cjs
       - name: Build signed debug APK
         run: gradle --no-daemon assembleDebug
       - name: Verify APK signature
@@ -58,10 +60,10 @@ jobs:
           set -euo pipefail
           APK="app/build/outputs/apk/debug/app-debug.apk"
           test -s "$APK"
-          RELEASE_APK="ExamTrainer_v0.9.8.apk"
+          RELEASE_APK="ExamTrainer_v0.9.9.apk"
           cp "$APK" "$RELEASE_APK"
-          if gh release view "v0.9.8" >/dev/null 2>&1; then
-            gh release upload "v0.9.8" "$RELEASE_APK" --clobber
+          if gh release view "v0.9.9" >/dev/null 2>&1; then
+            gh release upload "v0.9.9" "$RELEASE_APK" --clobber
           else
-            gh release create "v0.9.8" "$RELEASE_APK" --target "$GITHUB_SHA" --title "Экзаменатор 0.9.8 — улучшенный тренажёр Android" --notes "Тренажёр демоэкзамена: НМЦК, бюджет и финансовый анализ. Масштаб 15–250% во всех таблицах, изменение двумя пальцами, кнопка «Вписать», удобный переход между расчётными ячейками, сворачиваемые условия НМЦК. Сохранены коэффициенты устойчивости, ROA/ROE/ROS и бюджет без сальдо. Офлайн-тестовая APK для Android." --latest=false
+            gh release create "v0.9.9" "$RELEASE_APK" --target "$GITHUB_SHA" --title "Экзаменатор 0.9.9 — улучшенный тренажёр Android" --notes "Тренажёр демоэкзамена: НМЦК, бюджет и финансовый анализ. Видимая активная ячейка с подписью показателя, автоматическая прокрутка таблицы, сохранение позиции в каждом листе, переход к ошибкам без потери контекста, компактный интерфейс и кнопка «К таблице» в условиях НМЦК. Сохранены коэффициенты устойчивости, ROA/ROE/ROS и бюджет без сальдо. Офлайн-тестовая APK для Android." --latest=false
           fi

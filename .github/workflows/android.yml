@@ -51,6 +51,8 @@ jobs:
         run: node scripts/test-finance-v097.cjs
       - name: Verify universal zoom 15-250 percent, pinch and 3 workbook modules
         run: node scripts/test-zoom-v098.cjs
+      - name: Check actual mobile workflow regressions and 225 workbooks
+        run: node scripts/test-mobile-v099.cjs
       - name: Build real debug APK with Gradle
         run: gradle --no-daemon --stacktrace assembleDebug
       - name: Verify signing and Android manifest
