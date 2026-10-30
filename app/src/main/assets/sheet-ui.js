@@ -130,8 +130,9 @@ const tbody=node('tbody');for(let r=0;r<sh.rows;r++){
    });tr.appendChild(td);
  }tbody.appendChild(tr);}
  table.appendChild(tbody);gridbox.replaceChildren(table);
+ const savedView=viewMemory[active]?{...viewMemory[active]}:null;
  select(selected||firstEditable(sh),false);
- if(viewMemory[active]){gridbox.scrollLeft=viewMemory[active].scrollLeft||0;gridbox.scrollTop=viewMemory[active].scrollTop||0;}
+ if(savedView){gridbox.scrollLeft=savedView.scrollLeft||0;gridbox.scrollTop=savedView.scrollTop||0;}
  else revealSelected();}
 function firstEditable(sh){return Object.keys(sh.editable)[0]||'A1';}
 function select(a,focus=false){if(editDirty)flush();selected=a;const sh=w.sheets[active],raw=sh.values[a];address.textContent=active+'!'+a;input.value=raw?String(raw.raw):'';editDirty=false;
