@@ -24,6 +24,8 @@ function go(index){
 function update(){
  const on=visible();strip.hidden=!on;if(!on)return;
  const all=editable();const current=selected(),idx=all.findIndex(e=>e.dataset.addr===current);
+ if(all.length===0){counter.textContent='Лист исходных данных';detail.textContent='Можно увеличить таблицу. Для расчётов открой лист «Анализ».';
+   prev.disabled=true;next.disabled=true;return;}
  if(idx<0){counter.textContent='Выбери жёлтую ячейку';detail.textContent='Нажми на нужное поле в таблице';}
  else{
   counter.textContent='Расчёт '+(idx+1)+' из '+all.length;
