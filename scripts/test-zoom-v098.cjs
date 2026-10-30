@@ -33,7 +33,7 @@ function element(tag='div'){
  };
 }
 const tool=element(),grid=element(),work=element();
-tool.querySelector=(selector)=>selector==='.excel-grid-box'?grid:null;
+tool.querySelector=(selector)=>selector==='.excel-grid-box'?grid:selector==='.sheet-zoom'?tool.children.find(e=>e.className==='sheet-zoom'):null;
 tool.insertBefore=(el,before)=>tool.children.push(el);
 const items={};grid.clientWidth=340;grid.scrollLeft=0;grid.scrollTop=0;
 grid.querySelectorAll=sel=>sel==='thead th.excel-col'?Array(items.cols||15).fill({}):[];
