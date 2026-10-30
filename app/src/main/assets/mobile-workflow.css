@@ -1,0 +1,57 @@
+/* v0.9.9 — make the actual worksheet the focus on a narrow Android phone. */
+#work .back{display:inline-flex;align-items:center;min-height:36px;margin:0 0 8px;padding:4px 5px;font-size:13px}
+#work .hero{padding:10px 13px!important;margin:0 0 8px!important;border-radius:12px}
+#work .hero .eyebrow{font-size:9px}
+#work .hero h2{font-size:18px!important;line-height:1.2;margin:2px 0 3px!important}
+#work .hero p:not(.eyebrow){font-size:11px!important;line-height:1.35;margin:0!important}
+#work h3{font-size:15px!important;margin:9px 0 6px!important}
+#work .excel-tool{margin:5px 0 11px}
+#work .excel-progress{padding:7px 9px;border-radius:9px;margin:0 0 5px;gap:4px}
+#work .excel-progress-label{font-size:11px}
+#work .excel-progress progress{height:6px}
+#work .excel-tabs{padding:3px 0;gap:4px}
+#work .excel-tab{min-height:34px;padding:6px 12px;font-size:12px}
+#work .excel-formula-bar{padding:5px 2px;gap:4px}
+#work .excel-addr{min-width:53px;max-width:84px;font-size:10px;padding:9px 6px}
+#work .excel-fx{font-size:14px}
+#work .excel-input{min-height:41px;height:41px;font-size:13px;padding:7px}
+#work .excel-commit,#work .excel-undo{min-width:39px;width:39px;min-height:40px;padding:4px;border-radius:8px}
+#work .excel-cell-context{padding:5px 9px;background:#25435e;color:#f1faff;line-height:1.35;font-size:11px;overflow-wrap:anywhere;border-left:3px solid #74d8af;border-radius:0 0 6px 6px}
+#work .nmck-navigation{position:relative;top:auto;padding:5px 7px;margin:4px 0;gap:5px;border-radius:8px}
+#work .nmck-navigation .nmck-nav-button{min-width:80px;min-height:38px;padding:5px 8px}
+#work .nmck-nav-step{font-size:11px}
+#work .nmck-nav-detail{font-size:10px}
+#work .sheet-zoom{padding:6px;margin:4px 0 0;gap:5px;border-radius:9px 9px 0 0}
+#work .sheet-zoom-caption{font-size:11px}
+#work .sheet-zoom-button,#work .sheet-zoom-percent,#work .sheet-zoom-fit{min-height:37px;padding:5px 7px}
+#work .sheet-zoom-button{height:37px;min-width:36px;width:36px}
+#work .sheet-zoom-hint{padding:5px 8px;font-size:10px;margin-bottom:4px}
+#work .excel-info{padding:8px 9px;margin:4px 0;font-size:11px}
+#work .excel-controls button{min-height:38px;font-size:11px;padding:7px 5px}
+#work #task-notes{margin:4px 0;font-size:11px}
+#work>.muted{display:none}
+#work #check{margin-top:4px}
+#work .nmck-condition{padding:9px 10px;margin:3px 0 5px;border-radius:10px}
+#work .condition-body{max-height:270px;overflow-y:auto;overscroll-behavior:contain}
+#work .condition-body h3{font-size:14px!important;margin:6px 0!important}
+#work .nmck-condition p{font-size:11px;line-height:1.35;margin:3px 0 6px}
+#work .condition-lot{padding:6px 0}
+#work .condition-lot strong{font-size:12px}
+#work .condition-prices{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+#work .condition-price{padding:5px 6px;border-radius:6px;min-width:0}
+#work .condition-price span{font-size:9px}
+#work .condition-price b{font-size:11px;overflow-wrap:anywhere}
+#work .condition-instruction{padding:6px 8px}
+#work .condition-heading{gap:5px}
+#work .condition-toggle{min-height:35px}
+#work .excel-quick{padding:4px 0;gap:5px}
+#work .excel-quick-label{font-size:11px}
+#work .excel-quick-button{min-height:37px;padding:6px 9px;font-size:11px}
+@media(min-width:650px){#work .condition-body{max-height:400px}}
+@media(max-width:360px){
+ #work .sheet-zoom{grid-template-columns:34px minmax(30px,1fr) 34px 55px 60px}
+ #work .sheet-zoom-button{width:34px;min-width:34px}
+ #work .sheet-zoom-percent{min-width:55px}
+ #work .sheet-zoom-fit{min-width:60px}
+ #work .condition-prices{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
