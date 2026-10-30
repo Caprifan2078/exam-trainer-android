@@ -1,0 +1,37 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.join(__dirname,'../app/src/main/assets');
+const read=x=>fs.readFileSync(path.join(root,x),'utf8');
+const ui=read('sheet-ui.js'),css=read('mobile-workflow.css'),nmck=read('nmck-practice-ui.js'),html=read('index.html');
+const build=fs.readFileSync(path.join(__dirname,'../app/build.gradle'),'utf8');
+assert.match(build,/versionName '0\.9\.9'/);
+assert(html.includes('<small>0.9.9</small>'));
+assert(html.includes('<link rel="stylesheet" href="mobile-workflow.css">'));
+for(const script of [...html.matchAll(/<script src="([^"]+)"><\/script>/g)])assert(fs.existsSync(path.join(root,script[1])),script[1]);
+for(const file of ['sheet-ui.js','nmck-practice-ui.js','sheet-zoom.js','nmck-navigation.js'])assert.doesNotThrow(()=>new Function(read(file)),file);
+assert(ui.includes('const cellContext=node('),'Missing selected-cell context');
+assert(ui.includes('function revealSelected()'),'Selected editable cell can be offscreen at workbook start');
+assert(ui.includes('updateCellContext();'),'Context is not refreshed when selection changes');
+assert(ui.includes('viewMemory[active]'),'Sheet-specific scroll position absent');
+assert(ui.includes("selected:viewMemory")===false);
+assert(ui.includes('Object.assign(viewMemory,v.viewMemory||{})'),'Restore per-sheet scroll state from draft');
+assert(ui.includes('bar.scrollIntoView({block:\'start\'});'),'Error navigation must show formula editor, not NMCK instructions');
+assert(ui.includes('savedView=viewMemory[active]?.selected===selected'),'Do not restore stale viewport onto different cell');
+assert(nmck.includes('К таблице ↓'),'Long instructions need direct table navigation');
+assert(css.includes('.condition-body{max-height:270px'),'Bound task instruction height');
+assert(css.includes('.excel-cell-context'),'Selected cell must be legible');
+assert(css.includes('#work .hero'),'Too much wasted vertical space at top of worksheet');
+const E=require(path.join(root,'engine.js'));require(path.join(root,'upgrade.js'));require(path.join(root,'nmck-advanced.js'));
+const S=require(path.join(root,'sheet-engine.js'));require(path.join(root,'nmck-template.js'));S.setEngine(E);
+for(const kind of ['nmck','budget','financial'])for(const level of ['easy','medium','hard'])for(let i=0;i<25;i++){
+ const task=E.generate(kind,level),w=S.create(task);
+ assert(w.order.length>0&&w.targets.length>0);
+ const first=w.targets.find(t=>typeof t.answer==='number');
+ S.write(w,first.sheet,first.addr,'='+first.answer);
+ assert.equal(S.grade(w).results.find(r=>r.id===first.id).status,kind==='nmck'?'need-formula':'ok');
+ const entries=S.save(w),restored=S.create(task);S.load(restored,entries);
+ assert.equal(String(restored.sheets[first.sheet].values[first.addr].raw),'='+first.answer);
+}
+console.log('PASS: 0.9.9 compact worksheet and 225 persisted workbooks across all 3 modules');
