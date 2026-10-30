@@ -67,3 +67,10 @@
  .sheet-zoom-percent{min-width:61px;font-size:13px}
  .sheet-zoom-fit{min-width:63px;font-size:12px}
 }
+
+/* Less scrolling before practice: task terms stay above NMCK table but may be folded. */
+.condition-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.condition-toggle{background:#244c66;border:1px solid #6d99b6;color:#eafaff;min-height:40px;border-radius:9px;padding:7px 11px;font-size:12px}
+.condition-body[hidden]{display:none!important}
+.condition-body h3{margin-top:10px}
+@media(max-width:390px){.condition-heading{gap:4px}.condition-toggle{padding:6px 8px;font-size:11px}}
