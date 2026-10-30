@@ -37,6 +37,10 @@ tool.querySelector=(selector)=>selector==='.excel-grid-box'?grid:selector==='.sh
 tool.insertBefore=(el,before)=>tool.children.push(el);
 const items={};grid.clientWidth=340;grid.scrollLeft=0;grid.scrollTop=0;
 grid.querySelectorAll=sel=>sel==='thead th.excel-col'?Array(items.cols||15).fill({}):[];
+// Simulate headers/text causing 25% more width than a simple column-count estimate.
+const realTable={getBoundingClientRect(){const scale=Number.parseFloat(grid.style.values['--exam-cell-w']||'110')/110;
+ return {width:(37+((items.cols||15)-1)*110+155)*scale*1.25};}};
+grid.querySelector=sel=>sel==='.excel-grid'?realTable:null;
 const doc={querySelector:sel=>sel==='.excel-tool'?tool:null,
  getElementById:id=>id==='work'?work:null,
  createElement:tag=>element(tag)};
@@ -53,7 +57,9 @@ assert.equal(api.getScale(),.15);assert.equal(minus.disabled,true);assert.equal(
 plus.trigger('click');assert.equal(api.getScale(),.25);
 percent.trigger('click');assert.equal(api.getScale(),1);
 items.cols=15;fit.trigger('click');const wide=api.getScale();assert(wide<=.2);
+assert(realTable.getBoundingClientRect().width<=grid.clientWidth+1,'Wide budget/NMCK table must genuinely fit screen');
 items.cols=4;fit.trigger('click');const narrow=api.getScale();assert(narrow>wide);
+assert(realTable.getBoundingClientRect().width<=grid.clientWidth+1,'Narrow financial table must genuinely fit screen');
 api.setScale(1);
 const gesture=(x,y)=>({clientX:x,clientY:y});
 grid.trigger('touchstart',{touches:[gesture(0,10),gesture(100,10)]});
