@@ -1,21 +1,23 @@
-/* NMCK quality-of-life improvements: navigate editable cells instead of endlessly scrolling. */
+/* Universal editable-cell navigation: NMCK, budget, balance analysis. */
 (function() {
 'use strict';
 const $=id=>document.getElementById(id),tool=document.querySelector('.excel-tool'),grid=tool&&tool.querySelector('.excel-grid-box');
 if(!tool||!grid)return;
 const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e;};
 const strip=node('div',undefined,'nmck-navigation');
-const prev=node('button','← Назад','nmck-nav-button'),next=node('button','Далее →','nmck-nav-button');
+strip.setAttribute('aria-label','Переход по расчётным ячейкам');
+const prev=node('button','← Ячейка','nmck-nav-button'),next=node('button','Ячейка →','nmck-nav-button');
 const center=node('div',undefined,'nmck-nav-center'),counter=node('strong','Шаг 1','nmck-nav-step'),detail=node('span','Выберите ячейку','nmck-nav-detail');
 center.append(counter,detail);strip.append(prev,center,next);
 for(const b of [prev,next])b.type='button';
 const zoom=tool.querySelector('.sheet-zoom');tool.insertBefore(strip,zoom||grid);
-function visible(){return !$('work').hidden&&$('work').dataset.nmckSheet==='yes';}
+function visible(){return !$('work').hidden;}
 function editable(){return Array.from(grid.querySelectorAll('td.excel-editable[data-addr]'));}
 function selected(){const value=tool.querySelector('.excel-addr')?.textContent||'';const i=value.lastIndexOf('!');return i>=0?value.slice(i+1):'';}
 function go(index){
  const all=editable();if(!all.length)return;
  const i=Math.max(0,Math.min(index,all.length-1)),cell=all[i];
+ tool.querySelector('.excel-commit')?.click();
  cell.click();cell.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
  requestAnimationFrame(update);
 }
