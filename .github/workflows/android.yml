@@ -49,6 +49,8 @@ jobs:
         run: node scripts/test-syllabus-v096.cjs
       - name: Verify 0.9.7 financial ratios and spreadsheet formulas
         run: node scripts/test-finance-v097.cjs
+      - name: Verify universal zoom 15-250 percent, pinch and 3 workbook modules
+        run: node scripts/test-zoom-v098.cjs
       - name: Build real debug APK with Gradle
         run: gradle --no-daemon --stacktrace assembleDebug
       - name: Verify signing and Android manifest
