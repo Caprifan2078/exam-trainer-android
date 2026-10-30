@@ -80,7 +80,7 @@ function jumpTo(t){
  flush();active=t.sheet;selected=t.addr;renderGrid();
  const cell=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(x=>x.dataset.addr===t.addr);
  if(cell)cell.scrollIntoView({block:'nearest',inline:'center'});
- sheetRoot.scrollIntoView({block:'start'});
+ bar.scrollIntoView({block:'start'});
 }
 const kindGuides={nmck:[
   'Исходные данные — количество в колонке D и коммерческие цены в колонках E–I.',
@@ -130,7 +130,7 @@ const tbody=node('tbody');for(let r=0;r<sh.rows;r++){
    });tr.appendChild(td);
  }tbody.appendChild(tr);}
  table.appendChild(tbody);gridbox.replaceChildren(table);
- const savedView=viewMemory[active]?{...viewMemory[active]}:null;
+ const savedView=viewMemory[active]?.selected===selected?{...viewMemory[active]}:null;
  select(selected||firstEditable(sh),false);
  if(savedView){gridbox.scrollLeft=savedView.scrollLeft||0;gridbox.scrollTop=savedView.scrollTop||0;}
  else revealSelected();}
