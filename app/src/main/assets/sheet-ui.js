@@ -114,7 +114,7 @@ for(let c=0;c<sh.cols;c++)hr.appendChild(node('th',S.col(c),'excel-col'));thead.
 const tbody=node('tbody');for(let r=0;r<sh.rows;r++){
  const tr=node('tr');tr.appendChild(node('th',r+1,'excel-row'));for(let c=0;c<sh.cols;c++){
    const a=S.addr(c,r),raw=sh.values[a],editable=!!sh.editable[a];
-   const td=node('td',raw?fmt(S.value(w,active,a)):'',editable?'excel-editable':raw?'excel-locked':'excel-blank');
+   const td=node('td',raw&&String(raw.raw).trim()!==''?fmt(S.value(w,active,a)):'',editable?'excel-editable':raw?'excel-locked':'excel-blank');
    td.dataset.addr=a;td.title=raw?.raw?.toString()||a;
    const colspan=sh.spans&&sh.spans[a];if(Number.isInteger(colspan)&&colspan>1){td.colSpan=colspan;c+=colspan-1;}
    if(r===0)td.classList.add('excel-header');
@@ -148,7 +148,7 @@ function flush(){if(!w||!active||!selected||!editDirty)return;try{
  if(String(previous)!==String(input.value)){history.push({sheet:active,addr:selected,raw:previous});if(history.length>30)history.shift();}
  undo.disabled=!history.length;
  editDirty=false;invalidateCheck();refreshValues();saveDraft();updateProgress();info.textContent='Формула сохранена. Выбери следующую ячейку или проверь работу.';}catch(e){info.textContent=e.message;}}
-function refreshValues(){if(!w)return;for(const cell of gridbox.querySelectorAll('td[data-addr]')){const v=w.sheets[active].values[cell.dataset.addr];cell.textContent=v?fmt(S.value(w,active,cell.dataset.addr)):'';cell.classList.remove('excel-pass','excel-fail','excel-needs');}
+function refreshValues(){if(!w)return;for(const cell of gridbox.querySelectorAll('td[data-addr]')){const v=w.sheets[active].values[cell.dataset.addr];cell.textContent=v&&String(v.raw).trim()!==''?fmt(S.value(w,active,cell.dataset.addr)):'';cell.classList.remove('excel-pass','excel-fail','excel-needs');}
  if(checked)for(const r of checked.results)if(r.sheet===active){const el=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(x=>x.dataset.addr===r.addr);if(el)el.classList.add(r.status==='ok'?'excel-pass':r.status==='need-formula'?'excel-needs':'excel-fail');}}
 function check(){
  flush();checked=S.grade(w);refreshValues();
