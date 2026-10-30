@@ -10,6 +10,8 @@ assert(version==='0.9.9' && html.includes('0.9.9'));
 assert(html.includes('mobile-review.css'));
 assert(ui.includes("document.body.classList.add('exam-solving')"));
 assert(ui.includes("document.body.classList.remove('exam-solving')"));
+assert(ui.includes("String(v.raw??'').trim()!==''"),'Cleared cells must not display spurious zero after undo');
+assert(ui.includes('shown(active,a,raw)')&&ui.includes('shown(active,cell.dataset.addr,v)'),'Both initial and updated table render must preserve blank cells');
 assert(css.includes('body.exam-solving #work>.hero'));
 assert(css.includes('body.exam-solving #work .excel-tool'));
 assert(css.includes('body.exam-solving #work .condition-preview-row'));
