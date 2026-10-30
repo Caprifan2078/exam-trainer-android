@@ -46,12 +46,22 @@ sheetRoot.replaceChildren(toolbar);
 const footer=node('div',undefined,'excel-check-help');$('questions').insertAdjacentElement('afterend',footer);
 const progressBox=node('div',undefined,'excel-progress'),progressLabel=node('span','Прогресс выполнения','excel-progress-label');
 const progressBar=document.createElement('progress');progressBar.max=1;progressBar.value=0;progressBar.setAttribute('aria-label','Заполнение расчётных ячеек');
-progressBox.append(progressLabel,progressBar);toolbar.prepend(progressBox);
+const progressHead=node('div',undefined,'excel-progress-head');
+const jumpButton=node('button','К расчётам ↓','excel-jump');jumpButton.type='button';
+jumpButton.setAttribute('aria-label','Показать выбранную расчётную ячейку в таблице');
+progressHead.append(progressLabel,jumpButton);
+progressBox.append(progressHead,progressBar);toolbar.prepend(progressBox);
+jumpButton.addEventListener('click',()=>{
+ const cell=gridbox.querySelector('td.excel-selected')||gridbox.querySelector('td.excel-editable');
+ if(!cell)return;
+ cell.scrollIntoView({block:'center',inline:'center',behavior:'smooth'});
+});
 function updateProgress(){
  if(!w)return;
  const filled=w.targets.filter(t=>String(w.sheets[t.sheet]?.values[t.addr]?.raw??'').trim()!=='').length;
  progressLabel.textContent='Заполнено '+filled+' из '+w.targets.length+' расчётных ячеек · черновик сохраняется';
  progressBar.max=Math.max(1,w.targets.length);progressBar.value=filled;
+ jumpButton.disabled=!gridbox.querySelector('td.excel-editable');
 }
 function invalidateCheck(){checked=null;$('results').hidden=true;footer.replaceChildren();}
 function jumpTo(t){
