@@ -1,4 +1,4 @@
-name: Verify delivered ExamTrainer 0.9.18
+name: Verify packaged 0.9.18 Windows executable
 on:
   push:
     branches: [qa/examtrainer-0914-verify]
@@ -6,27 +6,37 @@ permissions:
   contents: read
   actions: read
 jobs:
-  android-smoke:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+  windows-packaged:
+    runs-on: windows-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: ExamTrainer-0.9.18-Android-QA
+          name: ExamTrainer-0.9.18-Windows-QA
           run-id: 41455029745
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: qa-bin
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - name: Enable KVM
-        run: if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
-      - uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 30
-          target: google_apis
-          arch: x86_64
-          disable-animations: true
-          script: bash qa_tests/delivered-android-smoke.sh
+      - name: Check exact executable and launch window
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @(Get-ChildItem qa-bin -Filter '*.exe')
+          if ($files.Count -ne 1) { throw 'Expected exactly one EXE' }
+          $exe = $files[0].FullName
+          $hash = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLower()
+          Write-Host "EXE SHA256: $hash"
+          if ($hash -ne '0e54bdb308a304bfb65eb2273a8750cfb9a80b6a5bc25b6dfacf25a6a2976a17') { throw 'Unexpected EXE bytes' }
+          $sig = Get-AuthenticodeSignature $exe
+          Write-Host "Signature status: $($sig.Status)"
+          $started = Start-Process -FilePath $exe -PassThru
+          $found = $null
+          for ($i=0; $i -lt 90; $i++) {
+            Start-Sleep -Seconds 1
+            $found = Get-Process | Where-Object { $_.MainWindowTitle -match 'Экзаменатор' } | Select-Object -First 1
+            if ($found) { break }
+          }
+          if (!$found) { throw 'Application window not found within 90 seconds' }
+          Write-Host "PASS: packaged executable opened window title $($found.MainWindowTitle), PID $($found.Id)"
+          Start-Sleep -Seconds 5
+          if (!(Get-Process -Id $found.Id -ErrorAction SilentlyContinue)) { throw 'Application process exited unexpectedly' }
+          Write-Host 'PASS: application window process stayed alive for 5 seconds'
