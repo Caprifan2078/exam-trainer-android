@@ -61,7 +61,7 @@ function drawCondition(t){
   r.prices.forEach((p,j)=>{const label=mk('span','КП №'+(j+1));const price=mk('b',fmt(p)+' ₽');const item=mk('div',undefined,'condition-price');item.append(label,price);sub.append(item);});
   block.append(sub);content.append(block);
  });
- content.append(mk('p','Задача: сначала самостоятельно перенести цены предложений в таблицу, затем заполнить расчётные ячейки формулами Excel. Определить среднюю цену, среднее квадратичное отклонение, коэффициент вариации, цену за единицу и НМЦК. Порог вариации для учебного задания — 33%.','condition-instruction'));
+ content.append(mk('p','Задача: сначала самостоятельно перенести цены предложений в таблицу, затем заполнить расчётные ячейки формулами Excel. Определить среднюю цену, отклонение и вариацию. Затем выбрать предложение с ближайшей ценой строго ниже средней и умножить его цену на количество. Порог вариации для учебного задания — 33%.','condition-instruction'));
 }
 function suggestion(t,col,row){
  const n=t.rows.length,offers=t.rows[0].prices.length;
@@ -70,16 +70,16 @@ function suggestion(t,col,row){
  if(row>=6&&row<=5+n){
   const range='E'+row+':'+String.fromCharCode(68+offers)+row;
   const formulas={
-   [avg]:['СРЗНАЧ','=AVERAGE('+range+')'],
-   [sd]:['Отклонение','=STDEV.S('+range+')'],
+   [avg]:['СРЗНАЧ','=СРЗНАЧ('+range+')'],
+   [sd]:['Отклонение','=СТАНДОТКЛОН.В('+range+')'],
    [cv]:['Вариация, %','='+sd+row+'/'+avg+row+'*100'],
-   [calc]:['Расчёт НМЦК','=ROUND('+avg+row+';2)*D'+row],
-   [unit]:['Цена за ед.','=ROUND('+avg+row+';2)'],
+   [calc]:['Расчёт НМЦК','=ОКРУГЛ('+avg+row+';2)*D'+row],
+   [unit]:['Выбери предложение','Выбери цену ниже средней и ближе всех к ней'],
    [amount]:['НМЦК позиции','='+unit+row+'*D'+row]
   };
   return formulas[col]?[formulas[col]]:[];
  }
- if(col===amount&&row===n+6)return[['Итог НМЦК','=SUM('+amount+'6:'+amount+(n+5)+')']];
+ if(col===amount&&row===n+6)return[['Итог НМЦК','=СУММ('+amount+'6:'+amount+(n+5)+')']];
  return [];
 }
 function showQuick(){
@@ -92,13 +92,14 @@ function showQuick(){
  if(match&&t.kind==='financial'&&window.ExamFinanceHints)choices=window.ExamFinanceHints.suggest(t,match[1],match[2],Number(match[3]),window.ExamEngine);
  quick.hidden=!choices.length;
  if(!choices.length)return;
- quick.append(mk('span','Подсказка для '+match[2]+match[3]+': '+choices.map(x=>x[1]).join(' или ')+' — можно ввести вручную или вставить кнопкой.','excel-quick-label'));
+ const reveal=mk('button','Показать подсказку для '+match[2]+match[3],'excel-quick-button');reveal.type='button';quick.append(reveal);const details=mk('div');details.hidden=true;quick.append(details);reveal.addEventListener('click',()=>{details.hidden=!details.hidden;reveal.textContent=details.hidden?'Показать подсказку':'Скрыть подсказку';});details.append(mk('span',choices.map(x=>x[1]).join(' или '),'excel-quick-label'));
  for(const [caption,formula] of choices){
+  if(!formula.startsWith('='))continue;
   const b=mk('button',caption,'excel-quick-button');b.type='button';b.title=formula;
   b.addEventListener('click',()=>{
    field.value=formula;field.dispatchEvent(new Event('input',{bubbles:true}));field.focus();
    const info=document.querySelector('.excel-info');if(info)info.textContent='Формула вставлена. Нажми ✓ для расчёта и затем проверь результат.';
-  });quick.append(b);
+  });details.append(b);
  }
 }
 function refresh(){

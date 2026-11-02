@@ -30,7 +30,7 @@ function render(task){
  fixed(sd,4,'Среднее квадратичное отклонение, руб.');
  fixed(cv,4,'Коэффициент вариации V, % (≤33)');
  fixed(calc,4,'Расчёт НМЦК по формуле, руб.');
- fixed(unit,4,'Цена за единицу, руб.');
+ fixed(unit,4,task.offerRule?'Выбранная цена ниже средней, руб./ед.':'Цена за единицу, руб.');
  fixed(amount,4,'НМЦК позиции, руб.');
  task.rows.forEach((row,i)=>{
   const r=i+5,R=r+1,id='n'+i;
@@ -45,12 +45,14 @@ function render(task){
   const q=suffix=>task.questions.find(x=>x.id===id+suffix);
   const mean=q('avg'),deviation=q('sd'),variation=q('cv'),total=q('amount');
   if(!mean||!deviation||!variation||!total)throw Error('В задании НМЦК недостаёт обязательного показателя');
-  editable(avg,r,mean.answer,'Средняя цена, руб.','=AVERAGE('+area+')',id+'avg');
-  editable(sd,r,deviation.answer,'Среднее квадратичное отклонение','=STDEV.S('+area+')',id+'sd');
+  editable(avg,r,mean.answer,'Средняя цена, руб.','=СРЗНАЧ('+area+')',id+'avg');
+  editable(sd,r,deviation.answer,'Среднее квадратичное отклонение','=СТАНДОТКЛОН.В('+area+')',id+'sd');
   editable(cv,r,variation.answer,'Коэффициент вариации, %','='+letter(sd)+R+'/'+letter(avg)+R+'*100',id+'cv');
-  editable(calc,r,total.answer,'Расчёт НМЦК позиции','=ROUND('+letter(avg)+R+';2)*D'+R,id+'calc');
-  editable(unit,r,E.round(mean.answer),'Цена за одну единицу','=ROUND('+letter(avg)+R+';2)',id+'unit');
-  editable(amount,r,total.answer,'НМЦК позиции','='+letter(unit)+R+'*D'+R,id+'amount');
+  editable(calc,r,total.answer,'Расчёт НМЦК позиции','=ОКРУГЛ('+letter(avg)+R+';2)*D'+R,id+'calc');
+  const chosen=q('selected'),chosenTotal=q('selectedTotal');
+  if(task.offerRule&&chosen){editable(unit,r,chosen.answer,'Выбранное предложение','Выбери цену, ближайшую к средней и строго меньше неё; введи число или ссылку на предложение.',id+'selected');w.targets[w.targets.length-1].formula=false;}
+  else editable(unit,r,E.round(mean.answer),'Цена за одну единицу','=ОКРУГЛ('+letter(avg)+R+';2)',id+'unit');
+  editable(amount,r,task.offerRule&&chosenTotal?chosenTotal.answer:total.answer,'Сумма выбранного предложения',task.offerRule?'=ЕСЛИ('+letter(unit)+R+'="Нет цены ниже средней";"Нет цены ниже средней";'+letter(unit)+R+'*D'+R+')':'='+letter(unit)+R+'*D'+R,id+'amount');
  });
  const footer=task.rows.length+5,R=footer+1;
  sh.spans['B'+R]=sh.cols-2;
@@ -58,7 +60,7 @@ function render(task){
  fixed(1,footer,'В результате проведённого расчёта Н(М)ЦК составляет, руб.:');
  const total=task.questions.find(x=>x.id==='total');
  if(!total)throw Error('Не найден итог НМЦК');
- editable(amount,footer,total.answer,'Итоговая НМЦК','=SUM('+letter(amount)+'6:'+letter(amount)+(task.rows.length+5)+')','total');
+ editable(amount,footer,task.offerRule?(task.questions.find(x=>x.id==='n0selectedTotal')||total).answer:total.answer,'Итог по выбранному предложению',task.offerRule?'='+letter(amount)+'6':'=СУММ('+letter(amount)+'6:'+letter(amount)+(task.rows.length+5)+')','total');
  fixed(1,footer+3,'Дата составления: __________________');
  fixed(1,footer+4,'Работник контрактной службы:');
  fixed(1,footer+5,'Должность: _______________________');

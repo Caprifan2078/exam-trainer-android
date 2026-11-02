@@ -67,6 +67,9 @@ function revealSelected(){
  else if(rect.top<viewport.top+8)gridbox.scrollTop-=viewport.top+8-rect.top;
 }
 const gridbox=node('div',undefined,'excel-grid-box');gridbox.tabIndex=0;gridbox.setAttribute('aria-label','Таблица: стрелки перемещают выделение, Enter открывает ввод');
+let inlineCell=null;
+function closeInline(){if(!inlineCell)return;bar.insertBefore(input,undo);inlineCell.classList.remove('excel-editing');const v=w?.sheets[active]?.values[inlineCell.dataset.addr];inlineCell.textContent=v&&String(v.raw).trim()?fmt(S.value(w,active,inlineCell.dataset.addr)):'';inlineCell=null;}
+function openInline(td){if(input.disabled)return;closeInline();inlineCell=td;td.classList.add('excel-editing');td.textContent='';td.appendChild(input);input.focus();input.setSelectionRange(input.value.length,input.value.length);}
 const info=node('div','Выбирай жёлтую ячейку, вводи =формулу в строку fx. Синие значения — исходные.','excel-info');
 const controls=node('div',undefined,'excel-controls');
 const helpButton=node('button','? Подсказка','secondary');helpButton.type='button';
@@ -98,14 +101,14 @@ const kindGuides={nmck:[
   'Найди цены в условии над таблицей и впиши их в жёлтые ячейки E–I. Количество указано в колонке D.',
   'В НМЦК вычисления начинаются со строки 6. Диапазон коммерческих предложений — E6:G6 (3 КП), E6:H6 (4 КП), E6:I6 (5 КП).',
   'В первой расчётной колонке введи =СРЗНАЧ(E6:G6), в следующей =СТАНДОТКЛОН.В(E6:G6). Для 4 или 5 КП расширь диапазон.',
-  'Коэффициент вариации = (отклонение / средняя цена) * 100; цена позиции = ОКРУГЛ(средняя цена;2) * количество.',
+  'Коэффициент вариации = отклонение / средняя цена × 100. Для учебного задания выбери цену предложения, ближайшую к средней, но строго ниже неё, и умножь на количество.',
   'Под таблицей находится общая НМЦК. Вводи формулы в жёлтые ячейки; «Вставить формулу» показывает пример для выбранного расчёта.',
   'Важно: пустые ячейки должны игнорироваться в СРЗНАЧ, СТАНДОТКЛОН.В и СЧЁТ. Коэффициент вариации — число в процентах (5,5 означает 5,5%).'
 ],budget:[
   'Формулировка статьи находится в колонке B, раздел — в C, план — в D, факт — в E.',
-  'В F впиши доход или расход — это группировка. Колонка G — доля фактической статьи среди всех фактических доходов или расходов.',
-  'Для сумм доходов используй =SUMIF(F4:F19;"Доход";E4:E19) (или СУММЕСЛИ); последние строки таблицы содержат итоги.',
-  'В H рассчитай процент исполнения =E4/D4*100; в I отклонение =E4-D4.',
+  'Перенеси факт из E в F для дохода или в G для расхода; другую ячейку оставь пустой. В H рассчитай долю.',
+  'Суммируй доходы функцией =СУММ(F4:F19), а расходы — =СУММ(G4:G19); проверь последнюю строку диапазона.',
+  'В I рассчитай процент исполнения =E4/D4*100; в J отклонение =E4-D4.',
   'Результат: фактические доходы минус фактические расходы. Положительное значение — профицит, отрицательное — дефицит.'
 ],financial:[
   'На вкладке «Баланс» три года и коды строк: 1100/1200/1600 — актив, 1300/1400/1500/1700 — пассив.',
@@ -142,7 +145,7 @@ const tbody=node('tbody');for(let r=0;r<sh.rows;r++){
       const v=window.ExamFormulaComplete.insert(input.value,pos,end,a);input.value=v.value;
       editDirty=true;closeSuggestions();input.focus();input.setSelectionRange(v.caret,v.caret);
       info.textContent='Добавлена ссылка '+a+'. Продолжи формулу и нажми ✓ для сохранения.';
-    }else select(a);
+    }else {select(a);if(editable)openInline(td);}
    });tr.appendChild(td);
  }tbody.appendChild(tr);}
  table.appendChild(tbody);gridbox.replaceChildren(table);
@@ -156,9 +159,9 @@ function restoreReference(ref){
  info.textContent=ref?'Добавлена ссылка '+ref+'. Продолжи формулу и нажми ✓.':'Выбор ссылки отменён. Продолжи формулу.';
 }
 function firstEditable(sh){return Object.keys(sh.editable)[0]||'A1';}
-function select(a,focus=false){if(editDirty)flush();selected=a;const sh=w.sheets[active],raw=sh.values[a];address.textContent=active+'!'+a;input.value=raw?String(raw.raw):'';editDirty=false;
+function select(a,focus=false){if(editDirty)flush();closeInline();selected=a;const sh=w.sheets[active],raw=sh.values[a];address.textContent=active+'!'+a;input.value=raw?String(raw.raw):'';editDirty=false;
  input.disabled=!sh.editable[a];commit.disabled=!sh.editable[a];
- info.textContent=!sh.editable[a]?'Исходная ячейка '+a+' защищена. Используй её в формулах.':(w.hintMap[active+'!'+a]||'Жёлтая ячейка: введи формулу, начинающуюся с =');
+ info.textContent=!sh.editable[a]?'Исходная ячейка '+a+' защищена. Используй её в формулах.':'Жёлтая ячейка: введи число или формулу. Подсказка доступна по кнопке.';
  for(const el of gridbox.querySelectorAll('.excel-selected'))el.classList.remove('excel-selected');
  const chosen=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(e=>e.dataset.addr===a);if(chosen){chosen.classList.add('excel-selected');revealSelected();}
  viewMemory[active]={selected:a,scrollLeft:gridbox.scrollLeft,scrollTop:gridbox.scrollTop};
@@ -168,7 +171,7 @@ function flush(){if(pendingReference)restoreReference(null);if(!w||!active||!sel
  S.write(w,active,selected,input.value);
  if(String(previous)!==String(input.value)){history.push({sheet:active,addr:selected,raw:previous});if(history.length>30)history.shift();}
  undo.disabled=!history.length;
- editDirty=false;invalidateCheck();refreshValues();saveDraft();updateProgress();info.textContent='Формула сохранена. Выбери следующую ячейку или проверь работу.';}catch(e){info.textContent=e.message;}}
+ editDirty=false;closeInline();invalidateCheck();refreshValues();saveDraft();updateProgress();info.textContent='Формула сохранена. Выбери следующую ячейку или проверь работу.';}catch(e){info.textContent=e.message;}}
 function refreshValues(){if(!w)return;for(const cell of gridbox.querySelectorAll('td[data-addr]')){const v=w.sheets[active].values[cell.dataset.addr];cell.textContent=v&&String(v.raw).trim()!==''?fmt(S.value(w,active,cell.dataset.addr)):'';cell.classList.remove('excel-pass','excel-fail','excel-needs');}
  if(checked)for(const r of checked.results)if(r.sheet===active){const el=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(x=>x.dataset.addr===r.addr);if(el)el.classList.add(r.status==='ok'?'excel-pass':r.status==='need-formula'?'excel-needs':'excel-fail');}}
 function check(){
@@ -212,6 +215,7 @@ function showWork(){$('work').hidden=false;$('home').hidden=true;document.body.c
 function start(){if(w)flush();if(w&&Object.values(S.save(w)).some(x=>Object.keys(x).length)&&!confirm('Создать новый вариант? Черновик предыдущего будет заменён.'))return;
  try{task=E.generate($('kind').value,$('level').value);w=S.create(task);history.length=0;for(const key of Object.keys(viewMemory))delete viewMemory[key];undo.disabled=true;active=w.order[w.order.length-1];selected='';showWork();saveDraft();}catch(e){alert('Ошибка создания таблицы: '+e.message);}}
 gridbox.addEventListener('keydown',e=>{
+ if(e.target===input)return;
  if(!w||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.key))return;
  const sh=w.sheets[active],p=S.decode(selected);if(!p)return;
  if(e.key==='Enter'){if(sh.editable[selected]){e.preventDefault();input.focus();}return;}
@@ -219,6 +223,7 @@ gridbox.addEventListener('keydown',e=>{
  if(c<0||r<0||c>=sh.cols||r>=sh.rows)return;
  const cell=gridbox.querySelector('td[data-addr="'+S.addr(c,r)+'"]');if(cell){e.preventDefault();cell.click();}
 });
+input.addEventListener('click',e=>e.stopPropagation());
 input.addEventListener('input',()=>{editDirty=true;showSuggestions();});input.addEventListener('click',showSuggestions);input.addEventListener('keydown',e=>{
  if(suggestions&&e.key==='ArrowDown'){e.preventDefault();moveSuggestion(1);return;}
  if(suggestions&&e.key==='ArrowUp'){e.preventDefault();moveSuggestion(-1);return;}
@@ -242,7 +247,7 @@ $('start').addEventListener('click',start);$('again').addEventListener('click',s
 $('hints-button').addEventListener('click',showAnswers);
 $('back').addEventListener('click',()=>{flush();saveDraft();$('work').hidden=true;$('home').hidden=false;document.body.classList.remove('exam-solving');window.scrollTo(0,0);});
 helpButton.addEventListener('click',()=>{flush();if(sheetHelp.hidden)showHelp(kindGuides[task.kind]);else sheetHelp.hidden=true;});
-formulaExample.addEventListener('click',()=>showHelp(['Доступные функции: SUM/СУММ, AVERAGE/СРЗНАЧ, STDEV.S/СТАНДОТКЛОН.В, ROUND/ОКРУГЛ, SQRT/КОРЕНЬ, IF/ЕСЛИ, SUMIF/СУММЕСЛИ, COUNT/СЧЁТ, MIN, MAX, ABS.',
+formulaExample.addEventListener('click',()=>showHelp(['Доступные функции: СУММ, СРЗНАЧ, СТАНДОТКЛОН.В, ОКРУГЛ, КОРЕНЬ, ЕСЛИ, СУММЕСЛИ, СЧЁТ, МИН, МАКС, АБС.',
 'Поддерживаются ссылки на одну ячейку, диапазон A1:C8 и другие листы: =Баланс!C5+Баланс!D5. В формулах используй ; между аргументами.',
 'Сначала заполни промежуточные ячейки, после этого итоговые. Для редактирования нажми жёлтую ячейку и введи формулу в поле fx.',
 'Правильные значения можно увидеть только после нажатия «Проверить».']));

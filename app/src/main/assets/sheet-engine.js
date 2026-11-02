@@ -32,6 +32,23 @@ function create(task){
    const tr=task.rows.length+4;input(sh,1,tr,'ВСЕГО НМЦК, руб.');const total=task.questions.find(q=>q.id==='total');
    target(sh,13,tr,total.answer,'Сложи стоимости всех позиций: =SUM(N4:N'+(task.rows.length+3)+')','Итог НМЦК','total');
    sh.rows=tr+3;
+ }else if(task.kind==='budget'&&task.budgetSplit){
+   const sh=add('Бюджет',10,task.rows.length+11);
+   head(sh,0,['№','Статья бюджета','Раздел','План, тыс.','Факт, тыс.','Доход, тыс.','Расход, тыс.','Доля, %','Исполнение, %','Отклонение']);
+   input(sh,1,1,'Перенеси факт в доход или расход; другую ячейку оставь пустой.');
+   const end=task.rows.length+3,start=task.rows.length+5;
+   task.rows.forEach((row,i)=>{const r=i+3,R=r+1,id='b'+i;
+     input(sh,0,r,i+1);input(sh,1,r,row.name);input(sh,2,r,row.category||'—');input(sh,3,r,row.plan);input(sh,4,r,row.actual);
+     for(const [c,k] of [[5,'Доход'],[6,'Расход']]){target(sh,c,r,row.kind===k?row.actual:0,'Перенеси факт из E'+R+' в столбец дохода или расхода.',row.name+' — '+k,id+k,false);w.targets[w.targets.length-1].blankIsZero=true;}
+     const side=row.kind==='Доход'?'F':'G',den=task.rows.length+(row.kind==='Доход'?6:7);
+     target(sh,7,r,norm(row.actual/task.summary[row.kind].actual*100),'='+side+R+'/E'+den+'*100',row.name+' — доля, %',id+'share');
+     for(const [c,suffix,hint] of [[8,'pct','=E'+R+'/D'+R+'*100'],[9,'diff','=E'+R+'-D'+R]]){const q=task.questions.find(q=>q.id===id+suffix);if(q)target(sh,c,r,q.answer,hint,q.label,q.id);}
+   });
+   for(const [k,d,side] of [['Доход',0,'F'],['Расход',1,'G']]){const r=start+d,R=r+1;input(sh,1,r,(d?'РАСХОДЫ':'ДОХОДЫ')+' — ВСЕГО');
+     for(const [c,suffix,hint] of [[3,'plan',`=СУММЕСЛИ(${side}4:${side}${end};">0";D4:D${end})`],[4,'actual',`=СУММ(${side}4:${side}${end})`],[8,'pct','=E'+R+'/D'+R+'*100']]){const q=task.questions.find(q=>q.id===k+suffix);if(q)target(sh,c,r,q.answer,hint,q.label,q.id);}
+   }
+   input(sh,1,start+3,'ДЕФИЦИТ / ПРОФИЦИТ');const st=task.questions.find(q=>q.id==='status');
+   target(sh,4,start+3,st.answer,'=ЕСЛИ(E'+(start+1)+'>E'+(start+2)+';"Профицит";ЕСЛИ(E'+(start+1)+'<E'+(start+2)+';"Дефицит";"Сбалансирован"))',st.label,st.id,false);sh.rows=start+6;
  }else if(task.kind==='budget'){
    const sh=add('Бюджет',10,task.rows.length+11);
    head(sh,0,['№','Статья бюджета','Раздел','План, тыс.','Факт, тыс.','Доход/расход','Доля, %','Исполнение, %','Отклонение','Примечание']);
@@ -107,7 +124,7 @@ case 'COUNT':case 'СЧЁТ':return nums.length;
 case 'MIN':case 'МИН':return Math.min(...nums);
 case 'MAX':case 'МАКС':return Math.max(...nums);
 case 'IF':case 'ЕСЛИ':return args[0]?args[1]:args[2];
-case 'SUMIF':case 'СУММЕСЛИ':{if(!Array.isArray(args[0])||!Array.isArray(args[2]))throw Error('#ЗНАЧ!');const criteria=String(args[1]);return args[0].reduce((s,x,i)=>s+(String(x).toLowerCase()===criteria.toLowerCase()?num(args[2][i]||0):0),0);}
+case 'SUMIF':case 'СУММЕСЛИ':{if(!Array.isArray(args[0])||!Array.isArray(args[2]))throw Error('#ЗНАЧ!');const criteria=String(args[1]);const m=/^(>=|<=|<>|>|<|=)(-?\d+(?:[.,]\d+)?)$/.exec(criteria);const match=x=>{if(!m)return String(x).toLowerCase()===criteria.toLowerCase();if(x===null||x===''||typeof x!=='number')return false;const n=Number(m[2].replace(',','.'));return m[1]==='>'?x>n:m[1]==='<'?x<n:m[1]==='>='?x>=n:m[1]==='<='?x<=n:m[1]==='<>'?x!==n:x===n;};return args[0].reduce((s,x,i)=>s+(match(x)?num(args[2][i]||0):0),0);}
 case 'COUNTIF':case 'СЧЁТЕСЛИ':{if(!Array.isArray(args[0]))throw Error('#ЗНАЧ!');return args[0].filter(x=>String(x).toLowerCase()===String(args[1]).toLowerCase()).length;}
 default:throw Error('#ИМЯ?');}}
 function ref(shName,cell){const p=decode(cell);if(!p||!w.sheets[shName]||p.c>=w.sheets[shName].cols||p.r>=w.sheets[shName].rows)throw Error('#REF!');return calc(w,shName,addr(p.c,p.r),stack);}
@@ -144,7 +161,7 @@ function expression(){let x=additive();while(['=','>','<','>=','<=','<>'].includ
 const result=expression();if(peek()!=='end')throw Error('#ФОРМУЛА!');if(typeof result==='number'&&!Number.isFinite(result))throw Error('#ЗНАЧ!');return result;
 }finally{stack.pop();}}
 function value(w,s,a){try{return calc(w,s,a,[]);}catch(e){return /^#/.test(e.message)?e.message:'#ОШИБКА!';}}
-function grade(w){let passed=0;const results=[];for(const t of w.targets){const cel=w.sheets[t.sheet].values[t.addr],raw=cel?.raw||'',v=value(w,t.sheet,t.addr);let status='empty';if(String(raw).trim()){if(typeof v==='string'&&v.startsWith('#'))status='bad';else{const good=typeof t.answer==='number'?typeof v==='number'&&Math.abs(v-t.answer)<=(t.tolerance??Math.max(.011,Math.abs(t.answer)*1e-9)):String(v).trim().toLowerCase().replace(/ё/g,'е')===String(t.answer).toLowerCase().replace(/ё/g,'е');status=good?(t.formula&&(!String(raw).startsWith('=')||(w.template==='nmck-solved'&&!/\$?[A-Z]{1,2}\$?[1-9][0-9]{0,2}(?![0-9])/i.test(String(raw))))?'need-formula':'ok'):'bad';}}
+function grade(w){let passed=0;const results=[];for(const t of w.targets){const cel=w.sheets[t.sheet].values[t.addr],raw=cel?.raw||'',v=value(w,t.sheet,t.addr);let status=t.blankIsZero&&t.answer===0?'ok':'empty';if(String(raw).trim()){if(typeof v==='string'&&v.startsWith('#'))status='bad';else{const good=typeof t.answer==='number'?typeof v==='number'&&Math.abs(v-t.answer)<=(t.tolerance??Math.max(.011,Math.abs(t.answer)*1e-9)):String(v).trim().toLowerCase().replace(/ё/g,'е')===String(t.answer).toLowerCase().replace(/ё/g,'е');status=good?(t.formula&&(!String(raw).startsWith('=')||(w.template==='nmck-solved'&&!/\$?[A-Z]{1,2}\$?[1-9][0-9]{0,2}(?![0-9])/i.test(String(raw))))?'need-formula':'ok'):'bad';}}
  if(status==='ok')passed++;results.push({...t,value:v,status,raw});}
  return{passed,total:w.targets.length,percent:Math.round(passed/w.targets.length*100),results};}
 function save(w){const entries={};for(const name of w.order){const sh=w.sheets[name];entries[name]=Object.fromEntries(Object.entries(sh.values).filter(([k,v])=>!v.locked).map(([k,v])=>[k,v.raw]));}return entries;}

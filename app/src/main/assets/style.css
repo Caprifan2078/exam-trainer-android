@@ -73,3 +73,5 @@
 .excel-err-primary{width:100%;padding:12px 10px;background:#295f6d;border:1px solid #72b9ac;color:#edfffb;border-radius:10px;font-size:13px}
 .excel-err-caption{flex-basis:100%;font-size:12px;color:#d4e6f5;margin:6px 0 0}
 @media(max-width:390px){.excel-undo{min-width:36px;width:36px}.excel-formula-bar{gap:4px}.excel-addr{min-width:48px;max-width:90px}}
+
+.excel-grid td.excel-editing{padding:0;min-width:130px;overflow:visible}.excel-grid td.excel-editing .excel-input{display:block;width:100%;min-width:130px;box-sizing:border-box;font-size:16px;padding:5px}.excel-grid td.excel-editing:focus-within{outline:2px solid #298466;z-index:2;position:relative}

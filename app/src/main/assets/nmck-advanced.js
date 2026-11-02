@@ -23,6 +23,7 @@ function nmck(level,opts){
    const sum=prices.reduce((a,b)=>a+b,0),avg=sum/offers;
    const sd=Math.sqrt(prices.reduce((a,b)=>a+(b-avg)**2,0)/(offers-1));
    const cv=100*sd/avg,uniformity=cv<=33?'Однородны':'Неоднородны';
+   const chosen=prices.filter(x=>x<avg).sort((a,b)=>b-a)[0];
    const amount=round(round(avg)*product.quantity),id='n'+i,group='Позиция '+(i+1);
    rows.push({name:product.name,quantity:product.quantity,prices});
    questions.push(q(id+'sum','Сумма коммерческих предложений, руб.',sum,'SUM/СУММ цен поставщиков',group));
@@ -30,13 +31,15 @@ function nmck(level,opts){
    questions.push(q(id+'sd','Выборочное стандартное отклонение, руб.',sd,'STDEV.S/СТАНДОТКЛОН.В по ценам (n-1)',group));
    questions.push(q(id+'cv','Коэффициент вариации, %',cv,'Отклонение / средняя цена × 100',group));
    questions.push(q(id+'amount','Начальная цена позиции, руб.',amount,'ROUND/ОКРУГЛ(средняя;2) × количество',group));
+   questions.push(q(id+'selected','Выбранная цена, руб.',chosen===undefined?'Нет цены ниже средней':chosen,'Выбери предложение, ближайшее к средней цене и строго ниже неё',group));
+   questions.push(q(id+'selectedTotal','Сумма выбранного предложения, руб.',chosen===undefined?'Нет цены ниже средней':round(chosen*product.quantity),'Выбранная цена × количество',group));
    questions.push(q(id+'uniformity','Однородность цен',uniformity,'IF/ЕСЛИ: вариация не более 33%',group));
    total+=amount;
  }
  questions.push(q('total','НМЦК всей закупки, руб.',round(total),'SUM/СУММ всех позиций','Итог'));
  return{kind:'nmck',title:'Расчёт начальной (максимальной) цены контракта',company:generated.company,
-  rows,questions,offers,lots,manualPrices:true,id:generated.id||Date.now().toString()+'-'+rnd(100,999),difficulty:level,
+  rows,questions,offers,lots,manualPrices:true,offerRule:true,id:generated.id||Date.now().toString()+'-'+rnd(100,999),difficulty:level,
   notes:'Учебный метод сопоставимых рыночных цен. На каждую позицию '+offers+' коммерческих предложений; позиций '+lots+'. Коэффициент вариации указывается в процентах, порог для учебной проверки — 33%. Данные вымышлены.'};
 }
-E.generate=function(kind,level,options){const t=kind==='nmck'?nmck(level,options):prev(kind,level);root.ExamCurrentTask=t;return t;};
+E.generate=function(kind,level,options){const t=kind==='nmck'?nmck(level,options):prev(kind,level);if(kind==='budget')t.budgetSplit=true;root.ExamCurrentTask=t;return t;};
 })(typeof globalThis!=='undefined'?globalThis:this);
