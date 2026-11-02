@@ -42,3 +42,17 @@ x1,y1,x2,y2=bounds(buttons[0]);adb('shell','input','tap',str((x1+x2)//2),str((y1
 root=dump();text=' '.join(txt(e) for e in root.iter());open('qa-evidence/after-input.xml','w').write(ET.tostring(root,encoding='unicode'))
 if 'Заполнено 1 из' not in text:raise Exception('Entering first price did not update progress: '+text[:4000])
 print('PASS: price entered and progress updated')
+
+# Exercise the real autocomplete UI on the numeric cell without committing the test formula.
+root=dump(); fields=[e for e in root.iter() if e.attrib.get('class')=='android.widget.EditText' and valid(e)]
+if not fields:raise Exception('Formula input not found for autocomplete')
+x1,y1,x2,y2=bounds(fields[0]);adb('shell','input','tap',str((x1+x2)//2),str((y1+y2)//2))
+adb('shell','input','keyevent','KEYCODE_MOVE_END')
+for _ in range(16):adb('shell','input','keyevent','KEYCODE_DEL')
+adb('shell','input','text','=AV');time.sleep(2);adb('shell','input','keyevent','4');time.sleep(1)
+root=dump(); choices=[e for e in root.iter() if 'AVERAGE' in txt(e) and valid(e)]
+if not choices:raise Exception('AVERAGE suggestion is not visible: '+' '.join(txt(e) for e in root.iter())[:4000])
+x1,y1,x2,y2=bounds(choices[0]);adb('shell','input','tap',str((x1+x2)//2),str((y1+y2)//2));time.sleep(2)
+root=dump();fields=[e for e in root.iter() if e.attrib.get('class')=='android.widget.EditText' and valid(e)]
+if not fields or '=AVERAGE(' not in txt(fields[0]):raise Exception('Selected function was not inserted: '+' '.join(txt(e) for e in root.iter())[:4000])
+print('PASS: Android function suggestion displayed and inserted')
