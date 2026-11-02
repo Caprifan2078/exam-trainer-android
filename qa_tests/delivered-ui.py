@@ -23,6 +23,12 @@ x1,y1,x2,y2=bounds(buttons[0]);adb('shell','input','tap',str((x1+x2)//2),str((y1
 root=dump();text=' '.join(txt(e) for e in root.iter());open('qa-evidence/work.xml','w').write(ET.tostring(root,encoding='unicode'))
 if 'К выбору задания' not in text or 'Расчёт начальной' not in text:raise Exception('Task not opened: '+text[:4000])
 print('PASS: create button tapped and NMCK task UI opened')
+
+nav=[e for e in root.iter() if 'Переход по расчётным ячейкам' in txt(e) and valid(e)]
+zoom=[e for e in root.iter() if 'Уменьшить таблицу' in txt(e) and valid(e)]
+if not nav or not zoom: raise Exception('Mobile navigation or zoom not visible')
+if bounds(nav[0])[3]>bounds(zoom[0])[1]: raise Exception('Navigation overlaps zoom: '+str((bounds(nav[0]),bounds(zoom[0]))))
+print('PASS: mobile navigation and zoom do not overlap')
 prices=[txt(e) for e in root.iter() if 'КП:' in txt(e)]
 if not prices:raise Exception('Source prices not found')
 m=re.search(r'КП:\s*([\d\s\u00a0\u202f]+)',prices[0]);price=re.sub(r'\s','',m.group(1)) if m else ''
