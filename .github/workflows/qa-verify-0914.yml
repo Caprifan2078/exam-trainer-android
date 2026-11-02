@@ -1,4 +1,4 @@
-name: Verify delivered ExamTrainer 0.9.14
+name: Verify delivered ExamTrainer 0.9.15
 on:
   push:
     branches: [qa/examtrainer-0914-verify]
@@ -13,8 +13,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: ExamTrainer-0.9.14-Android-QA
-          run-id: 41426445851
+          name: ExamTrainer-0.9.15-Android-QA
+          run-id: 41429413919
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: qa-bin
       - uses: actions/setup-java@v4
@@ -33,7 +33,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ExamTrainer-0914-android-ui-evidence
+          name: ExamTrainer-0915-android-ui-evidence
           path: qa-evidence/
           if-no-files-found: ignore
   windows-smoke:
@@ -42,8 +42,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: ExamTrainer-0.9.14-Windows-QA
-          run-id: 41426445851
+          name: ExamTrainer-0.9.15-Windows-QA
+          run-id: 41429413919
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: qa-bin
       - name: Launch delivered EXE
