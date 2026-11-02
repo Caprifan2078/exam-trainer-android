@@ -1,12 +1,12 @@
 {
   "name": "examtrainer-desktop",
   "productName": "ExamTrainer",
-  "version": "0.9.16",
+  "version": "0.9.17",
   "private": true,
   "description": "Offline exam trainer desktop QA build",
   "main": "main.cjs",
-  "scripts": {"dist:win": "electron-builder --win portable --x64"},
-  "devDependencies": {"electron": "30.5.1", "electron-builder": "24.13.3"},
+  "scripts": {"dist:win": "electron-builder --win portable --x64", "dist:dir": "electron-builder --win --dir --x64"},
+  "devDependencies": {"electron": "30.5.1", "electron-builder": "24.13.3", "playwright-core": "1.48.2"},
   "build": {
     "appId": "io.github.caprifan2078.examtrainer.desktop.qa",
     "productName": "ExamTrainer QA",

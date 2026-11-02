@@ -58,3 +58,5 @@ body.exam-solving #work .excel-jump:disabled{display:none}
 
 /* The navigation is relative in mobile-workflow.css; undo the old sticky offset. */
 body.exam-solving #work .nmck-navigation{top:auto}
+.formula-suggestions{position:relative;z-index:20;max-height:220px;overflow:auto;background:#f4f8ff;color:#172a3c;border:1px solid #7898ae;border-radius:8px;box-shadow:0 6px 18px #0005}
+.formula-suggestions[hidden]{display:none!important}.formula-suggestion{display:block;width:100%;padding:9px 12px;text-align:left;color:#172a3c;background:#f4f8ff;border:0;border-bottom:1px solid #d5e1ec;font-size:14px;min-height:40px}.formula-suggestion.active,.formula-suggestion:hover{background:#cfe7f5}

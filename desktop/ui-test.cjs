@@ -1,0 +1,27 @@
+'use strict';
+const { _electron: electron }=require('playwright-core');
+const assert=require('node:assert/strict');
+(async()=>{
+ const app=await electron.launch({executablePath:require('electron'),args:['main.cjs'],timeout:60000});
+ try{
+  const page=await app.firstWindow({timeout:30000});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.evaluate(()=>localStorage.clear());await page.reload();
+  await page.locator('#offers-count').selectOption('3');await page.locator('#start').click();
+  await page.locator('td[data-addr="H6"]').click();const input=page.locator('.excel-input');
+  await input.fill('=ср');await page.locator('.formula-suggestion').filter({hasText:'СРЗНАЧ'}).first().click();
+  assert.equal(await input.inputValue(),'=СРЗНАЧ(');
+  await page.locator('td[data-addr="E6"]').click();assert.equal(await input.inputValue(),'=СРЗНАЧ(E6');
+  await input.fill('=D6');await page.locator('.excel-commit').click();
+  assert.equal(await page.locator('td[data-addr="H6"]').innerText(),await page.locator('td[data-addr="D6"]').innerText());
+  await page.evaluate(()=>localStorage.clear());await page.reload();
+  await page.locator('#kind').selectOption('financial');await page.locator('#start').click();
+  await page.locator('td[data-addr="C3"]').click();await input.fill('=');
+  await page.locator('.excel-tab').filter({hasText:'Баланс'}).click();await page.locator('td[data-addr="C3"]').click();
+  assert.equal(await input.inputValue(),'=Баланс!C3');
+  await page.locator('.excel-tab').filter({hasText:'ОФР'}).click();await page.reload();
+  assert.equal(await input.inputValue(),'=Баланс!C3','Draft must survive switching sheets and reload');
+  assert.deepEqual(errors,[]);
+  console.log('PASS: function suggestion, same-sheet reference, save, cross-sheet reference, draft restore');
+ }finally{await app.close();}
+})().catch(e=>{console.error(e);process.exitCode=1});
