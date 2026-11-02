@@ -1,4 +1,4 @@
-name: Verify delivered ExamTrainer 0.9.16
+name: Verify delivered ExamTrainer 0.9.17
 on:
   push:
     branches: [qa/examtrainer-0914-verify]
@@ -13,8 +13,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: ExamTrainer-0.9.16-Android-QA
-          run-id: 41439870144
+          name: ExamTrainer-0.9.17-Android-QA
+          run-id: 41449370602
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: qa-bin
       - uses: actions/setup-java@v4
@@ -33,7 +33,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ExamTrainer-0916-android-ui-evidence
+          name: ExamTrainer-0917-android-ui-evidence
           path: qa-evidence/
           if-no-files-found: ignore
   windows-smoke:
@@ -42,18 +42,43 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: ExamTrainer-0.9.16-Windows-QA
-          run-id: 41439870144
+          name: ExamTrainer-0.9.17-Windows-QA
+          run-id: 41449370602
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: qa-bin
-      - name: Launch delivered EXE
+      - uses: actions/download-artifact@v4
+        with:
+          name: ExamTrainer-0.9.17-Windows-Folder-QA
+          run-id: 41449370602
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: qa-folder-zip
+      - name: Compare startup until Electron process
         shell: pwsh
         run: |
-          $exe = Get-ChildItem qa-bin -Filter *.exe | Select-Object -First 1
-          if (!$exe) { throw 'EXE not found' }
-          $parent = Start-Process -FilePath $exe.FullName -PassThru
-          Start-Sleep -Seconds 35
-          $apps = @(Get-CimInstance Win32_Process | Where-Object { $_.Name -like '*ExamTrainer*' -or $_.CommandLine -like '*ExamTrainer QA*' })
-          $apps | Select-Object ProcessId,Name,ExecutablePath | Format-Table
-          if ($apps.Count -eq 0) { throw 'No ExamTrainer process detected after launch' }
-          Write-Host 'PASS: process exists after startup; UI interaction not assessed'
+          $zip = Get-ChildItem qa-folder-zip -Filter *.zip | Select-Object -First 1
+          Expand-Archive -Path $zip.FullName -DestinationPath qa-folder
+          function Measure-Start($exe) {
+            Get-Process -Name 'ExamTrainer QA' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+            $watch=[Diagnostics.Stopwatch]::StartNew()
+            $launcher=Start-Process -FilePath $exe -PassThru
+            $found=$null
+            for($i=0;$i -lt 120;$i++) {
+              Start-Sleep -Milliseconds 500
+              $found=Get-Process -Name 'ExamTrainer QA' -ErrorAction SilentlyContinue | Select-Object -First 1
+              if($found){break}
+            }
+            if(!$found){throw "Application process did not start: $exe"}
+            $seconds=[Math]::Round($watch.Elapsed.TotalSeconds,2)
+            Start-Sleep -Seconds 5
+            Get-Process -Name 'ExamTrainer QA' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+            if (!$launcher.HasExited) { Stop-Process -Id $launcher.Id -Force -ErrorAction SilentlyContinue }
+            return $seconds
+          }
+          $portable=(Get-ChildItem qa-bin -Filter *.exe | Select-Object -First 1).FullName
+          $folder=(Get-ChildItem qa-folder -Filter 'ExamTrainer QA.exe' -Recurse | Select-Object -First 1).FullName
+          if (!$portable -or !$folder) { throw 'Missing Windows executable' }
+          $p=Measure-Start $portable
+          $f=Measure-Start $folder
+          Write-Host "PORTABLE_FIRST_PROCESS_SECONDS=$p"
+          Write-Host "FOLDER_FIRST_PROCESS_SECONDS=$f"
+          Write-Host 'PASS: both variants spawned the Electron process; responsiveness is not measured'
