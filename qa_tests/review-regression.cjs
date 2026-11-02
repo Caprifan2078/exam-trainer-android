@@ -1,0 +1,16 @@
+'use strict';const assert=require('node:assert/strict'),path=require('node:path');const R=require(path.resolve(__dirname,'../app/src/main/assets/review.js'));
+const budget=(a,b)=>({kind:'budget',summary:{'Доход':{actual:a},'Расход':{actual:b}}});const bp=budget(1200,1000),bd=budget(1000,1200),bb=budget(1000,1000);
+assert.match(R.facts(bp).example,/профицит/);assert.match(R.facts(bd).example,/дефицит/);assert.match(R.facts(bb).example,/сбалансирован/);
+assert.match(R.review(bp,'доходы 1200, расходы 1000, дефицит'),/проверь|не соответствует/i);
+assert.match(R.review(bp,'доходы 1200, расходы 1000, не профицит'),/отрицан|противореч/i);
+assert.match(R.review(bp,'профицит и дефицит'),/противореч|несколько/i);
+assert.match(R.review(bp,'доходы 500 тыс. руб., расходы 1000 тыс. руб., профицит'),/доход.*проверь|проверь.*доход/i);
+const nm=(prices,total=330)=>({kind:'nmck',rows:[{name:'пример',quantity:3,prices}],questions:[{id:'total',answer:total}]});
+const uniform=nm([100,110,120]),unequal=nm([10,100,300],410);
+assert.match(R.facts(uniform).example,/однород/i);assert.match(R.facts(unequal).example,/предварительн/i);assert.match(R.review(unequal,'НМЦК 410 руб., цены однородны'),/проверь|противореч/i);
+const fin={kind:'financial',balance:{'2025':{'1600':1200},'2024':{'1600':1000}},pl:{'2025':{'2110':1100,'2400':100},'2024':{'2110':1000,'2400':80}}};assert.match(R.facts(fin).example,/выручк/i);
+console.log('PASS: базовые, противоречивые и финансовые письменные выводы');
+const edge=nm([67,100,133]);assert.equal(R.facts(edge).problematic.length,0);const above=nm([66.9,100,133.1]);assert.equal(R.facts(above).problematic.length,1);
+for(const [a,b,term] of [[0,0,'сбалансирован'],[1,0,'профицит'],[0,1,'дефицит'],[500,700,'дефицит'],[700,500,'профицит']])assert.equal(R.facts(budget(a,b)).status,term);
+const rev=R.facts(fin).example;assert.match(rev,/1100/);assert.match(rev,/1000/);assert.match(rev,/показатель увеличился/);assert(!rev.includes('она увеличился'));
+console.log('PASS: граница вариации 33%, нулевой бюджет, направления финансового результата');
