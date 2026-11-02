@@ -23,3 +23,16 @@ x1,y1,x2,y2=bounds(buttons[0]);adb('shell','input','tap',str((x1+x2)//2),str((y1
 root=dump();text=' '.join(txt(e) for e in root.iter());open('qa-evidence/work.xml','w').write(ET.tostring(root,encoding='unicode'))
 if 'К выбору задания' not in text or 'Расчёт начальной' not in text:raise Exception('Task not opened: '+text[:4000])
 print('PASS: create button tapped and NMCK task UI opened')
+prices=[txt(e) for e in root.iter() if 'КП:' in txt(e)]
+if not prices:raise Exception('Source prices not found')
+m=re.search(r'КП:\s*([\d\s\u00a0\u202f]+)',prices[0]);price=re.sub(r'\s','',m.group(1)) if m else ''
+if not price.isdigit():raise Exception('Cannot parse source price')
+inputs=[e for e in root.iter() if e.attrib.get('class')=='android.widget.EditText' and valid(e)]
+if not inputs:raise Exception('Formula input not visible')
+x1,y1,x2,y2=bounds(inputs[0]);adb('shell','input','tap',str((x1+x2)//2),str((y1+y2)//2));adb('shell','input','text',price);adb('shell','input','keyevent','4');time.sleep(1)
+root=dump();buttons=[e for e in root.iter() if 'Применить формулу' in txt(e) and valid(e)]
+if not buttons:raise Exception('Save button not visible')
+x1,y1,x2,y2=bounds(buttons[0]);adb('shell','input','tap',str((x1+x2)//2),str((y1+y2)//2));time.sleep(2)
+root=dump();text=' '.join(txt(e) for e in root.iter());open('qa-evidence/after-input.xml','w').write(ET.tostring(root,encoding='unicode'))
+if 'Заполнено 1 из' not in text:raise Exception('Entering first price did not update progress: '+text[:4000])
+print('PASS: price entered and progress updated')
