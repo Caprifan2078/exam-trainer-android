@@ -14,7 +14,9 @@ function facts(t){
  if(t.kind==='financial' && t.pl?.['2025'] && t.pl?.['2024']){
   const newer=t.pl['2025'],older=t.pl['2024'],revChange=newer['2110']-older['2110'],profitChange=newer['2400']-older['2400'];
   const direction=x=>x>0?'увеличился':x<0?'уменьшился':'не изменился';
-  return {example:'Выручка в 2025 году составила '+newer['2110']+' тыс. руб., в 2024 году — '+older['2110']+' тыс. руб.; показатель '+direction(revChange)+'. Чистый финансовый результат в 2025 году — '+newer['2400']+' тыс. руб., в 2024 году — '+older['2400']+' тыс. руб.; показатель '+direction(profitChange)+'. Выводы по коэффициентам зависят от выбранной методики.'};
+  const current=(t.questions||[]).find(q=>q.id==='f02025')?.answer,previous=(t.questions||[]).find(q=>q.id==='f02024')?.answer;
+  let liquidity='';if(Number.isFinite(current)&&Number.isFinite(previous))liquidity=' Текущая ликвидность: '+current+' в 2025 году и '+previous+' в 2024 году; по округлённым значениям показатель '+direction(current-previous)+'.';
+  return {example:'Выручка в 2025 году составила '+newer['2110']+' тыс. руб., в 2024 году — '+older['2110']+' тыс. руб.; показатель '+direction(revChange)+'. Чистый финансовый результат в 2025 году — '+newer['2400']+' тыс. руб., в 2024 году — '+older['2400']+' тыс. руб.; показатель '+direction(profitChange)+'.'+liquidity+' Выводы по коэффициентам зависят от выбранной методики.'};
  }
  return null;
 }

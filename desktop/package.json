@@ -1,7 +1,7 @@
 {
   "name": "examtrainer-desktop",
   "productName": "ExamTrainer",
-  "version": "0.9.15",
+  "version": "0.9.16",
   "private": true,
   "description": "Offline exam trainer desktop QA build",
   "main": "main.cjs",

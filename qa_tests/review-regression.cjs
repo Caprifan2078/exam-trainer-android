@@ -14,3 +14,4 @@ const edge=nm([67,100,133]);assert.equal(R.facts(edge).problematic.length,0);con
 for(const [a,b,term] of [[0,0,'сбалансирован'],[1,0,'профицит'],[0,1,'дефицит'],[500,700,'дефицит'],[700,500,'профицит']])assert.equal(R.facts(budget(a,b)).status,term);
 const rev=R.facts(fin).example;assert.match(rev,/1100/);assert.match(rev,/1000/);assert.match(rev,/показатель увеличился/);assert(!rev.includes('она увеличился'));
 console.log('PASS: граница вариации 33%, нулевой бюджет, направления финансового результата');
+const f2={...fin,questions:[{id:'f02025',answer:1.25},{id:'f02024',answer:1.75}]};const lx=R.facts(f2).example;assert.match(lx,/Текущая ликвидность: 1.25/);assert.match(lx,/по округлённым значениям показатель уменьшился/);console.log('PASS: тренд текущей ликвидности сравнивается по двум годам');
