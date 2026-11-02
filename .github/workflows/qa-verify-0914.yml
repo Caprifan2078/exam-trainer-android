@@ -1,0 +1,59 @@
+name: Verify delivered ExamTrainer 0.9.14
+on:
+  push:
+    branches: [qa/examtrainer-0914-verify]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  android-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ExamTrainer-0.9.14-Android-QA
+          run-id: 41426445851
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: qa-bin
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Enable KVM if present
+        run: if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash qa_tests/delivered-android-smoke.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ExamTrainer-0914-android-ui-evidence
+          path: qa-evidence/
+          if-no-files-found: ignore
+  windows-smoke:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ExamTrainer-0.9.14-Windows-QA
+          run-id: 41426445851
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: qa-bin
+      - name: Launch delivered EXE
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem qa-bin -Filter *.exe | Select-Object -First 1
+          if (!$exe) { throw 'EXE not found' }
+          $parent = Start-Process -FilePath $exe.FullName -PassThru
+          Start-Sleep -Seconds 35
+          $apps = @(Get-CimInstance Win32_Process | Where-Object { $_.Name -like '*ExamTrainer*' -or $_.CommandLine -like '*ExamTrainer QA*' })
+          $apps | Select-Object ProcessId,Name,ExecutablePath | Format-Table
+          if ($apps.Count -eq 0) { throw 'No ExamTrainer process detected after launch' }
+          Write-Host 'PASS: process exists after startup; UI interaction not assessed'
