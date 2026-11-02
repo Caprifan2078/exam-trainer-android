@@ -1,0 +1,61 @@
+name: ExamTrainer QA APK and Windows
+on:
+  push:
+    branches: [qa/examtrainer-0914-build]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check tasks and formulas
+        run: |
+          node qa_tests/full_solve.cjs
+          node qa_tests/nmck.cjs
+          node qa_tests/statements.cjs
+          node qa_tests/independent.cjs
+          for f in app/src/main/assets/*.js; do node --check "$f"; done
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - run: gradle --no-daemon assembleDebug
+      - name: Verify APK signature and package
+        run: |
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ExamTrainer-0.9.14-Android-QA
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install build dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+      - name: Build Windows portable EXE
+        working-directory: desktop
+        run: npm run dist:win
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ExamTrainer-0.9.14-Windows-QA
+          path: desktop/dist/*.exe
+          if-no-files-found: error

@@ -3,10 +3,19 @@
 const enc=new TextEncoder();
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
 const funcs=[['СТАНДОТКЛОН.В','STDEV.S'],['СУММЕСЛИ','SUMIF'],['СЧЁТЕСЛИ','COUNTIF'],['СРЗНАЧ','AVERAGE'],['ОКРУГЛ','ROUND'],['КОРЕНЬ','SQRT'],['СУММ','SUM'],['ЕСЛИ','IF'],['СЧЁТ','COUNT'],['МИН','MIN'],['МАКС','MAX']];
-function fexp(f){let s=f.slice(1);for(const [ru,en] of funcs)s=s.replace(new RegExp(ru.replace('.','\\.'),'gi'),en);return s.replace(/;/g,',');}
+function fexp(f){
+ const src=f.slice(1), localDecimals=src.includes(';')||!/[A-ZА-ЯЁ_][A-ZА-ЯЁ_0-9.]*\(/i.test(src);
+ // Do not translate function names or argument separators inside string literals.
+ let result='',outside='',quoted=false;
+ function emit(){let part=outside;for(const [ru,en] of funcs)part=part.replace(new RegExp(ru.replace('.','\\.')+'(?=\\s*\\()','gi'),en);if(localDecimals)part=part.replace(/(\d),(?=\d)/g,'$1.');result+=part.replace(/;/g,',');outside='';}
+ for(let i=0;i<src.length;i++){const ch=src[i];if(ch==='"'){if(!quoted){emit();quoted=true;result+=ch;}else if(src[i+1]==='"'){result+='""';i++;}else{quoted=false;result+=ch;}}else if(quoted)result+=ch;else outside+=ch;}emit();return result;
+}
 function xcell(a,cell,editable,sh){if(cell===undefined||cell.raw===undefined||cell.raw===null||cell.raw==='')return '';const raw=cell.raw,number=Number(a.replace(/[A-Z]/gi,'')),style=editable?'2':(sh.spans&&number<=5?'3':number===1?'1':'0');
  if(typeof raw==='number')return `<c r="${a}" s="${style}"><v>${raw}</v></c>`;
  if(String(raw).startsWith('='))return `<c r="${a}" s="${style}"><f>${esc(fexp(String(raw)))}</f></c>`;
+ // Editable numeric inputs must be numbers in Excel: AVERAGE ignores text cells.
+ const cleaned=String(raw).trim().replace(/[\s\u00a0\u202f]/g,'').replace(',','.');
+ if(editable && /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(cleaned) && Number.isFinite(Number(cleaned)))return `<c r="${a}" s="${style}"><v>${Number(cleaned)}</v></c>`;
  return `<c r="${a}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${esc(String(raw))}</t></is></c>`;}
 function sheetXML(sh){const rows=[];for(let r=0;r<sh.rows;r++){let cells='';for(let c=0;c<sh.cols;c++){let a='',n=c+1;while(n){a=String.fromCharCode(65+(n-1)%26)+a;n=Math.floor((n-1)/26);}a+=r+1;cells+=xcell(a,sh.values[a],!!sh.editable[a],sh);}
  if(cells){const height=sh.spans&&(r===3?' ht="62" customHeight="1"':r===4?' ht="95" customHeight="1"':r<3?' ht="37" customHeight="1"':'');rows.push(`<row r="${r+1}"${height||''}>${cells}</row>`);}}

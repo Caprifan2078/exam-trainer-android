@@ -14,7 +14,7 @@ function nmck(level,opts){
    if(opts.lots==null){const el=document.getElementById('lot-count');if(el)opts.lots=el.value;}
  }
  const offers=[3,4,5].includes(Number(opts.offers))?Number(opts.offers):rnd(3,5);
- const lots=[1,2,3].includes(Number(opts.lots))?Number(opts.lots):(level==='easy'?1:level==='medium'?2:3);
+ const lots=1; // Один контракт и одна закупаемая позиция с 3–5 ценовыми источниками.
  const generated=prev('nmck','hard'),rows=[],questions=[];
  let total=0;
  for(let i=0;i<lots;i++){
@@ -35,7 +35,7 @@ function nmck(level,opts){
  }
  questions.push(q('total','НМЦК всей закупки, руб.',round(total),'SUM/СУММ всех позиций','Итог'));
  return{kind:'nmck',title:'Расчёт начальной (максимальной) цены контракта',company:generated.company,
-  rows,questions,offers,lots,id:generated.id||Date.now().toString()+'-'+rnd(100,999),difficulty:level,
+  rows,questions,offers,lots,manualPrices:true,id:generated.id||Date.now().toString()+'-'+rnd(100,999),difficulty:level,
   notes:'Учебный метод сопоставимых рыночных цен. На каждую позицию '+offers+' коммерческих предложений; позиций '+lots+'. Коэффициент вариации указывается в процентах, порог для учебной проверки — 33%. Данные вымышлены.'};
 }
 E.generate=function(kind,level,options){const t=kind==='nmck'?nmck(level,options):prev(kind,level);root.ExamCurrentTask=t;return t;};

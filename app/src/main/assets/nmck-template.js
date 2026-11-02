@@ -35,7 +35,12 @@ function render(task){
  task.rows.forEach((row,i)=>{
   const r=i+5,R=r+1,id='n'+i;
   fixed(0,r,i+1);fixed(1,r,row.name);fixed(2,r,'Штуки');fixed(3,r,row.quantity);
-  row.prices.forEach((v,k)=>fixed(4+k,r,v));
+  row.prices.forEach((v,k)=>{
+   if(!task.manualPrices){fixed(4+k,r,v);return;}
+   const a=S.addr(4+k,r);sh.editable[a]=true;
+   const hint='Впиши цену КП №'+(k+1)+' из условия задания числом, без знака рубля.';
+   w.targets.push({sheet:name,addr:a,answer:v,label:'Цена КП №'+(k+1),hint,id:id+'price'+k,formula:false,tolerance:0.001});w.hintMap[name+'!'+a]=hint;
+  });
   const area='E'+R+':'+letter(avg-1)+R;
   const q=suffix=>task.questions.find(x=>x.id===id+suffix);
   const mean=q('avg'),deviation=q('sd'),variation=q('cv'),total=q('amount');

@@ -60,3 +60,7 @@
 #work .condition-heading .condition-eyebrow{flex:1 0 100%}
 #work .condition-heading button{flex:1;min-width:108px;min-height:34px;font-size:11px;padding:5px 8px}
 #work .condition-jump{color:#10253e;background:#9ee5ca;border:1px solid #caf5e5;border-radius:8px;font-weight:800}
+
+/* Телефон: хорошо читаемый ввод; компьютер: больше места под таблицу и клавиатуру. */
+@media(max-width:600px){#work .excel-input{font-size:16px}#work .excel-grid-box{max-height:48vh}#work .excel-tool{min-width:0}#work .nmck-condition{scroll-margin-top:8px}}
+@media(min-width:900px){#work .excel-grid-box{max-height:68vh}#work .excel-input{font-size:16px}#work .excel-grid-box:focus{outline:2px solid #74d8af;outline-offset:2px}}

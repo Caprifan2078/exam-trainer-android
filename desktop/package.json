@@ -1,0 +1,18 @@
+{
+  "name": "examtrainer-desktop",
+  "productName": "ExamTrainer",
+  "version": "0.9.14",
+  "private": true,
+  "description": "Offline exam trainer desktop QA build",
+  "main": "main.cjs",
+  "scripts": {"dist:win": "electron-builder --win portable --x64"},
+  "devDependencies": {"electron": "30.5.1", "electron-builder": "24.13.3"},
+  "build": {
+    "appId": "io.github.caprifan2078.examtrainer.desktop.qa",
+    "productName": "ExamTrainer QA",
+    "files": ["main.cjs", "package.json"],
+    "extraResources": [{"from": "../app/src/main/assets", "to": "assets", "filter": ["**/*"]}],
+    "win": {"target": ["portable"]},
+    "artifactName": "ExamTrainer-${version}-Windows-QA.${ext}"
+  }
+}

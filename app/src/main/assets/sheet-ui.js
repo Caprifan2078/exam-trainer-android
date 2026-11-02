@@ -17,7 +17,7 @@ const fmt=n=>typeof n==='number'?new Intl.NumberFormat('ru-RU',{maximumFractionD
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=String(text);if(cls)e.className=cls;return e;};
 const sheetRoot=$('sources');
 $('work').querySelector('h3').textContent='01 · Таблица Excel';
-$('work').querySelectorAll('h3')[1].textContent='02 · Проверь свою работу';
+$('verification-title').textContent='02 · Проверь свою работу';
 $('questions').replaceChildren();$('questions').hidden=true;
 $('check').textContent='Проверить таблицу ✓';
 $('hints-button').textContent='Показать правильные значения (после проверки)';
@@ -27,7 +27,7 @@ const tabs=node('div',undefined,'excel-tabs');
 const bar=node('div',undefined,'excel-formula-bar');
 const address=node('span','A1','excel-addr');address.setAttribute('aria-label','Адрес выбранной ячейки');
 const fx=node('span','fx','excel-fx');
-const input=node('input',undefined,'excel-input');input.type='text';input.autocomplete='off';input.spellcheck=false;input.placeholder='Выбери ячейку и введи формулу =…';
+const input=node('input',undefined,'excel-input');input.type='text';input.autocomplete='off';input.spellcheck=false;input.placeholder='Введи число или формулу =…';
 input.setAttribute('aria-label','Ввод формул');
 const commit=node('button','✓','excel-commit');commit.type='button';commit.setAttribute('aria-label','Применить формулу');
 const undo=node('button','↶','excel-undo');undo.type='button';undo.setAttribute('aria-label','Отменить последнюю формулу');undo.disabled=true;
@@ -54,7 +54,7 @@ function revealSelected(){
  if(rect.bottom>viewport.bottom-8)gridbox.scrollTop+=rect.bottom-viewport.bottom+8;
  else if(rect.top<viewport.top+8)gridbox.scrollTop-=viewport.top+8-rect.top;
 }
-const gridbox=node('div',undefined,'excel-grid-box');gridbox.tabIndex=0;
+const gridbox=node('div',undefined,'excel-grid-box');gridbox.tabIndex=0;gridbox.setAttribute('aria-label','Таблица: стрелки перемещают выделение, Enter открывает ввод');
 const info=node('div','Выбирай жёлтую ячейку, вводи =формулу в строку fx. Синие значения — исходные.','excel-info');
 const controls=node('div',undefined,'excel-controls');
 const helpButton=node('button','? Подсказка','secondary');helpButton.type='button';
@@ -71,7 +71,7 @@ progressBox.append(progressLabel,progressBar);toolbar.prepend(progressBox);
 function updateProgress(){
  if(!w)return;
  const filled=w.targets.filter(t=>String(w.sheets[t.sheet]?.values[t.addr]?.raw??'').trim()!=='').length;
- progressLabel.textContent='Заполнено '+filled+' из '+w.targets.length+' расчётных ячеек · черновик сохраняется';
+ progressLabel.textContent='Заполнено '+filled+' из '+w.targets.length+' ячеек · черновик сохраняется';
  progressBar.max=Math.max(1,w.targets.length);progressBar.value=filled;
 }
 function invalidateCheck(){checked=null;$('results').hidden=true;footer.replaceChildren();}
@@ -83,7 +83,7 @@ function jumpTo(t){
  bar.scrollIntoView({block:'start'});
 }
 const kindGuides={nmck:[
-  'Исходные данные — количество в колонке D и коммерческие цены в колонках E–I.',
+  'Найди цены в условии над таблицей и впиши их в жёлтые ячейки E–I. Количество указано в колонке D.',
   'В НМЦК вычисления начинаются со строки 6. Диапазон коммерческих предложений — E6:G6 (3 КП), E6:H6 (4 КП), E6:I6 (5 КП).',
   'В первой расчётной колонке введи =СРЗНАЧ(E6:G6), в следующей =СТАНДОТКЛОН.В(E6:G6). Для 4 или 5 КП расширь диапазон.',
   'Коэффициент вариации = (отклонение / средняя цена) * 100; цена позиции = ОКРУГЛ(средняя цена;2) * количество.',
@@ -190,7 +190,20 @@ function showWork(){$('work').hidden=false;$('home').hidden=true;document.body.c
  $('results').hidden=true;checked=null;footer.replaceChildren();renderGrid();updateProgress();window.scrollTo(0,0);}
 function start(){if(w)flush();if(w&&Object.values(S.save(w)).some(x=>Object.keys(x).length)&&!confirm('Создать новый вариант? Черновик предыдущего будет заменён.'))return;
  try{task=E.generate($('kind').value,$('level').value);w=S.create(task);history.length=0;for(const key of Object.keys(viewMemory))delete viewMemory[key];undo.disabled=true;active=w.order[w.order.length-1];selected='';showWork();saveDraft();}catch(e){alert('Ошибка создания таблицы: '+e.message);}}
-input.addEventListener('input',()=>{editDirty=true;});input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();flush();input.blur();}else if(e.key==='Escape'){e.preventDefault();select(selected);}});
+gridbox.addEventListener('keydown',e=>{
+ if(!w||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.key))return;
+ const sh=w.sheets[active],p=S.decode(selected);if(!p)return;
+ if(e.key==='Enter'){if(sh.editable[selected]){e.preventDefault();input.focus();}return;}
+ let c=p.c+(e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0),r=p.r+(e.key==='ArrowDown'?1:e.key==='ArrowUp'?-1:0);
+ if(c<0||r<0||c>=sh.cols||r>=sh.rows)return;
+ const cell=gridbox.querySelector('td[data-addr="'+S.addr(c,r)+'"]');if(cell){e.preventDefault();cell.click();}
+});
+input.addEventListener('input',()=>{editDirty=true;});input.addEventListener('keydown',e=>{
+ if(e.key==='Tab'){
+  const cells=Array.from(gridbox.querySelectorAll('td.excel-editable[data-addr]')),index=cells.findIndex(c=>c.dataset.addr===selected),next=index+(e.shiftKey?-1:1);
+  if(index>=0&&next>=0&&next<cells.length){e.preventDefault();flush();cells[next].click();input.focus();}return;
+ }
+ if(e.key==='Enter'){e.preventDefault();flush();input.blur();}else if(e.key==='Escape'){e.preventDefault();select(selected);}});
 commit.addEventListener('click',flush);
 undo.addEventListener('click',()=>{
  if(!w||!history.length)return;

@@ -41,7 +41,7 @@ function create(task){
      input(sh,0,r,i+1);input(sh,1,r,row.name);input(sh,2,r,row.category||'—');input(sh,3,r,row.plan);input(sh,4,r,row.actual);
      const qkind=task.questions.find(q=>q.id===id+'kind');
      target(sh,5,r,row.kind,'Определи, поступление это или расход. Впиши «Доход» или «Расход».',qkind.label,qkind.id,false);
-     target(sh,6,r,norm(row.actual/task.summary[row.kind].actual*100),'Доля статьи от суммы фактических '+(row.kind==='Доход'?'доходов':'расходов')+'. Используй ссылки на итоги ниже.',row.name+' — доля, %',id+'share');
+     target(sh,6,r,norm(row.actual/task.summary[row.kind].actual*100),'Доля статьи от фактического итога группы: =E'+(r+1)+'/E'+(task.rows.length+(row.kind==='Доход'?6:7))+'*100. Сначала заполни итог группы.',row.name+' — доля, %',id+'share');
      const qpct=task.questions.find(q=>q.id===id+'pct');if(qpct)target(sh,7,r,qpct.answer,'=E'+(r+1)+'/D'+(r+1)+'*100',qpct.label,qpct.id);
      const qdiff=task.questions.find(q=>q.id===id+'diff');if(qdiff)target(sh,8,r,qdiff.answer,'=E'+(r+1)+'-D'+(r+1),qdiff.label,qdiff.id);
    });
@@ -144,7 +144,7 @@ function expression(){let x=additive();while(['=','>','<','>=','<=','<>'].includ
 const result=expression();if(peek()!=='end')throw Error('#ФОРМУЛА!');if(typeof result==='number'&&!Number.isFinite(result))throw Error('#ЗНАЧ!');return result;
 }finally{stack.pop();}}
 function value(w,s,a){try{return calc(w,s,a,[]);}catch(e){return /^#/.test(e.message)?e.message:'#ОШИБКА!';}}
-function grade(w){let passed=0;const results=[];for(const t of w.targets){const cel=w.sheets[t.sheet].values[t.addr],raw=cel?.raw||'',v=value(w,t.sheet,t.addr);let status='empty';if(String(raw).trim()){if(typeof v==='string'&&v.startsWith('#'))status='bad';else{const good=typeof t.answer==='number'?typeof v==='number'&&Math.abs(v-t.answer)<=Math.max(.011,Math.abs(t.answer)*1e-9):String(v).trim().toLowerCase().replace(/ё/g,'е')===String(t.answer).toLowerCase().replace(/ё/g,'е');status=good?(t.formula&&(!String(raw).startsWith('=')||(w.template==='nmck-solved'&&!/\$?[A-Z]{1,2}\$?[1-9][0-9]{0,2}(?![0-9])/i.test(String(raw))))?'need-formula':'ok'):'bad';}}
+function grade(w){let passed=0;const results=[];for(const t of w.targets){const cel=w.sheets[t.sheet].values[t.addr],raw=cel?.raw||'',v=value(w,t.sheet,t.addr);let status='empty';if(String(raw).trim()){if(typeof v==='string'&&v.startsWith('#'))status='bad';else{const good=typeof t.answer==='number'?typeof v==='number'&&Math.abs(v-t.answer)<=(t.tolerance??Math.max(.011,Math.abs(t.answer)*1e-9)):String(v).trim().toLowerCase().replace(/ё/g,'е')===String(t.answer).toLowerCase().replace(/ё/g,'е');status=good?(t.formula&&(!String(raw).startsWith('=')||(w.template==='nmck-solved'&&!/\$?[A-Z]{1,2}\$?[1-9][0-9]{0,2}(?![0-9])/i.test(String(raw))))?'need-formula':'ok'):'bad';}}
  if(status==='ok')passed++;results.push({...t,value:v,status,raw});}
  return{passed,total:w.targets.length,percent:Math.round(passed/w.targets.length*100),results};}
 function save(w){const entries={};for(const name of w.order){const sh=w.sheets[name];entries[name]=Object.fromEntries(Object.entries(sh.values).filter(([k,v])=>!v.locked).map(([k,v])=>[k,v.raw]));}return entries;}

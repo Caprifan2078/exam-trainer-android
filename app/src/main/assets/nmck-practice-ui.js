@@ -10,9 +10,7 @@ const nmckOptions=mk('div',undefined,'nmck-options');
 nmckOptions.id='nmck-options';
 const offerLabel=mk('label','Коммерческих предложений'),offer=mk('select');offer.id='offers-count';offerLabel.htmlFor=offer.id;
 [['random','Случайно: 3–5'],['3','3 предложения'],['4','4 предложения'],['5','5 предложений']].forEach(([v,t])=>{const e=mk('option',t);e.value=v;offer.append(e);});
-const lotsLabel=mk('label','Количество позиций'),lots=mk('select');lots.id='lot-count';lotsLabel.htmlFor=lots.id;
-[['random','По сложности: 1–3'],['1','1 позиция'],['2','2 позиции'],['3','3 позиции']].forEach(([v,t])=>{const e=mk('option',t);e.value=v;lots.append(e);});
-nmckOptions.append(offerLabel,offer,lotsLabel,lots);panel.insertBefore(nmckOptions,start);
+nmckOptions.append(offerLabel,offer);panel.insertBefore(nmckOptions,start);
 const onKind=()=>{nmckOptions.hidden=kind.value!=='nmck';};kind.addEventListener('change',onKind);onKind();
 
 const condition=mk('section',undefined,'nmck-condition');const source=$('sources');
@@ -31,7 +29,7 @@ function drawCondition(t){
  if(!t||t.kind!=='nmck'){condition.hidden=true;document.getElementById('work').dataset.nmckSheet='no';return;}
  condition.hidden=false;document.getElementById('work').dataset.nmckSheet='yes';
  const top=mk('div',undefined,'condition-heading');
- top.append(mk('div','УСЛОВИЕ ЗАДАНИЯ · '+t.rows.length+' поз.','condition-eyebrow'));
+ top.append(mk('div','ОДИН КОНТРАКТ · '+t.rows[0].prices.length+' ЦЕН','condition-eyebrow'));
  const btn=mk('button',undefined,'condition-toggle');btn.type='button';
  const content=mk('div',undefined,'condition-body');
  const preview=mk('div',undefined,'condition-preview');
@@ -63,7 +61,7 @@ function drawCondition(t){
   r.prices.forEach((p,j)=>{const label=mk('span','КП №'+(j+1));const price=mk('b',fmt(p)+' ₽');const item=mk('div',undefined,'condition-price');item.append(label,price);sub.append(item);});
   block.append(sub);content.append(block);
  });
- content.append(mk('p','Задача: самостоятельно заполнить расчётную таблицу ниже формулами Excel. Определить среднюю цену, среднее квадратичное отклонение, коэффициент вариации, цену за единицу и НМЦК. Порог вариации для учебного задания — 33%.','condition-instruction'));
+ content.append(mk('p','Задача: сначала самостоятельно перенести цены предложений в таблицу, затем заполнить расчётные ячейки формулами Excel. Определить среднюю цену, среднее квадратичное отклонение, коэффициент вариации, цену за единицу и НМЦК. Порог вариации для учебного задания — 33%.','condition-instruction'));
 }
 function suggestion(t,col,row){
  const n=t.rows.length,offers=t.rows[0].prices.length;
@@ -94,7 +92,7 @@ function showQuick(){
  if(match&&t.kind==='financial'&&window.ExamFinanceHints)choices=window.ExamFinanceHints.suggest(t,match[1],match[2],Number(match[3]),window.ExamEngine);
  quick.hidden=!choices.length;
  if(!choices.length)return;
- quick.append(mk('span','Вставить формулу для выбранной ячейки:','excel-quick-label'));
+ quick.append(mk('span','Подсказка для '+match[2]+match[3]+': '+choices.map(x=>x[1]).join(' или ')+' — можно ввести вручную или вставить кнопкой.','excel-quick-label'));
  for(const [caption,formula] of choices){
   const b=mk('button',caption,'excel-quick-button');b.type='button';b.title=formula;
   b.addEventListener('click',()=>{
