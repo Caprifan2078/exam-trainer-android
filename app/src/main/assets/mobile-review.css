@@ -67,3 +67,6 @@ body.exam-solving #work .nmck-navigation{top:auto}
 #work .excel-grid td.excel-editing:focus-within {outline:none;z-index:auto;}
 #work .excel-grid td.excel-editing .excel-input {display:block!important;box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;height:100%!important;min-height:0!important;margin:0!important;padding:3px 4px!important;border:0!important;border-radius:0!important;font-size:14px!important;line-height:normal!important;}
 #review-result {white-space:pre-line;}
+
+/* Бюджет: длинные групповые коды полностью видны и сохраняют нули. */
+#work .budget-grid th:nth-child(4),#work .budget-grid td:nth-child(4){width:220px!important;min-width:220px!important;max-width:220px!important;font-family:monospace;text-align:left;white-space:nowrap!important;font-size:11px!important;}

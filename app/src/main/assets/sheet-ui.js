@@ -105,7 +105,7 @@ const kindGuides={nmck:[
   'Под таблицей находится общая НМЦК. Вводи формулы в жёлтые ячейки; «Вставить формулу» показывает пример для выбранного расчёта.',
   'Важно: пустые ячейки должны игнорироваться в СРЗНАЧ, СТАНДОТКЛОН.В и СЧЁТ. Коэффициент вариации — число в процентах (5,5 означает 5,5%).'
 ],budget:[
-  'Статья находится в B, фрагмент кода классификации — в C, план — в D, факт — в E. Это не полный КБК; «уточнить» означает, что данных недостаточно.',
+  'Статья находится в B, групповой код — в C, план — в D, факт — в E. Нули обозначают уровень группировки. Код не заменяет детальный КБК конкретной статьи; «уточнить» означает недостаточно данных.',
   'Перенеси факт из E в F для дохода или в G для расхода; другую ячейку оставь пустой. В H рассчитай долю.',
   'Суммируй доходы функцией =СУММ(F4:F19), а расходы — =СУММ(G4:G19); проверь последнюю строку диапазона.',
   'В I рассчитай процент исполнения =E4/D4*100; в J отклонение =E4-D4.',
@@ -128,7 +128,7 @@ function renderGrid(){const sh=w.sheets[active];tabs.replaceChildren();for(const
  if(viewMemory[name]){gridbox.scrollLeft=viewMemory[name].scrollLeft||0;gridbox.scrollTop=viewMemory[name].scrollTop||0;}
  if(pendingReference)info.textContent='Выбери нужную ячейку на этом листе: её ссылка добавится к формуле. Для отмены вернись на исходный лист.';else saveDraft();
 });tabs.appendChild(b);}
-const table=node('table',undefined,'excel-grid');const thead=node('thead'),hr=node('tr');hr.appendChild(node('th','', 'excel-corner'));
+const table=node('table',undefined,'excel-grid'+(w.kind==='budget'?' budget-grid':''));const thead=node('thead'),hr=node('tr');hr.appendChild(node('th','', 'excel-corner'));
 for(let c=0;c<sh.cols;c++)hr.appendChild(node('th',S.col(c),'excel-col'));thead.appendChild(hr);table.appendChild(thead);
 const tbody=node('tbody');for(let r=0;r<sh.rows;r++){
  const tr=node('tr');tr.appendChild(node('th',r+1,'excel-row'));for(let c=0;c<sh.cols;c++){

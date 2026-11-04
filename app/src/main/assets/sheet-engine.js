@@ -16,8 +16,18 @@ const expenseSections={
  'Библиотеки и культура':'0800','Социальная политика':'1000','Поддержка семей с детьми':'1000',
  'Физическая культура и спорт':'1100','Содержание спортивных площадок':'1100','Обслуживание муниципального долга':'1300'
 };
-const transfers=new Set(['Дотации на выравнивание бюджета','Субсидии из регионального бюджета','Субвенции на переданные полномочия','Межбюджетные трансферты']);
-function budgetCode(row){if(row.kind==='Доход')return 'гр. '+(transfers.has(row.name)?'2':'1');const v=expenseSections[row.name];return v?'рзд. '+v:'уточнить';}
+const incomeSubgroups={
+ 'Налог на доходы физических лиц':'101','Земельный налог':'106','Налог на имущество физических лиц':'106',
+ 'Единый сельскохозяйственный налог':'105','Налог по упрощённой системе налогообложения':'105',
+ 'Доходы от аренды муниципального имущества':'111','Аренда земельных участков':'111','Доходы от концессий':'111',
+ 'Продажа муниципального имущества':'114','Доходы от платных муниципальных услуг':'113','Государственная пошлина':'108',
+ 'Штрафы за нарушение благоустройства':'116','Поступления от возмещения ущерба':'116','Плата за негативное воздействие на окружающую среду':'112',
+ 'Иные неналоговые доходы':'117','Дотации на выравнивание бюджета':'202','Субсидии из регионального бюджета':'202',
+ 'Субвенции на переданные полномочия':'202','Межбюджетные трансферты':'202'
+};
+// Коды в формате сводных строк отчёта: нули означают уровень группировки.
+// Это не платёжные КБК и не уникальный код конкретной статьи.
+function budgetCode(row){if(row.kind==='Доход'){const group=incomeSubgroups[row.name];return group?'000 '+group[0]+' '+group.slice(1)+' 00000 00 0000 000':'уточнить';}const section=expenseSections[row.name];return section?'000 '+section+' 0000000000 000':'уточнить';}
 
 function create(task){
  const w={kind:task.kind,id:task.id,task,order:[],sheets:{},targets:[],hintMap:{}};
@@ -47,11 +57,11 @@ function create(task){
    sh.rows=tr+3;
  }else if(task.kind==='budget'&&task.budgetSplit){
    const sh=add('Бюджет',10,task.rows.length+11);
-   head(sh,0,['№','Статья бюджета','Фрагмент кода','План, тыс.','Факт, тыс.','Доход, тыс.','Расход, тыс.','Доля, %','Исполнение, %','Отклонение']);
+   head(sh,0,['№','Статья бюджета','Групповой код (20 цифр)','План, тыс.','Факт, тыс.','Доход, тыс.','Расход, тыс.','Доля, %','Исполнение, %','Отклонение']);
    input(sh,1,1,'Перенеси факт в доход или расход; другую ячейку оставь пустой.');
    const end=task.rows.length+3,start=task.rows.length+5;
    task.rows.forEach((row,i)=>{const r=i+3,R=r+1,id='b'+i;
-     input(sh,0,r,i+1);input(sh,1,r,row.name);input(sh,2,r,budgetCode(row));input(sh,3,r,row.plan);input(sh,4,r,row.actual);
+     input(sh,0,r,i+1);input(sh,1,r,row.name);input(sh,2,r,budgetCode(row));sh.values[addr(2,r)].asText=true;input(sh,3,r,row.plan);input(sh,4,r,row.actual);
      for(const [c,k] of [[5,'Доход'],[6,'Расход']]){target(sh,c,r,row.kind===k?row.actual:0,'Перенеси факт из E'+R+' в столбец дохода или расхода.',row.name+' — '+k,id+k,false);w.targets[w.targets.length-1].blankIsZero=true;}
      const side=row.kind==='Доход'?'F':'G',den=task.rows.length+(row.kind==='Доход'?6:7);
      target(sh,7,r,norm(row.actual/task.summary[row.kind].actual*100),'='+side+R+'/E'+den+'*100',row.name+' — доля, %',id+'share');
@@ -120,7 +130,7 @@ throw Error('#ФОРМУЛА!');}
 if(out.length>400)throw Error('#ФОРМУЛА!');out.push({t:'end'});return out;
 }
 function calc(w,sheet,a,stack){const sh=w.sheets[sheet];if(!sh)throw Error('#REF!');const cell=sh.values[a];if(!cell||cell.raw===undefined||cell.raw===null||String(cell.raw)==='')return 0;
-const raw=cell.raw;if(typeof raw==='number')return raw;if(typeof raw!=='string'||!raw.startsWith('=')){const n=Number(raw.trim().replace(/\s/g,'').replace(',','.'));return raw.trim()!==''&&Number.isFinite(n)?n:raw;}
+const raw=cell.raw;if(cell.asText)return String(raw);if(typeof raw==='number')return raw;if(typeof raw!=='string'||!raw.startsWith('=')){const n=Number(raw.trim().replace(/\s/g,'').replace(',','.'));return raw.trim()!==''&&Number.isFinite(n)?n:raw;}
 const key=sheet+'!'+a;if(stack.includes(key))throw Error('#ЦИКЛ!');if(stack.length>75)throw Error('#ЦИКЛ!');stack.push(key);
 try{const tokens=lex(raw.slice(1));let ix=0;const peek=()=>tokens[ix].t;const take=t=>{if(peek()!==t)throw Error('#ФОРМУЛА!');return tokens[ix++];};
 function val(v){if(Array.isArray(v))return v.flat(Infinity).map(val);if(v===null||v==='')return null;if(typeof v==='number')return v;if(typeof v==='string'){const n=Number(v.replace(',','.'));return Number.isFinite(n)?n:v;}return v;}

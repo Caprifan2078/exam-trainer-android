@@ -18,7 +18,7 @@ const assert=require('node:assert/strict');
   await page.locator('td[data-addr="E6"]').click();assert.equal(await input.inputValue(),'=СРЗНАЧ(E6');
   await input.fill('=D6');await page.locator('.excel-commit').click();
   assert.equal(await page.locator('td[data-addr="H6"]').innerText(),await page.locator('td[data-addr="D6"]').innerText());
-  await page.evaluate(()=>localStorage.clear());await page.reload();await page.locator('#kind').selectOption('budget');await page.locator('#start').click();assert.match(await page.locator('td[data-addr="C1"]').innerText(),/Фрагмент кода/);assert.match(await page.locator('td[data-addr="C4"]').innerText(),/(гр\. [12]|рзд\. [0-9]{4}|уточнить)/);
+  await page.evaluate(()=>localStorage.clear());await page.reload();await page.locator('#kind').selectOption('budget');await page.locator('#start').click();assert.match(await page.locator('td[data-addr="C1"]').innerText(),/Групповой код/);assert.match(await page.locator('td[data-addr="C4"]').innerText(),/(000 [12]|000 [0-9]{4}|уточнить)/);
   await page.evaluate(()=>localStorage.clear());await page.reload();
   await page.locator('#kind').selectOption('financial');await page.locator('#start').click();
   await page.locator('td[data-addr="C3"]').click();await input.fill('=');
