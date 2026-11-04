@@ -371,8 +371,13 @@ body.exam-solving #work .nmck-navigation{top:auto}
 /* Бюджет: длинные групповые коды полностью видны и сохраняют нули. */
 #work .budget-grid th:nth-child(4),#work .budget-grid td:nth-child(4){width:220px!important;min-width:220px!important;max-width:220px!important;font-family:monospace;text-align:left;white-space:nowrap!important;font-size:11px!important;}
 
+@media(max-width:600px){#work .excel-grid td.excel-editing .excel-input{font-size:16px!important}}
+
+/* На широком экране отдаём таблице больше места, сохраняя отступы страницы. */
+@media(min-width:1000px){body.exam-solving main{max-width:min(1720px,calc(100% - 32px))}}
+
 </style></head><body>
-<header><div class="logo">∑</div><div><div class="eyebrow">ТРЕНАЖЁР ДЕМОЭКЗАМЕНА</div><h1>Экзаменатор <small>0.9.21 · учебная QA-сборка</small></h1></div></header>
+<header><div class="logo">∑</div><div><div class="eyebrow">ТРЕНАЖЁР ДЕМОЭКЗАМЕНА</div><h1>Экзаменатор <small>0.9.23 · учебная QA-сборка</small></h1></div></header>
 <main>
 <section id="home"><div class="hero"><p class="eyebrow">РАСЧЁТЫ ВЫПОЛНЯЕШЬ САМ · ПОДСКАЗКИ ПО ЖЕЛАНИЮ</p><h2>Учись решать.<br><em>Проверяй себя.</em></h2><p>Новые компании, показатели и суммы для каждого задания. Формулы вводишь ты — приложение только проверяет готовую таблицу.</p></div>
 <div class="panel"><label for="kind">Тип задания</label><select id="kind"><option value="nmck">НМЦК — коммерческие предложения</option><option value="budget">Муниципальный бюджет</option><option value="financial">Финансовый анализ</option></select>
@@ -380,12 +385,11 @@ body.exam-solving #work .nmck-navigation{top:auto}
 <details class="panel"><summary>Как читать бюджетные коды</summary><p>Код бюджетной классификации состоит из нескольких частей. Например, в части кода доходов элемент 01 обозначает федеральный бюджет, 02 — бюджет субъекта РФ. Значение 00 зависит от позиции и контекста. Код 2 00 00000 00 может обозначать безвозмездные поступления, то есть доход, а не расход. В таблице показаны 20-значные групповые коды: подгруппа дохода или раздел расходов. Нули означают уровень группировки: это не детальный платёжный КБК и не уникальный код отдельной статьи. Если данных недостаточно, написано «уточнить».</p></details><p class="note">Данные учебные, без реальных предприятий. Интернет и регистрация не нужны.</p><div class="stats" id="stats"></div></section>
 <section id="work" hidden><button class="back" id="back">‹ К выбору задания</button><div class="hero"><p class="eyebrow">ПРАКТИЧЕСКОЕ ЗАДАНИЕ</p><h2 id="task-title"></h2><p id="task-org"></p><p id="task-meta" class="muted"></p></div>
 <h3>01 · Таблица Excel</h3><div id="sources"></div><p class="note" id="task-notes"></p>
-<section id="written-review" class="panel" hidden><h3>Письменный вывод</h3><p>Напиши вывод по заданию своими словами. Проверка ищет основные признаки и может ошибаться — перечитай замечания.</p><textarea id="review-text" rows="5" style="width:100%;box-sizing:border-box" placeholder="Например: фактические доходы ..."></textarea><button type="button" id="review-check">Проверить вывод</button><button type="button" id="review-example">Показать пример вывода</button><p id="review-result" aria-live="polite"></p></section><h3 id="verification-title">02 · Проверка таблицы</h3><p class="muted">Выбери жёлтую ячейку, введи формулу в fx и нажми ✓. Кнопки «Ячейка ← / →» помогут перейти к следующему расчёту. Масштаб таблицы регулируется от 15% до 250%.</p><div id="questions"></div>
+<section id="written-review" class="panel" hidden><h3>Письменный вывод</h3><p>Напиши вывод по заданию своими словами. Проверка ищет основные признаки и может ошибаться — перечитай замечания.</p><textarea id="review-text" rows="5" style="width:100%;box-sizing:border-box" placeholder="Например: фактические доходы ..."></textarea><button type="button" id="review-check">Проверить вывод</button><button type="button" id="review-example">Показать пример вывода</button><p id="review-result" aria-live="polite"></p></section><h3 id="verification-title">02 · Проверка таблицы</h3><p class="muted">Нажми на жёлтую ячейку и вводи формулу прямо в ней. Для сохранения нажми Enter или ✓. Кнопки «Ячейка ← / →» помогут перейти к следующему расчёту. Масштаб таблицы регулируется от 15% до 250%.</p><div id="questions"></div>
 <button class="primary" id="check">Проверить ответы ✓</button><button class="secondary" id="again">Новый случайный вариант ↻</button>
 <div id="results" hidden><h3 id="score"></h3><p id="message"></p><button id="hints-button" class="secondary">Показать правильные ответы и формулы</button><div id="hints" hidden></div></div></section>
 </main>
-<script>
-/* Offline exam engine: synthetic data, independent arithmetic answer key. */
+<script>/* Offline exam engine: synthetic data, independent arithmetic answer key. */
 (function(root,factory){const x=factory();root.ExamEngine=x;if(typeof module!=='undefined'&&module.exports)module.exports=x;})(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
 const pre=['Северный','Балтийский','Волжский','Сибирский','Лесной','Центральный','Прибрежный','Ладожский','Уральский','Московский','Новый','Ясный','Современный','Открытый','Полярный','Степной','Озёрный','Невский','Восточный','Дальний','Зелёный','Надёжный','Первый','Городской','Региональный'];
@@ -498,11 +502,10 @@ function financial(level){
 }
 function generate(kind='nmck',level='medium'){if(!['easy','medium','hard'].includes(level))throw Error('Уровень');const t=kind==='nmck'?nmck(level):kind==='budget'?budget(level):kind==='financial'?financial(level):null;if(!t)throw Error('Тип задания');return Object.assign(t,{level,id:Date.now()+'-'+rand(1000,9999)});}
 function numeric(s){if(typeof s==='number')return s;if(typeof s!=='string')return NaN;s=s.trim().replace(/[\s\u00a0\u202f]/g,'').replace(/%$/,'').replace(',','.');return /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(s)?Number(s):NaN;}
-function check(q,s){if(s===null||s===undefined||String(s).trim()==='')return 'empty';if(typeof q.answer==='string'){return String(s).trim().toLowerCase().replace(/ё/g,'е')===q.answer.toLowerCase().replace(/ё/g,'е')?'ok':'bad';}const v=numeric(s);return Number.isFinite(v)&&Math.abs(v-q.answer)<=Math.max(0.011,Math.abs(q.answer)*1e-9)?'ok':'bad';}
+function check(q,s){if(s===null||s===undefined||String(s).trim()==='')return 'empty';if(typeof q.answer==='string'){return String(s).trim().toLowerCase().replace(/ё/g,'е')===q.answer.toLowerCase().replace(/ё/g,'е')?'ok':'bad';}const v=numeric(s);return Number.isFinite(v)&&Math.abs(v-q.answer)<=Math.max(0.005000001,Math.abs(q.answer)*Number.EPSILON*16)?'ok':'bad';}
 function grade(t,answers){const details=t.questions.map(q=>Object.assign({},q,{status:check(q,answers[q.id])})),ok=details.filter(r=>r.status==='ok').length;return{details,ok,total:details.length,percent:round(ok/details.length*100,0)};}
 return{generate,grade,check,numeric,round,bnames,pnames,metricNames,income,expense,goods};
 });
-
 
 </script><script>
 /* v0.7 supplemental generator. Loads after engine.js, before app.js. */
@@ -705,8 +708,7 @@ E.generate=function(kind,level,options){const t=kind==='nmck'?nmck(level,options
 })(typeof globalThis!=='undefined'?globalThis:this);
 
 
-</script><script>
-/* ExamTrainer v0.8: spreadsheet-style practice engine; no eval(), no network. */
+</script><script>/* ExamTrainer v0.8: spreadsheet-style practice engine; no eval(), no network. */
 (function(root,factory){const m=factory();root.ExamSheets=m;if(typeof module!=='undefined'&&module.exports)module.exports=m;})(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
 const MAX_ROWS=145,MAX_COLS=17;
@@ -892,16 +894,14 @@ function expression(){let x=additive();while(['=','>','<','>=','<=','<>'].includ
 const result=expression();if(peek()!=='end')throw Error('#ФОРМУЛА!');if(typeof result==='number'&&!Number.isFinite(result))throw Error('#ЗНАЧ!');return result;
 }finally{stack.pop();}}
 function value(w,s,a){try{return calc(w,s,a,[]);}catch(e){return /^#/.test(e.message)?e.message:'#ОШИБКА!';}}
-function grade(w){let passed=0;const results=[];for(const t of w.targets){const cel=w.sheets[t.sheet].values[t.addr],raw=cel?.raw||'',v=value(w,t.sheet,t.addr);let status=t.blankIsZero&&t.answer===0?'ok':'empty';if(String(raw).trim()){if(typeof v==='string'&&v.startsWith('#'))status='bad';else{const good=typeof t.answer==='number'?typeof v==='number'&&Math.abs(v-t.answer)<=(t.tolerance??Math.max(.011,Math.abs(t.answer)*1e-9)):String(v).trim().toLowerCase().replace(/ё/g,'е')===String(t.answer).toLowerCase().replace(/ё/g,'е');status=good?(t.formula&&(!String(raw).startsWith('=')||(w.template==='nmck-solved'&&!/\$?[A-Z]{1,2}\$?[1-9][0-9]{0,2}(?![0-9])/i.test(String(raw))))?'need-formula':'ok'):'bad';}}
+function grade(w){let passed=0;const results=[];for(const t of w.targets){const cel=w.sheets[t.sheet].values[t.addr],raw=cel?.raw||'',v=value(w,t.sheet,t.addr);let status=t.blankIsZero&&t.answer===0?'ok':'empty';if(String(raw).trim()){if(typeof v==='string'&&v.startsWith('#'))status='bad';else{const good=typeof t.answer==='number'?typeof v==='number'&&Math.abs(v-t.answer)<=(t.tolerance??Math.max(.005000001,Math.abs(t.answer)*Number.EPSILON*16)):String(v).trim().toLowerCase().replace(/ё/g,'е')===String(t.answer).toLowerCase().replace(/ё/g,'е');status=good?(t.formula&&(!String(raw).startsWith('=')||(w.template==='nmck-solved'&&!/\$?[A-Z]{1,2}\$?[1-9][0-9]{0,2}(?![0-9])/i.test(String(raw))))?'need-formula':'ok'):'bad';}}
  if(status==='ok')passed++;results.push({...t,value:v,status,raw});}
  return{passed,total:w.targets.length,percent:Math.round(passed/w.targets.length*100),results};}
 function save(w){const entries={};for(const name of w.order){const sh=w.sheets[name];entries[name]=Object.fromEntries(Object.entries(sh.values).filter(([k,v])=>!v.locked).map(([k,v])=>[k,v.raw]));}return entries;}
 function load(w,entries){for(const [name,table] of Object.entries(entries||{}))if(w.sheets[name])for(const [a,v] of Object.entries(table))if(w.sheets[name].editable[a])write(w,name,a,v);}
 return{create,setEngine,col,addr,decode,write,value,grade,save,load};
 });
-
-</script><script>
-/* v0.9.3 — NMCK working sheet matches supplied solved Excel templates (3 or 5 KP). */
+</script><script>/* v0.9.3 — NMCK working sheet matches supplied solved Excel templates (3 or 5 KP). */
 (function(root) {
 'use strict';
 const S=root.ExamSheets,E=root.ExamEngine;
@@ -951,11 +951,12 @@ function render(task){
   editable(avg,r,mean.answer,'Средняя цена, руб.','=СРЗНАЧ('+area+')',id+'avg');
   editable(sd,r,deviation.answer,'Среднее квадратичное отклонение','=СТАНДОТКЛОН.В('+area+')',id+'sd');
   editable(cv,r,variation.answer,'Коэффициент вариации, %','='+letter(sd)+R+'/'+letter(avg)+R+'*100',id+'cv');
-  editable(calc,r,total.answer,'Расчёт НМЦК позиции','=ОКРУГЛ('+letter(avg)+R+';2)*D'+R,id+'calc');
   const chosen=q('selected'),chosenTotal=q('selectedTotal');
+  const calcHint=task.offerRule?'=ЕСЛИ('+letter(unit)+R+'="Нет цены ниже средней";"Нет цены ниже средней";'+letter(unit)+R+'*D'+R+')':'=ОКРУГЛ('+letter(avg)+R+';2)*D'+R;
+  editable(calc,r,task.offerRule&&chosenTotal?chosenTotal.answer:total.answer,'Расчёт НМЦК позиции',calcHint,id+'calc');
   if(task.offerRule&&chosen){editable(unit,r,chosen.answer,'Выбранное предложение','Выбери цену, ближайшую к средней и строго меньше неё; введи число или ссылку на предложение.',id+'selected');w.targets[w.targets.length-1].formula=false;}
   else editable(unit,r,E.round(mean.answer),'Цена за одну единицу','=ОКРУГЛ('+letter(avg)+R+';2)',id+'unit');
-  editable(amount,r,task.offerRule&&chosenTotal?chosenTotal.answer:total.answer,'Сумма выбранного предложения',task.offerRule?'=ЕСЛИ('+letter(unit)+R+'="Нет цены ниже средней";"Нет цены ниже средней";'+letter(unit)+R+'*D'+R+')':'='+letter(unit)+R+'*D'+R,id+'amount');
+  editable(amount,r,task.offerRule&&chosenTotal?chosenTotal.answer:total.answer,'Сумма выбранного предложения',task.offerRule?'='+letter(calc)+R:'='+letter(unit)+R+'*D'+R,id+'amount');
  });
  const footer=task.rows.length+5,R=footer+1;
  sh.spans['B'+R]=sh.cols-2;
@@ -978,7 +979,6 @@ S.create=function(task){
  return render(task);
 };
 })(typeof globalThis!=='undefined'?globalThis:this);
-
 
 </script><script>
 /* Small XLSX writer (ZIP STORE + OOXML), no external dependency or network. */
@@ -1044,8 +1044,7 @@ function candidates(value,cursor){
 function insert(value,start,end,text){const str=String(value),pos=Math.max(0,Math.min(str.length,start)),stop=Math.max(pos,Math.min(str.length,end));return{value:str.slice(0,pos)+text+str.slice(stop),caret:pos+text.length};}
 return{catalog,candidates,insert};});
 
-</script><script>
-/* ExamTrainer v0.8: mobile spreadsheet as the primary, not a form quiz. */
+</script><script>/* ExamTrainer v0.8: mobile spreadsheet as the primary, not a form quiz. */
 (function(){'use strict';
 /* Android System WebView compatibility: replaceChildren() is absent in older builds. */
 if(typeof Element.prototype.replaceChildren!=='function'){
@@ -1075,7 +1074,7 @@ const bar=node('div',undefined,'excel-formula-bar');
 const address=node('span','A1','excel-addr');address.setAttribute('aria-label','Адрес выбранной ячейки');
 const fx=node('span','fx','excel-fx');
 const input=node('input',undefined,'excel-input');input.type='text';input.autocomplete='off';input.spellcheck=false;input.placeholder='Введи число или формулу =…';
-input.setAttribute('aria-label','Ввод формул');
+input.setAttribute('aria-label','Ввод формул');input.maxLength=300;
 const commit=node('button','✓','excel-commit');commit.type='button';commit.setAttribute('aria-label','Применить формулу');
 const undo=node('button','↶','excel-undo');undo.type='button';undo.setAttribute('aria-label','Отменить последнюю формулу');undo.disabled=true;
 bar.append(address,fx,input,undo,commit);
@@ -1219,7 +1218,7 @@ function flush(){if(pendingReference)restoreReference(null);if(!w||!active||!sel
  if(String(previous)!==String(input.value)){history.push({sheet:active,addr:selected,raw:previous});if(history.length>30)history.shift();}
  undo.disabled=!history.length;
  editDirty=false;closeInline();invalidateCheck();refreshValues();saveDraft();updateProgress();info.textContent='Формула сохранена. Выбери следующую ячейку или проверь работу.';}catch(e){info.textContent=e.message;}}
-function refreshValues(){if(!w)return;for(const cell of gridbox.querySelectorAll('td[data-addr]')){const v=w.sheets[active].values[cell.dataset.addr];cell.textContent=v&&String(v.raw).trim()!==''?fmt(S.value(w,active,cell.dataset.addr)):'';cell.classList.remove('excel-pass','excel-fail','excel-needs');}
+function refreshValues(){if(!w)return;for(const cell of gridbox.querySelectorAll('td[data-addr]')){const v=w.sheets[active].values[cell.dataset.addr];if(cell!==inlineCell)cell.textContent=v&&String(v.raw).trim()!==''?fmt(S.value(w,active,cell.dataset.addr)):'';cell.classList.remove('excel-pass','excel-fail','excel-needs');}
  if(checked)for(const r of checked.results)if(r.sheet===active){const el=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(x=>x.dataset.addr===r.addr);if(el)el.classList.add(r.status==='ok'?'excel-pass':r.status==='need-formula'?'excel-needs':'excel-fail');}}
 function check(){
  flush();checked=S.grade(w);refreshValues();
@@ -1250,7 +1249,8 @@ function saveDraft(){
  try{
  if(!w)return;
  viewMemory[active]={selected,scrollLeft:gridbox.scrollLeft,scrollTop:gridbox.scrollTop};
- localStorage.setItem('examSheetsDraft',JSON.stringify({task,entries:S.save(w),active,viewMemory}));
+ const entries=S.save(w);if(editDirty&&!pendingReference&&w.sheets[active]?.editable[selected])entries[active][selected]=input.value;
+ localStorage.setItem('examSheetsDraft',JSON.stringify({task,entries,active,viewMemory}));
  }catch(e){}
 }
 function restoreDraft(){try{const v=JSON.parse(localStorage.getItem('examSheetsDraft')||'null');if(!v?.task?.kind||!Array.isArray(v.task.questions))return;task=v.task;w=S.create(task);S.load(w,v.entries);active=w.sheets[v.active]?v.active:w.order[0];Object.assign(viewMemory,v.viewMemory||{});selected=viewMemory[active]?.selected||'';showWork();}catch(e){}}
@@ -1271,7 +1271,8 @@ gridbox.addEventListener('keydown',e=>{
  const cell=gridbox.querySelector('td[data-addr="'+S.addr(c,r)+'"]');if(cell){e.preventDefault();cell.click();}
 });
 input.addEventListener('click',e=>e.stopPropagation());
-input.addEventListener('input',()=>{editDirty=true;showSuggestions();});input.addEventListener('click',showSuggestions);input.addEventListener('keydown',e=>{
+let draftTimer;input.addEventListener('input',()=>{editDirty=true;showSuggestions();clearTimeout(draftTimer);draftTimer=setTimeout(saveDraft,400);});
+window.addEventListener('pagehide',()=>{if(editDirty)saveDraft();});document.addEventListener('visibilitychange',()=>{if(editDirty&&document.visibilityState==='hidden')saveDraft();});input.addEventListener('click',showSuggestions);input.addEventListener('keydown',e=>{
  if(suggestions&&e.key==='ArrowDown'){e.preventDefault();moveSuggestion(1);return;}
  if(suggestions&&e.key==='ArrowUp'){e.preventDefault();moveSuggestion(-1);return;}
  if(suggestions&&(e.key==='Enter'||e.key==='Tab')){e.preventDefault();acceptSuggestion(suggestionIndex);return;}
@@ -1280,7 +1281,7 @@ input.addEventListener('input',()=>{editDirty=true;showSuggestions();});input.ad
   const cells=Array.from(gridbox.querySelectorAll('td.excel-editable[data-addr]')),index=cells.findIndex(c=>c.dataset.addr===selected),next=index+(e.shiftKey?-1:1);
   if(index>=0&&next>=0&&next<cells.length){e.preventDefault();flush();cells[next].click();input.focus();}return;
  }
- if(e.key==='Enter'){e.preventDefault();flush();input.blur();}else if(e.key==='Escape'){e.preventDefault();select(selected);}});
+ if(e.key==='Enter'){e.preventDefault();flush();input.blur();}else if(e.key==='Escape'){e.preventDefault();editDirty=false;closeSuggestions();select(selected);saveDraft();}});
 commit.addEventListener('click',flush);
 undo.addEventListener('click',()=>{
  if(pendingReference)restoreReference(null);
@@ -1304,7 +1305,6 @@ exportButton.addEventListener('click',()=>{flush();try{const b64=window.ExamXlsx
  }catch(e){alert('Не удалось сохранить XLSX: '+e.message);}});
 restoreDraft();try{const st=JSON.parse(localStorage.getItem('examStats')||'{}');$('stats').textContent='Проверено работ: '+(st.count||0)+' · Лучший результат '+(st.best||0)+'%';}catch(e){}
 })();
-
 </script><script>
 /* Financial-analysis formula suggestions based on the actual balance / P&L cells.
    Reference code-to-row mapping ensures source links work with expanded BFO codes. */
