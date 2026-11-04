@@ -17,6 +17,7 @@ jobs:
       - run: node qa_tests/offline-browser.cjs
       - run: node qa_tests/modes.cjs
       - run: node qa_tests/features.cjs
+      - run: node qa_tests/deep.cjs
 
       - uses: actions/upload-artifact@v4
         if: always()
