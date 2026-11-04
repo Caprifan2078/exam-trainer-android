@@ -15,6 +15,7 @@ jobs:
           node-version: '22'
       - run: npm install --no-save --no-audit --no-fund playwright-core@1.48.2
       - run: node qa_tests/offline-browser.cjs
+      - run: node qa_tests/modes.cjs
 
       - uses: actions/upload-artifact@v4
         if: always()
