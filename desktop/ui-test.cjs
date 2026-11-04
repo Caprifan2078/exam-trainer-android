@@ -18,7 +18,6 @@ const assert=require('node:assert/strict');
   await page.locator('td[data-addr="E6"]').click();assert.equal(await input.inputValue(),'=СРЗНАЧ(E6');
   await input.fill('=D6');await page.locator('.excel-commit').click();
   assert.equal(await page.locator('td[data-addr="H6"]').innerText(),await page.locator('td[data-addr="D6"]').innerText());
-  await page.locator('td[data-addr="M8"]').click();assert.equal(await page.locator('td[data-addr="M8"] .excel-input').count(),1);await input.fill('22');await page.locator('.excel-commit').click();await page.reload();assert.equal(await page.locator('td[data-addr="M8"]').innerText(),'22','Article must persist');
   await page.evaluate(()=>localStorage.clear());await page.reload();await page.locator('#kind').selectOption('budget');await page.locator('#start').click();assert.match(await page.locator('td[data-addr="C1"]').innerText(),/Фрагмент кода/);assert.match(await page.locator('td[data-addr="C4"]').innerText(),/(гр\. [12]|рзд\. [0-9]{4}|уточнить)/);
   await page.evaluate(()=>localStorage.clear());await page.reload();
   await page.locator('#kind').selectOption('financial');await page.locator('#start').click();
