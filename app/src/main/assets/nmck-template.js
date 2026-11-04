@@ -48,11 +48,12 @@ function render(task){
   editable(avg,r,mean.answer,'Средняя цена, руб.','=СРЗНАЧ('+area+')',id+'avg');
   editable(sd,r,deviation.answer,'Среднее квадратичное отклонение','=СТАНДОТКЛОН.В('+area+')',id+'sd');
   editable(cv,r,variation.answer,'Коэффициент вариации, %','='+letter(sd)+R+'/'+letter(avg)+R+'*100',id+'cv');
-  editable(calc,r,total.answer,'Расчёт НМЦК позиции','=ОКРУГЛ('+letter(avg)+R+';2)*D'+R,id+'calc');
   const chosen=q('selected'),chosenTotal=q('selectedTotal');
+  const calcHint=task.offerRule?'=ЕСЛИ('+letter(unit)+R+'="Нет цены ниже средней";"Нет цены ниже средней";'+letter(unit)+R+'*D'+R+')':'=ОКРУГЛ('+letter(avg)+R+';2)*D'+R;
+  editable(calc,r,task.offerRule&&chosenTotal?chosenTotal.answer:total.answer,'Расчёт НМЦК позиции',calcHint,id+'calc');
   if(task.offerRule&&chosen){editable(unit,r,chosen.answer,'Выбранное предложение','Выбери цену, ближайшую к средней и строго меньше неё; введи число или ссылку на предложение.',id+'selected');w.targets[w.targets.length-1].formula=false;}
   else editable(unit,r,E.round(mean.answer),'Цена за одну единицу','=ОКРУГЛ('+letter(avg)+R+';2)',id+'unit');
-  editable(amount,r,task.offerRule&&chosenTotal?chosenTotal.answer:total.answer,'Сумма выбранного предложения',task.offerRule?'=ЕСЛИ('+letter(unit)+R+'="Нет цены ниже средней";"Нет цены ниже средней";'+letter(unit)+R+'*D'+R+')':'='+letter(unit)+R+'*D'+R,id+'amount');
+  editable(amount,r,task.offerRule&&chosenTotal?chosenTotal.answer:total.answer,'Сумма выбранного предложения',task.offerRule?'='+letter(calc)+R:'='+letter(unit)+R+'*D'+R,id+'amount');
  });
  const footer=task.rows.length+5,R=footer+1;
  sh.spans['B'+R]=sh.cols-2;

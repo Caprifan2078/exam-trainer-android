@@ -13,3 +13,9 @@ assert.equal(E.check({answer:1.31},'1.3051'),'ok','An unrounded result that roun
  S.write(w,x.sheet,x.addr,'='+String(x.answer-0.01));
  assert.equal(S.grade(w).results.find(y=>y.id===x.id).status,'bad','Spreadsheet must reject a one-hundredth error');
 }
+{
+ const t=E.generate('nmck','medium',{offers:3}),r=t.rows[0];r.quantity=3;r.prices=[100,110,120];
+ for(const [id,v] of Object.entries({n0avg:110,n0sd:10,n0cv:9.09,n0amount:330,n0selected:100,n0selectedTotal:300,total:330}))t.questions.find(q=>q.id===id).answer=v;
+ const w=S.create(t);for(const x of w.targets)S.write(w,x.sheet,x.addr,x.formula?x.hint:String(x.answer));
+ assert.equal(S.grade(w).percent,100);assert.equal(S.value(w,'НМЦК','K6'),300,'Formula price must follow the selected offer');assert.equal(S.value(w,'НМЦК','M6'),300);
+}
