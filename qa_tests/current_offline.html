@@ -369,7 +369,7 @@ body.exam-solving #work .nmck-navigation{top:auto}
 #review-result {white-space:pre-line;}
 
 </style></head><body>
-<header><div class="logo">∑</div><div><div class="eyebrow">ТРЕНАЖЁР ДЕМОЭКЗАМЕНА</div><h1>Экзаменатор <small>0.9.19 · учебная QA-сборка</small></h1></div></header>
+<header><div class="logo">∑</div><div><div class="eyebrow">ТРЕНАЖЁР ДЕМОЭКЗАМЕНА</div><h1>Экзаменатор <small>0.9.20 · учебная QA-сборка</small></h1></div></header>
 <main>
 <section id="home"><div class="hero"><p class="eyebrow">РАСЧЁТЫ ВЫПОЛНЯЕШЬ САМ · ПОДСКАЗКИ ПО ЖЕЛАНИЮ</p><h2>Учись решать.<br><em>Проверяй себя.</em></h2><p>Новые компании, показатели и суммы для каждого задания. Формулы вводишь ты — приложение только проверяет готовую таблицу.</p></div>
 <div class="panel"><label for="kind">Тип задания</label><select id="kind"><option value="nmck">НМЦК — коммерческие предложения</option><option value="budget">Муниципальный бюджет</option><option value="financial">Финансовый анализ</option></select>
@@ -951,9 +951,6 @@ function render(task){
  const total=task.questions.find(x=>x.id==='total');
  if(!total)throw Error('Не найден итог НМЦК');
  editable(amount,footer,task.offerRule?(task.questions.find(x=>x.id==='n0selectedTotal')||total).answer:total.answer,'Итог по выбранному предложению',task.offerRule?'='+letter(amount)+'6':'=СУММ('+letter(amount)+'6:'+letter(amount)+(task.rows.length+5)+')','total');
- sh.spans['B'+(R+1)]=sh.cols-2;
- fixed(1,footer+1,'Номер статьи / код по заданию (введи самостоятельно):');
- sh.editable[letter(amount)+(R+1)]=true;
  fixed(1,footer+3,'Дата составления: __________________');
  fixed(1,footer+4,'Работник контрактной службы:');
  fixed(1,footer+5,'Должность: _______________________');
@@ -1646,8 +1643,8 @@ function facts(t){
   const total=t.questions.find(q=>q.id==='total').answer;
   const problematic=t.rows.map((r,i)=>{const mean=r.prices.reduce((a,b)=>a+b,0)/r.prices.length;return {i,cv:100*Math.sqrt(r.prices.reduce((a,b)=>a+(b-mean)**2,0)/(r.prices.length-1))/mean};}).filter(x=>x.cv>33);
   const row=t.rows[0],avg=row.prices.reduce((a,b)=>a+b,0)/row.prices.length,sd=Math.sqrt(row.prices.reduce((a,b)=>a+(b-avg)**2,0)/(row.prices.length-1)),cv=sd/avg*100,selected=row.prices.filter(x=>x<avg).sort((a,b)=>b-a)[0],indexes=selected===undefined?[]:row.prices.map((x,i)=>x===selected?i+1:0).filter(Boolean);
-  if(t.offerRule)return {problematic,avg,cv,selected,indexes,example:(problematic.length?'Предварительный учебный расчёт: ':'')+'Коэффициент вариации равен '+cv.toFixed(2).replace('.',',')+'%; '+(cv<=33?'он не превышает 33%, предложения однородны.':'он превышает 33%; предложения неоднородны, требуется дополнительный анализ цен.')+' Средняя цена контракта за единицу — '+avg.toFixed(2).replace('.',',')+' руб.; расчёт по средней цене с учётом количества — '+total+' руб. '+(selected===undefined?'Цены ниже средней нет: выбрать предложение по учебному правилу невозможно.':'По правилу задания выбрано предложение № '+indexes.join(' или № ')+' по цене '+selected+' руб. за единицу: оно ближе всех к средней цене и строго меньше её. Сумма выбранного предложения — '+(selected*row.quantity)+' руб.')};
-  return {problematic,avg,cv,selected,indexes,example:(problematic.length?'Предварительный учебный расчёт НМЦК: ':'НМЦК одного контракта по учебному методу составляет ')+total+' руб. '+(problematic.length?'По позициям '+problematic.map(x=>x.i+1).join(', ')+' коэффициент вариации превышает 33%; необходим дополнительный анализ цен.':'Коэффициент вариации по каждой позиции не превышает 33%; цены в учебном примере однородны.')};
+  if(t.offerRule)return {problematic,avg,cv,selected,indexes,example:'Обоснование НМЦК: статья 22 Федерального закона № 44-ФЗ. '+(problematic.length?'Предварительный учебный расчёт: ':'')+'Коэффициент вариации равен '+cv.toFixed(2).replace('.',',')+'%; '+(cv<=33?'он не превышает 33%, предложения однородны.':'он превышает 33%; предложения неоднородны, требуется дополнительный анализ цен.')+' Средняя цена контракта за единицу — '+avg.toFixed(2).replace('.',',')+' руб.; расчёт по средней цене с учётом количества — '+total+' руб. '+(selected===undefined?'Цены ниже средней нет: выбрать предложение по учебному правилу невозможно.':'По правилу задания выбрано предложение № '+indexes.join(' или № ')+' по цене '+selected+' руб. за единицу: оно ближе всех к средней цене и строго меньше её. Сумма выбранного предложения — '+(selected*row.quantity)+' руб.')};
+  return {problematic,avg,cv,selected,indexes,example:'Обоснование НМЦК: статья 22 Федерального закона № 44-ФЗ. '+(problematic.length?'Предварительный учебный расчёт НМЦК: ':'НМЦК одного контракта по учебному методу составляет ')+total+' руб. '+(problematic.length?'По позициям '+problematic.map(x=>x.i+1).join(', ')+' коэффициент вариации превышает 33%; необходим дополнительный анализ цен.':'Коэффициент вариации по каждой позиции не превышает 33%; цены в учебном примере однородны.')};
  }
  if(t.kind==='financial' && t.pl?.['2025'] && t.pl?.['2024']){
   const newer=t.pl['2025'],older=t.pl['2024'],revChange=newer['2110']-older['2110'],profitChange=newer['2400']-older['2400'];
@@ -1704,5 +1701,6 @@ el('review-check').addEventListener('click',()=>{const t=task();if(t)out.textCon
 el('review-example').addEventListener('click',()=>{const t=task();if(t)out.textContent='Пример: '+facts(t).example;});
 ['start','again','back'].forEach(x=>el(x).addEventListener('click',()=>setTimeout(refresh,0)));refresh();
 })(typeof globalThis!=='undefined'?globalThis:this);
+
 
 </script></body></html>
