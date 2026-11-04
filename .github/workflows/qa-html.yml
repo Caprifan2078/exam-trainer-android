@@ -16,6 +16,7 @@ jobs:
       - run: npm install --no-save --no-audit --no-fund playwright-core@1.48.2
       - run: node qa_tests/offline-browser.cjs
       - run: node qa_tests/modes.cjs
+      - run: node qa_tests/features.cjs
 
       - uses: actions/upload-artifact@v4
         if: always()
