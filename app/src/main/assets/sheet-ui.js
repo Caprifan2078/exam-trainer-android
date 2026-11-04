@@ -10,7 +10,7 @@ if(typeof Element.prototype.replaceChildren!=='function'){
 
 const $=id=>document.getElementById(id),E=window.ExamEngine,S=window.ExamSheets;
 S.setEngine(E);
-let task=null,w=null,active='',selected='',checked=null,editDirty=false,pendingReference=null;
+let task=null,w=null,active='',selected='',checked=null,editDirty=false,pendingReference=null,session=null;
 const history=[];
 const viewMemory={};
 const fmt=n=>typeof n==='number'?new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(n):String(n??'');
@@ -26,6 +26,10 @@ function hintsAllowed(){return !!task&&(task.practiceMode!=='exam'||!!task.helpU
 const modePanel=node('div',undefined,'mode-panel'),modeStatus=node('span','','mode-status'),unlockHelp=node('button','Нужна помощь','mode-unlock');
 unlockHelp.type='button';modePanel.append(modeStatus,unlockHelp);
 window.ExamMode={allowHints:hintsAllowed,cellHint:(sheet,addr)=>hintsAllowed()?w?.targets.find(t=>t.sheet===sheet&&t.addr===addr)?.hint:null};
+const sessionStatus=node('div','','session-status'),nextSession=node('button','Следующее задание →','secondary');sessionStatus.hidden=true;nextSession.hidden=true;nextSession.type='button';
+const saveWorkButton=node('button','Сохранить эту работу','secondary');saveWorkButton.type='button';
+const mobileCard=node('div',undefined,'mobile-cell-card'),mobileLabel=node('label','Выбранная ячейка','mobile-cell-label'),mobileInput=node('input'),mobileApply=node('button','Сохранить ввод','mobile-cell-apply');
+mobileInput.type='text';mobileInput.maxLength=300;mobileInput.setAttribute('aria-label','Ввод в выбранную ячейку');mobileApply.type='button';mobileCard.append(mobileLabel,mobileInput,mobileApply);
 const toolbar=node('div',undefined,'excel-tool');
 const tabs=node('div',undefined,'excel-tabs');
 const bar=node('div',undefined,'excel-formula-bar');
@@ -59,7 +63,7 @@ function updateCellContext(){
  const name=heading&&heading.length>120?heading.slice(0,117)+'…':heading;
  const label=[active+'!'+selected,head,name].filter(Boolean).join(' · ');
  cellContext.textContent=label;
- cellContext.title=label;
+ cellContext.title=label;mobileLabel.textContent=label;mobileInput.value=input.value;mobileInput.disabled=input.disabled;mobileApply.disabled=input.disabled;
 }
 function revealSelected(){
  const el=gridbox.querySelector('td.excel-selected'),viewport=gridbox.getBoundingClientRect();
@@ -81,12 +85,15 @@ const sheetHelp=node('div',undefined,'excel-help');sheetHelp.hidden=true;
 const exportButton=node('button','Скачать XLSX','secondary');exportButton.type='button';
 const formulaExample=node('button','Примеры формул','secondary');formulaExample.type='button';
 controls.append(helpButton,formulaExample,exportButton);
-toolbar.append(tabs,bar,suggestBox,cellContext,gridbox,info,controls,sheetHelp);
+toolbar.append(tabs,bar,suggestBox,cellContext,mobileCard,gridbox,info,controls,sheetHelp);
+$('results').appendChild(nextSession);$('check').insertAdjacentElement('beforebegin',saveWorkButton);
 sheetRoot.replaceChildren(toolbar);
+const explainButton=node('button','Разобрать ошибки','secondary'),explanations=node('div',undefined,'error-explanations');explainButton.type='button';explainButton.hidden=true;explanations.hidden=true;$('message').insertAdjacentElement('afterend',explainButton);explainButton.insertAdjacentElement('afterend',explanations);
+explainButton.addEventListener('click',()=>{if(!checked||!hintsAllowed())return;explanations.replaceChildren();const issues=checked.results.filter(x=>x.status!=='ok');if(!issues.length)explanations.appendChild(node('p','Ошибок в таблице не найдено.'));for(const x of issues.slice(0,12)){let advice=x.status==='empty'?'Заполни эту ячейку.':x.status==='need-formula'?'Результат верный, но здесь нужна формула со ссылками на ячейки.':task.kind==='budget'?'Проверь, доход это или расход, а также выбранные строки и единицы измерения.':task.kind==='financial'?'Проверь показатель в числителе и знаменателе, год и среднюю величину за два года.':'Проверь диапазон предложений, количество и нужное промежуточное значение.';explanations.appendChild(node('p',x.sheet+'!'+x.addr+' · '+x.label+': '+advice));}explanations.hidden=false;});
 const footer=node('div',undefined,'excel-check-help');$('questions').insertAdjacentElement('afterend',footer);
 const progressBox=node('div',undefined,'excel-progress'),progressLabel=node('span','Прогресс выполнения','excel-progress-label');
 const progressBar=document.createElement('progress');progressBar.max=1;progressBar.value=0;progressBar.setAttribute('aria-label','Заполнение расчётных ячеек');
-progressBox.append(progressLabel,progressBar);toolbar.prepend(modePanel,progressBox);
+progressBox.append(progressLabel,progressBar);toolbar.prepend(modePanel,sessionStatus,progressBox);
 function updateProgress(){
  if(!w)return;
  const filled=w.targets.filter(t=>String(w.sheets[t.sheet]?.values[t.addr]?.raw??'').trim()!=='').length;
@@ -97,17 +104,17 @@ function applyMode(){
  const exam=task?.practiceMode==='exam',allowed=hintsAllowed();
  modeStatus.textContent=exam?(allowed?'Экзамен · с подсказками':'Экзамен · без подсказок'):'Обучение · подсказки доступны';
  unlockHelp.hidden=!exam||allowed;helpButton.hidden=!allowed;formulaExample.hidden=!allowed;
- $('review-example').hidden=!allowed;$('hints-button').hidden=!allowed;
+ $('review-example').hidden=!allowed;$('hints-button').hidden=!allowed;explainButton.hidden=!allowed||!checked;if(!allowed)explanations.hidden=true;
  if(!allowed){sheetHelp.hidden=true;$('hints').hidden=true;closeSuggestions();}
  window.dispatchEvent(new Event('exam-mode-change'));
 }
 unlockHelp.addEventListener('click',()=>{
- if(!task||task.practiceMode!=='exam'||task.helpUsed)return;
+ if(!task||task.practiceMode!=='exam'||task.helpUsed||session?.finished)return;
  if(!confirm('Открыть подсказки и ответы? В этой работе результат будет отмечен как выполненный с помощью.'))return;
  task.helpUsed=true;applyMode();saveDraft();
  if(checked)$('score').textContent='Проверка: '+checked.passed+' из '+checked.total+' ('+checked.percent+'%) · с подсказками';
 });
-function invalidateCheck(){checked=null;$('results').hidden=true;footer.replaceChildren();}
+function invalidateCheck(){checked=null;$('results').hidden=true;explainButton.hidden=true;explanations.hidden=true;footer.replaceChildren();}
 function jumpTo(t){
  if(!t||!w.sheets[t.sheet])return;
  flush();active=t.sheet;selected=t.addr;renderGrid();
@@ -178,7 +185,7 @@ function restoreReference(ref){
 }
 function firstEditable(sh){return Object.keys(sh.editable)[0]||'A1';}
 function select(a,focus=false){if(editDirty)flush();closeInline();selected=a;const sh=w.sheets[active],raw=sh.values[a];address.textContent=active+'!'+a;input.value=raw?String(raw.raw):'';editDirty=false;
- input.disabled=!sh.editable[a];commit.disabled=!sh.editable[a];
+ input.disabled=!sh.editable[a]||!!session?.finished;commit.disabled=input.disabled;
  info.textContent=!sh.editable[a]?'Исходная ячейка '+a+' защищена. Используй её в формулах.':(hintsAllowed()?'Жёлтая ячейка: введи число или формулу. Подсказка доступна по кнопке.':'Жёлтая ячейка: введи число или формулу.');
  for(const el of gridbox.querySelectorAll('.excel-selected'))el.classList.remove('excel-selected');
  const chosen=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(e=>e.dataset.addr===a);if(chosen){chosen.classList.add('excel-selected');revealSelected();}
@@ -193,8 +200,9 @@ function flush(){if(pendingReference)restoreReference(null);if(!w||!active||!sel
 function refreshValues(){if(!w)return;for(const cell of gridbox.querySelectorAll('td[data-addr]')){const v=w.sheets[active].values[cell.dataset.addr];if(cell!==inlineCell)cell.textContent=v&&String(v.raw).trim()!==''?fmt(S.value(w,active,cell.dataset.addr)):'';cell.classList.remove('excel-pass','excel-fail','excel-needs');}
  if(checked)for(const r of checked.results)if(r.sheet===active){const el=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(x=>x.dataset.addr===r.addr);if(el)el.classList.add(r.status==='ok'?'excel-pass':r.status==='need-formula'?'excel-needs':'excel-fail');}}
 function check(){
+ if(session?.finished)return;
  flush();checked=S.grade(w);refreshValues();
- $('results').hidden=false;$('hints').hidden=true;
+ $('results').hidden=false;$('hints').hidden=true;explainButton.hidden=!hintsAllowed();explanations.hidden=true;
  $('score').textContent='Проверка: '+checked.passed+' из '+checked.total+' ('+checked.percent+'%)'+(task.practiceMode==='exam'?(task.helpUsed?' · с подсказками':' · самостоятельно'):' · обучение');
  const errors=checked.results.filter(r=>r.status!=='ok');
  const bad=errors.filter(r=>r.status==='bad'),empty=errors.filter(r=>r.status==='empty'),needs=errors.filter(r=>r.status==='need-formula');
@@ -214,6 +222,7 @@ function check(){
    b.addEventListener('click',()=>jumpTo(r));footer.appendChild(b);
   }
  }
+ nextSession.hidden=!session||session.finished;nextSession.textContent=session&&session.index===2?'Завершить пробный экзамен':'Следующее задание →';
  saveStats(checked.percent);$('results').scrollIntoView({block:'start',behavior:'smooth'});
 }
 function showAnswers(){if(!hintsAllowed())return;const box=$('hints');box.replaceChildren();for(const r of (checked?.results||[])){const el=node('p',r.sheet+'!'+r.addr+' — '+r.label+': '+fmt(r.answer)+(r.hint?' · '+r.hint:''),'excel-answer');box.appendChild(el);}box.hidden=false;}
@@ -222,17 +231,35 @@ function saveDraft(){
  if(!w)return;
  viewMemory[active]={selected,scrollLeft:gridbox.scrollLeft,scrollTop:gridbox.scrollTop};
  const entries=S.save(w);if(editDirty&&!pendingReference&&w.sheets[active]?.editable[selected])entries[active][selected]=input.value;
- localStorage.setItem('examSheetsDraft',JSON.stringify({task,entries,active,viewMemory}));
+ localStorage.setItem('examSheetsDraft',JSON.stringify({task,entries,active,viewMemory,session}));
  }catch(e){}
 }
-function restoreDraft(){try{const v=JSON.parse(localStorage.getItem('examSheetsDraft')||'null');if(!v?.task?.kind||!Array.isArray(v.task.questions))return;task=v.task;w=S.create(task);S.load(w,v.entries);active=w.sheets[v.active]?v.active:w.order[0];Object.assign(viewMemory,v.viewMemory||{});selected=viewMemory[active]?.selected||'';showWork();}catch(e){}}
+function restoreDraft(){try{const v=JSON.parse(localStorage.getItem('examSheetsDraft')||'null');if(!v?.task?.kind||!Array.isArray(v.task.questions))return;task=v.task;session=v.session||null;window.ExamCurrentTask=task;w=S.create(task);S.load(w,v.entries);active=w.sheets[v.active]?v.active:w.order[0];Object.assign(viewMemory,v.viewMemory||{});selected=viewMemory[active]?.selected||'';showWork();}catch(e){}}
 function saveStats(pct){try{const old=JSON.parse(localStorage.getItem('examStats')||'{"count":0,"best":0}');old.count++;old.best=Math.max(old.best,pct);localStorage.setItem('examStats',JSON.stringify(old));$('stats').textContent=`Проверено работ: ${old.count} · Лучший результат ${old.best}%`;}catch(e){}}
 function showWork(){$('work').hidden=false;$('home').hidden=true;document.body.classList.add('exam-solving');$('task-title').textContent=task.title+' · Таблицы';$('task-org').textContent=task.company;
  $('task-meta').textContent=task.questions.length+' исходных вопросов · '+w.targets.length+' ячеек для проверки · '+w.order.length+' лист(а)';
  $('task-notes').textContent='Жёлтые ячейки — для формул. Черновик сохраняется автоматически.';
- $('results').hidden=true;checked=null;footer.replaceChildren();applyMode();renderGrid();updateProgress();window.scrollTo(0,0);}
+ $('results').hidden=true;checked=null;nextSession.hidden=true;footer.replaceChildren();gridbox.inert=!!session?.finished;$('check').disabled=!!session?.finished;applyMode();renderGrid();updateProgress();updateSession();if(session?.finished)showSessionResult();window.scrollTo(0,0);}
 function start(){if(w)flush();if(w&&Object.values(S.save(w)).some(x=>Object.keys(x).length)&&!confirm('Создать новый вариант? Черновик предыдущего будет заменён.'))return;
- try{task=E.generate($('kind').value,$('level').value);task.practiceMode=$('mode').value==='exam'?'exam':'learning';task.helpUsed=false;w=S.create(task);history.length=0;for(const key of Object.keys(viewMemory))delete viewMemory[key];undo.disabled=true;active=w.order[w.order.length-1];selected='';showWork();saveDraft();}catch(e){alert('Ошибка создания таблицы: '+e.message);}}
+ try{const choice=$('mode').value;session=choice==='full_exam'?{tasks:['nmck','budget','financial'].map(k=>{const t=E.generate(k,$('level').value);t.practiceMode='exam';t.helpUsed=false;return t;}),index:0,results:[],deadline:Date.now()+90*60*1000,finished:false}:null;task=session?session.tasks[0]:E.generate($('kind').value,$('level').value);task.practiceMode=choice==='learning'?'learning':'exam';task.helpUsed=false;window.ExamCurrentTask=task;w=S.create(task);history.length=0;for(const key of Object.keys(viewMemory))delete viewMemory[key];undo.disabled=true;active=w.order[w.order.length-1];selected='';showWork();saveDraft();}catch(e){alert('Ошибка создания таблицы: '+e.message);}}
+function updateSession(){
+ sessionStatus.hidden=!session;if(!session)return;
+ const seconds=Math.max(0,Math.ceil((session.deadline-Date.now())/1000));const clock=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
+ sessionStatus.textContent=session.finished?'Пробный экзамен завершён':('Пробный экзамен · задание '+(session.index+1)+' из 3 · '+(seconds?'осталось '+clock:'время вышло, можно продолжить'));
+}
+setInterval(updateSession,1000);
+function showSessionResult(){const results=session.results||[],passed=results.reduce((a,r)=>a+r.passed,0),total=results.reduce((a,r)=>a+r.total,0);$('results').hidden=false;$('score').textContent='Пробный экзамен: '+passed+' из '+total+' ('+(total?Math.round(passed/total*100):0)+'%)';$('message').textContent=results.map((r,i)=>['НМЦК','Бюджет','Финансовый анализ'][i]+': '+r.passed+'/'+r.total+(r.help?' (с подсказками)':'')).join(' · ')+'. Оценены ячейки таблиц; письменные выводы проверяются отдельно.';nextSession.hidden=true;$('hints-button').hidden=true;}
+nextSession.addEventListener('click',()=>{if(!session||session.finished||!checked)return;
+ session.results[session.index]={passed:checked.passed,total:checked.total,help:!!task.helpUsed};
+ if(session.index===2){session.finished=true;gridbox.inert=true;input.disabled=true;$('check').disabled=true;updateSession();showSessionResult();saveDraft();return;}
+ session.index++;task=session.tasks[session.index];window.ExamCurrentTask=task;w=S.create(task);history.length=0;for(const key of Object.keys(viewMemory))delete viewMemory[key];active=w.order[w.order.length-1];selected='';showWork();saveDraft();window.dispatchEvent(new Event('exam-restored'));
+});
+function renderSaved(){const host=$('saved-list');host.replaceChildren();let items=[];try{items=JSON.parse(localStorage.getItem('examSavedWorks')||'[]');}catch(e){}if(!Array.isArray(items)||!items.length){host.appendChild(node('p','Пока нет сохранённых работ.'));return;}items.forEach((item,i)=>{const row=node('div',undefined,'saved-row'),open=node('button',item.title,'saved-open'),del=node('button','Удалить','saved-delete');open.type=del.type='button';open.addEventListener('click',()=>{if(w&&!confirm('Открыть сохранённую работу? Текущий черновик будет заменён.'))return;try{const v=item.snapshot;task=v.task;session=v.session||null;window.ExamCurrentTask=task;w=S.create(task);S.load(w,v.entries);active=w.sheets[v.active]?v.active:w.order[0];for(const key of Object.keys(viewMemory))delete viewMemory[key];Object.assign(viewMemory,v.viewMemory||{});selected=viewMemory[active]?.selected||'';editDirty=false;history.length=0;localStorage.setItem('exam-review-'+task.id,v.reviewText||'');showWork();saveDraft();window.dispatchEvent(new Event('exam-restored'));}catch(e){alert('Не удалось открыть работу. Текущие сохранения не удалены.');}});del.addEventListener('click',()=>{if(!confirm('Удалить эту сохранённую копию?'))return;try{const a=JSON.parse(localStorage.getItem('examSavedWorks')||'[]');a.splice(i,1);localStorage.setItem('examSavedWorks',JSON.stringify(a));renderSaved();}catch(e){alert('Не удалось удалить копию.');}});row.append(open,del);host.appendChild(row);});}
+saveWorkButton.addEventListener('click',()=>{if(!w)return;flush();try{const all=JSON.parse(localStorage.getItem('examSavedWorks')||'[]');if(all.length>=30){alert('Можно сохранить до 30 работ. Удали ненужную копию на главном экране.');return;}const snapshot={task,entries:S.save(w),active,viewMemory,session,reviewText:$('review-text').value};all.unshift({title:task.title+' · '+new Date().toLocaleString('ru-RU'),snapshot});localStorage.setItem('examSavedWorks',JSON.stringify(all));renderSaved();saveWorkButton.textContent='Работа сохранена ✓';setTimeout(()=>{saveWorkButton.textContent='Сохранить эту работу';},2000);}catch(e){alert('Не удалось сохранить работу: возможно, на устройстве не хватает места.');}});
+renderSaved();
+mobileInput.addEventListener('input',()=>{if(input.disabled)return;input.value=mobileInput.value;input.setSelectionRange(mobileInput.selectionStart,mobileInput.selectionEnd);input.dispatchEvent(new Event('input',{bubbles:true}));});
+mobileApply.addEventListener('click',()=>{flush();mobileInput.value=input.value;});
+input.addEventListener('input',()=>{if(document.activeElement!==mobileInput)mobileInput.value=input.value;});
 gridbox.addEventListener('keydown',e=>{
  if(e.target===input)return;
  if(!w||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.key))return;
@@ -265,7 +292,7 @@ undo.addEventListener('click',()=>{
 });
 $('start').addEventListener('click',start);$('again').addEventListener('click',start);$('check').addEventListener('click',check);
 $('hints-button').addEventListener('click',showAnswers);
-$('back').addEventListener('click',()=>{flush();saveDraft();$('work').hidden=true;$('home').hidden=false;document.body.classList.remove('exam-solving');window.scrollTo(0,0);});
+$('back').addEventListener('click',()=>{flush();saveDraft();$('work').hidden=true;$('home').hidden=false;document.body.classList.remove('exam-solving');renderSaved();window.scrollTo(0,0);});
 helpButton.addEventListener('click',()=>{if(!hintsAllowed())return;flush();if(sheetHelp.hidden)showHelp(kindGuides[task.kind]);else sheetHelp.hidden=true;});
 formulaExample.addEventListener('click',()=>{if(!hintsAllowed())return;showHelp(['Доступные функции: СУММ, СРЗНАЧ, СТАНДОТКЛОН.В, ОКРУГЛ, КОРЕНЬ, ЕСЛИ, СУММЕСЛИ, СЧЁТ, МИН, МАКС, АБС.',
 'Поддерживаются ссылки на одну ячейку, диапазон A1:C8 и другие листы: =Баланс!C5+Баланс!D5. В формулах используй ; между аргументами.',

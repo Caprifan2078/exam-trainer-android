@@ -42,19 +42,24 @@ function review(t,raw){
   if(!/доход/.test(text)||!/расход/.test(text))notices.push('Упомяни доходы и расходы и сравни их.');
   for(const [label,expected] of [['доход',t.summary['Доход'].actual],['расход',t.summary['Расход'].actual]]){
    // Only flag the simple unambiguous form “доходы 1200 тыс.”. Other number formats remain unverified.
-   const m=new RegExp(label+'[а-я]*\\s*[:—–-]?\\s*(\\d+(?:[.,]\\d+)?)\\s*тыс\\.','i').exec(text);
-   if(m && Math.abs(Number(m[1].replace(',','.'))-expected)>.01)notices.push('Проверь сумму: если указаны фактические '+label+'ы, она не совпадает с итогом задания.');
+   const m=new RegExp(label+'[а-я]*\\s*(?:составил[аио]?\\s*)?[:—–-]?\\s*(\\d[\\d\\s\\u00a0]*(?:[.,]\\d+)?)\\s*тыс\\.','i').exec(text);
+   if(m && Math.abs(Number(m[1].replace(/[\s\u00a0]/g,'').replace(',','.'))-expected)>.01)notices.push('Проверь сумму: если указаны фактические '+label+'ы, она не совпадает с итогом задания.');
   }
  } else if(t.kind==='nmck'){
   if(!/нмцк|цен[аыуе].*контракт/.test(text))notices.push('Укажи НМЦК контракта.');
   if(!/вариац|однород/.test(text))notices.push('Добавь вывод об однородности цен и коэффициенте вариации.');
   if(f.indexes?.length){const m=/предложени[еяюи]*\s*№\s*(\d+)/i.exec(text);if(m&&!f.indexes.includes(Number(m[1])))notices.push('Проверь номер выбранного предложения: оно должно быть ближайшим строго ниже средней цены.');else if(m)notices.push('Номер выбранного предложения распознан и совпадает с расчётом.');}
+  const nm=/итоговая\s+нмцк\s*(?:составила|равна|:)?\s*([\d\s\u00a0]+(?:[.,]\d+)?)\s*руб/i.exec(text);
+  if(nm&&f.selected!==undefined){const n=Number(nm[1].replace(/[\s\u00a0]/g,'').replace(',','.'));if(Number.isFinite(n)&&Math.abs(n-f.selected*t.rows[0].quantity)>.01)notices.push('Проверь итоговую НМЦК: указанная сумма не совпадает с выбранным предложением и количеством.');}
   if(f.problematic.length)notices.push('Проверь позиции, где коэффициент вариации превышает 33%; цены могут быть неоднородны.');
   if(!f.problematic.length&&/неоднород/.test(text))notices.push('Проверь утверждение о неоднородности: в учебном расчёте коэффициенты не превышают 33%.');
  } else {
   if(!/выручк/.test(text))notices.push('Упомяни выручку и сравни её по годам.');
   if(!/прибыл|убыт|финансов.*результат/.test(text))notices.push('Упомяни чистую прибыль или убыток.');
-  notices.push('Направления изменений и суммы в финансовом выводе автоматически не проверены.');
+  for(const [re,oldValue,newValue,label] of [[/выручка\s+(выросла|увеличилась|снизилась|уменьшилась)/,t.pl?.['2024']?.['2110'],t.pl?.['2025']?.['2110'],'выручки'],[/чистая\s+прибыль\s+(выросла|увеличилась|снизилась|уменьшилась)/,t.pl?.['2024']?.['2400'],t.pl?.['2025']?.['2400'],'чистой прибыли']]){
+   const m=re.exec(text);if(m&&Number.isFinite(oldValue)&&Number.isFinite(newValue)){const up=/выросла|увеличилась/.test(m[1]);if((up&&newValue<=oldValue)||(!up&&newValue>=oldValue))notices.push('Проверь направление изменения '+label+': оно не совпадает с данными за два года.');}
+  }
+  notices.push('Проверены только отдельные явно сформулированные направления; другие суммы и смысл требуют самостоятельной проверки.');
  }
  notices.push('Числа и смысл текста не проверяются полностью; отрицания и контекст могут быть распознаны неверно. Сверь вывод с таблицей и примером.');
  return notices.join(' ');
@@ -67,6 +72,6 @@ let id='';function refresh(){const t=task();section.hidden=!t||!['budget','nmck'
 input.addEventListener('input',()=>{try{localStorage.setItem('exam-review-'+id,input.value);}catch(_){}});
 el('review-check').addEventListener('click',()=>{const t=task();if(t)out.textContent=review(t,input.value);});
 el('review-example').addEventListener('click',()=>{const t=task();if(t)out.textContent='Пример: '+facts(t).example;});
-['start','again','back'].forEach(x=>el(x).addEventListener('click',()=>setTimeout(refresh,0)));refresh();
+['start','again','back'].forEach(x=>el(x).addEventListener('click',()=>setTimeout(refresh,0)));window.addEventListener('exam-restored',refresh);refresh();
 })(typeof globalThis!=='undefined'?globalThis:this);
 

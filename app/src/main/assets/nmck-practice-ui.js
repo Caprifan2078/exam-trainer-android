@@ -114,6 +114,7 @@ again.addEventListener('click',refresh);
 document.addEventListener('click',e=>{if(e.target.closest('.excel-grid')||e.target.closest('.excel-tabs')||e.target.closest('#back'))setTimeout(showQuick,0);});
 window.addEventListener('pageshow',()=>{if(!$('work').hidden)refresh();});
 window.addEventListener('exam-mode-change',()=>{if(!$('work').hidden)refresh();});
+window.addEventListener('exam-restored',()=>{if(!$('work').hidden)refresh();});
 if(!$('work').hidden)refresh();
 })();
 
