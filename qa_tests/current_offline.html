@@ -77,6 +77,7 @@
 
 .excel-grid td.excel-editing{padding:0;min-width:130px;overflow:visible}.excel-grid td.excel-editing .excel-input{display:block;width:100%;min-width:130px;box-sizing:border-box;font-size:16px;padding:5px}.excel-grid td.excel-editing:focus-within{outline:2px solid #298466;z-index:2;position:relative}
 
+
 </style><style>
 /* Layout patterned after the supplied solved NMCK spreadsheets; mobile zoom is grid-only. */
 .nmck-condition{margin:6px 0 14px;padding:16px;background:#182c46;border:1px solid #56718d;border-radius:15px;color:#edf5ff}
@@ -295,6 +296,7 @@
 @media(max-width:600px){#work .excel-input{font-size:16px}#work .excel-grid-box{max-height:48vh}#work .excel-tool{min-width:0}#work .nmck-condition{scroll-margin-top:8px}}
 @media(min-width:900px){#work .excel-grid-box{max-height:68vh}#work .excel-input{font-size:16px}#work .excel-grid-box:focus{outline:2px solid #74d8af;outline-offset:2px}}
 
+
 </style><style>
 /* v0.9.9 review: keep spreadsheet visible without two phone screens of introductions. */
 body.exam-solving > header{padding:6px 15px;min-height:44px;gap:8px}
@@ -359,13 +361,20 @@ body.exam-solving #work .nmck-navigation{top:auto}
 .formula-suggestions{position:relative;z-index:20;max-height:220px;overflow:auto;background:#f4f8ff;color:#172a3c;border:1px solid #7898ae;border-radius:8px;box-shadow:0 6px 18px #0005}
 .formula-suggestions[hidden]{display:none!important}.formula-suggestion{display:block;width:100%;padding:9px 12px;text-align:left;color:#172a3c;background:#f4f8ff;border:0;border-bottom:1px solid #d5e1ec;font-size:14px;min-height:40px}.formula-suggestion.active,.formula-suggestion:hover{background:#cfe7f5}
 
-</style><style>#review-result{white-space:pre-line}</style></head><body>
-<header><div class="logo">∑</div><div><div class="eyebrow">ТРЕНАЖЁР ДЕМОЭКЗАМЕНА</div><h1>Экзаменатор <small>0.9.18 · браузерная QA-сборка</small></h1></div></header>
+
+/* Редактор остаётся внутри выбранной ячейки и не меняет ширину столбца. */
+#work .excel-grid td.excel-editing {padding:0!important;min-width:0!important;overflow:hidden!important;position:relative;box-shadow:inset 0 0 0 2px #298466;}
+#work .excel-grid td.excel-editing:focus-within {outline:none;z-index:auto;}
+#work .excel-grid td.excel-editing .excel-input {display:block!important;box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;height:100%!important;min-height:0!important;margin:0!important;padding:3px 4px!important;border:0!important;border-radius:0!important;font-size:14px!important;line-height:normal!important;}
+#review-result {white-space:pre-line;}
+
+</style></head><body>
+<header><div class="logo">∑</div><div><div class="eyebrow">ТРЕНАЖЁР ДЕМОЭКЗАМЕНА</div><h1>Экзаменатор <small>0.9.19 · учебная QA-сборка</small></h1></div></header>
 <main>
 <section id="home"><div class="hero"><p class="eyebrow">РАСЧЁТЫ ВЫПОЛНЯЕШЬ САМ · ПОДСКАЗКИ ПО ЖЕЛАНИЮ</p><h2>Учись решать.<br><em>Проверяй себя.</em></h2><p>Новые компании, показатели и суммы для каждого задания. Формулы вводишь ты — приложение только проверяет готовую таблицу.</p></div>
 <div class="panel"><label for="kind">Тип задания</label><select id="kind"><option value="nmck">НМЦК — коммерческие предложения</option><option value="budget">Муниципальный бюджет</option><option value="financial">Финансовый анализ</option></select>
 <label for="level">Сложность</label><select id="level"><option value="easy">Лёгкая</option><option value="medium" selected>Обычная</option><option value="hard">Сложная</option></select><button class="primary" id="start">Создать случайный вариант →</button></div>
-<details class="panel"><summary>Как читать бюджетные коды</summary><p>Код бюджетной классификации состоит из нескольких частей. Например, в части кода доходов элемент 01 обозначает федеральный бюджет, 02 — бюджет субъекта РФ. Значение 00 зависит от позиции и контекста. Код 2 00 00000 00 может обозначать безвозмездные поступления, то есть доход, а не расход. Определяй статью по полному коду и действующему справочнику; примеры не заменяют полные КБК.</p></details><p class="note">Данные учебные, без реальных предприятий. Интернет и регистрация не нужны.</p><div class="stats" id="stats"></div></section>
+<details class="panel"><summary>Как читать бюджетные коды</summary><p>Код бюджетной классификации состоит из нескольких частей. Например, в части кода доходов элемент 01 обозначает федеральный бюджет, 02 — бюджет субъекта РФ. Значение 00 зависит от позиции и контекста. Код 2 00 00000 00 может обозначать безвозмездные поступления, то есть доход, а не расход. В таблице показаны фрагменты кодов: группа доходов 1 или 2 и четырёхзначный раздел расходов. Это разные части классификации, не полный КБК. Если статья неоднозначна, написано «уточнить».</p></details><p class="note">Данные учебные, без реальных предприятий. Интернет и регистрация не нужны.</p><div class="stats" id="stats"></div></section>
 <section id="work" hidden><button class="back" id="back">‹ К выбору задания</button><div class="hero"><p class="eyebrow">ПРАКТИЧЕСКОЕ ЗАДАНИЕ</p><h2 id="task-title"></h2><p id="task-org"></p><p id="task-meta" class="muted"></p></div>
 <h3>01 · Таблица Excel</h3><div id="sources"></div><p class="note" id="task-notes"></p>
 <section id="written-review" class="panel" hidden><h3>Письменный вывод</h3><p>Напиши вывод по заданию своими словами. Проверка ищет основные признаки и может ошибаться — перечитай замечания.</p><textarea id="review-text" rows="5" style="width:100%;box-sizing:border-box" placeholder="Например: фактические доходы ..."></textarea><button type="button" id="review-check">Проверить вывод</button><button type="button" id="review-example">Показать пример вывода</button><p id="review-result" aria-live="polite"></p></section><h3 id="verification-title">02 · Проверка таблицы</h3><p class="muted">Выбери жёлтую ячейку, введи формулу в fx и нажми ✓. Кнопки «Ячейка ← / →» помогут перейти к следующему расчёту. Масштаб таблицы регулируется от 15% до 250%.</p><div id="questions"></div>
@@ -490,6 +499,7 @@ function check(q,s){if(s===null||s===undefined||String(s).trim()==='')return 'em
 function grade(t,answers){const details=t.questions.map(q=>Object.assign({},q,{status:check(q,answers[q.id])})),ok=details.filter(r=>r.status==='ok').length;return{details,ok,total:details.length,percent:round(ok/details.length*100,0)};}
 return{generate,grade,check,numeric,round,bnames,pnames,metricNames,income,expense,goods};
 });
+
 
 </script><script>
 /* v0.7 supplemental generator. Loads after engine.js, before app.js. */
@@ -691,6 +701,7 @@ function nmck(level,opts){
 E.generate=function(kind,level,options){const t=kind==='nmck'?nmck(level,options):prev(kind,level);if(kind==='budget')t.budgetSplit=true;root.ExamCurrentTask=t;return t;};
 })(typeof globalThis!=='undefined'?globalThis:this);
 
+
 </script><script>
 /* ExamTrainer v0.8: spreadsheet-style practice engine; no eval(), no network. */
 (function(root,factory){const m=factory();root.ExamSheets=m;if(typeof module!=='undefined'&&module.exports)module.exports=m;})(typeof globalThis!=='undefined'?globalThis:this,function(){
@@ -700,6 +711,19 @@ const col=n=>{let s='';for(n++;n;n=Math.floor((n-1)/26))s=String.fromCharCode(65
 const addr=(c,r)=>col(c)+String(r+1);
 const decode=a=>{const m=/^\$?([A-Z]{1,2})\$?([1-9][0-9]{0,2})$/i.exec(a);if(!m)return null;let c=0;for(const x of m[1].toUpperCase())c=c*26+x.charCodeAt(0)-64;return{c:c-1,r:Number(m[2])-1};};
 const norm=x=>typeof x==='number'?Math.round((x+Number.EPSILON)*100)/100:x;
+// Справочные фрагменты: группы доходов и разделы расходов; не полный КБК.
+const expenseSections={
+ 'Общегосударственные вопросы':'0100','Содержание органов местного самоуправления':'0100','Резервный фонд администрации':'0100',
+ 'Национальная безопасность':'0300','Обеспечение пожарной безопасности':'0300',
+ 'Дорожное хозяйство':'0400','Ремонт местных дорог':'0400','Транспортное обслуживание населения':'0400','Поддержка предпринимательства':'0400',
+ 'Жилищно-коммунальное хозяйство':'0500','Уличное освещение':'0500','Благоустройство парков':'0500',
+ 'Охрана окружающей среды':'0600','Дошкольное образование':'0700','Общее образование':'0700','Дополнительное образование детей':'0700','Молодёжная политика':'0700',
+ 'Библиотеки и культура':'0800','Социальная политика':'1000','Поддержка семей с детьми':'1000',
+ 'Физическая культура и спорт':'1100','Содержание спортивных площадок':'1100','Обслуживание муниципального долга':'1300'
+};
+const transfers=new Set(['Дотации на выравнивание бюджета','Субсидии из регионального бюджета','Субвенции на переданные полномочия','Межбюджетные трансферты']);
+function budgetCode(row){if(row.kind==='Доход')return 'гр. '+(transfers.has(row.name)?'2':'1');const v=expenseSections[row.name];return v?'рзд. '+v:'уточнить';}
+
 function create(task){
  const w={kind:task.kind,id:task.id,task,order:[],sheets:{},targets:[],hintMap:{}};
  function add(name,cols,rows){const sh={name,cols,rows,values:{},editable:{}};w.sheets[name]=sh;w.order.push(name);return sh;}
@@ -728,11 +752,11 @@ function create(task){
    sh.rows=tr+3;
  }else if(task.kind==='budget'&&task.budgetSplit){
    const sh=add('Бюджет',10,task.rows.length+11);
-   head(sh,0,['№','Статья бюджета','Раздел','План, тыс.','Факт, тыс.','Доход, тыс.','Расход, тыс.','Доля, %','Исполнение, %','Отклонение']);
+   head(sh,0,['№','Статья бюджета','Фрагмент кода','План, тыс.','Факт, тыс.','Доход, тыс.','Расход, тыс.','Доля, %','Исполнение, %','Отклонение']);
    input(sh,1,1,'Перенеси факт в доход или расход; другую ячейку оставь пустой.');
    const end=task.rows.length+3,start=task.rows.length+5;
    task.rows.forEach((row,i)=>{const r=i+3,R=r+1,id='b'+i;
-     input(sh,0,r,i+1);input(sh,1,r,row.name);input(sh,2,r,row.category||'—');input(sh,3,r,row.plan);input(sh,4,r,row.actual);
+     input(sh,0,r,i+1);input(sh,1,r,row.name);input(sh,2,r,budgetCode(row));input(sh,3,r,row.plan);input(sh,4,r,row.actual);
      for(const [c,k] of [[5,'Доход'],[6,'Расход']]){target(sh,c,r,row.kind===k?row.actual:0,'Перенеси факт из E'+R+' в столбец дохода или расхода.',row.name+' — '+k,id+k,false);w.targets[w.targets.length-1].blankIsZero=true;}
      const side=row.kind==='Доход'?'F':'G',den=task.rows.length+(row.kind==='Доход'?6:7);
      target(sh,7,r,norm(row.actual/task.summary[row.kind].actual*100),'='+side+R+'/E'+den+'*100',row.name+' — доля, %',id+'share');
@@ -862,6 +886,7 @@ function save(w){const entries={};for(const name of w.order){const sh=w.sheets[n
 function load(w,entries){for(const [name,table] of Object.entries(entries||{}))if(w.sheets[name])for(const [a,v] of Object.entries(table))if(w.sheets[name].editable[a])write(w,name,a,v);}
 return{create,setEngine,col,addr,decode,write,value,grade,save,load};
 });
+
 </script><script>
 /* v0.9.3 — NMCK working sheet matches supplied solved Excel templates (3 or 5 KP). */
 (function(root) {
@@ -926,6 +951,9 @@ function render(task){
  const total=task.questions.find(x=>x.id==='total');
  if(!total)throw Error('Не найден итог НМЦК');
  editable(amount,footer,task.offerRule?(task.questions.find(x=>x.id==='n0selectedTotal')||total).answer:total.answer,'Итог по выбранному предложению',task.offerRule?'='+letter(amount)+'6':'=СУММ('+letter(amount)+'6:'+letter(amount)+(task.rows.length+5)+')','total');
+ sh.spans['B'+(R+1)]=sh.cols-2;
+ fixed(1,footer+1,'Номер статьи / код по заданию (введи самостоятельно):');
+ sh.editable[letter(amount)+(R+1)]=true;
  fixed(1,footer+3,'Дата составления: __________________');
  fixed(1,footer+4,'Работник контрактной службы:');
  fixed(1,footer+5,'Должность: _______________________');
@@ -940,6 +968,7 @@ S.create=function(task){
  return render(task);
 };
 })(typeof globalThis!=='undefined'?globalThis:this);
+
 
 </script><script>
 /* Small XLSX writer (ZIP STORE + OOXML), no external dependency or network. */
@@ -1076,8 +1105,8 @@ function revealSelected(){
 }
 const gridbox=node('div',undefined,'excel-grid-box');gridbox.tabIndex=0;gridbox.setAttribute('aria-label','Таблица: стрелки перемещают выделение, Enter открывает ввод');
 let inlineCell=null;
-function closeInline(){if(!inlineCell)return;bar.insertBefore(input,undo);inlineCell.classList.remove('excel-editing');const v=w?.sheets[active]?.values[inlineCell.dataset.addr];inlineCell.textContent=v&&String(v.raw).trim()?fmt(S.value(w,active,inlineCell.dataset.addr)):'';inlineCell=null;}
-function openInline(td){if(input.disabled)return;closeInline();inlineCell=td;td.classList.add('excel-editing');td.textContent='';td.appendChild(input);input.focus();input.setSelectionRange(input.value.length,input.value.length);}
+function closeInline(){if(!inlineCell)return;bar.insertBefore(input,undo);input.placeholder='Введи число или формулу =…';inlineCell.classList.remove('excel-editing');const v=w?.sheets[active]?.values[inlineCell.dataset.addr];inlineCell.textContent=v&&String(v.raw).trim()?fmt(S.value(w,active,inlineCell.dataset.addr)):'';inlineCell=null;}
+function openInline(td){if(input.disabled)return;closeInline();inlineCell=td;td.classList.add('excel-editing');td.textContent='';input.placeholder='';td.appendChild(input);input.focus();input.setSelectionRange(input.value.length,input.value.length);}
 const info=node('div','Выбирай жёлтую ячейку, вводи =формулу в строку fx. Синие значения — исходные.','excel-info');
 const controls=node('div',undefined,'excel-controls');
 const helpButton=node('button','? Подсказка','secondary');helpButton.type='button';
@@ -1113,7 +1142,7 @@ const kindGuides={nmck:[
   'Под таблицей находится общая НМЦК. Вводи формулы в жёлтые ячейки; «Вставить формулу» показывает пример для выбранного расчёта.',
   'Важно: пустые ячейки должны игнорироваться в СРЗНАЧ, СТАНДОТКЛОН.В и СЧЁТ. Коэффициент вариации — число в процентах (5,5 означает 5,5%).'
 ],budget:[
-  'Формулировка статьи находится в колонке B, раздел — в C, план — в D, факт — в E.',
+  'Статья находится в B, фрагмент кода классификации — в C, план — в D, факт — в E. Это не полный КБК; «уточнить» означает, что данных недостаточно.',
   'Перенеси факт из E в F для дохода или в G для расхода; другую ячейку оставь пустой. В H рассчитай долю.',
   'Суммируй доходы функцией =СУММ(F4:F19), а расходы — =СУММ(G4:G19); проверь последнюю строку диапазона.',
   'В I рассчитай процент исполнения =E4/D4*100; в J отклонение =E4-D4.',
@@ -1265,6 +1294,7 @@ exportButton.addEventListener('click',()=>{flush();try{const b64=window.ExamXlsx
  }catch(e){alert('Не удалось сохранить XLSX: '+e.message);}});
 restoreDraft();try{const st=JSON.parse(localStorage.getItem('examStats')||'{}');$('stats').textContent='Проверено работ: '+(st.count||0)+' · Лучший результат '+(st.best||0)+'%';}catch(e){}
 })();
+
 </script><script>
 /* Financial-analysis formula suggestions based on the actual balance / P&L cells.
    Reference code-to-row mapping ensures source links work with expanded BFO codes. */
