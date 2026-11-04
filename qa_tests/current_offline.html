@@ -1138,7 +1138,7 @@ function revealSelected(){
 const gridbox=node('div',undefined,'excel-grid-box');gridbox.tabIndex=0;gridbox.setAttribute('aria-label','Таблица: стрелки перемещают выделение, Enter открывает ввод');
 let inlineCell=null;
 function closeInline(){if(!inlineCell)return;bar.insertBefore(input,undo);input.placeholder='Введи число или формулу =…';inlineCell.classList.remove('excel-editing');const v=w?.sheets[active]?.values[inlineCell.dataset.addr];inlineCell.textContent=v&&String(v.raw).trim()?fmt(S.value(w,active,inlineCell.dataset.addr)):'';inlineCell=null;}
-function openInline(td){if(input.disabled)return;closeInline();inlineCell=td;td.classList.add('excel-editing');td.textContent='';input.placeholder='';td.appendChild(input);input.focus();input.setSelectionRange(input.value.length,input.value.length);}
+function openInline(td){if(input.disabled)return;usingMobileCard=false;closeInline();inlineCell=td;td.classList.add('excel-editing');td.textContent='';input.placeholder='';td.appendChild(input);input.focus();input.setSelectionRange(input.value.length,input.value.length);}
 const info=node('div','Выбирай жёлтую ячейку, вводи =формулу в строку fx. Синие значения — исходные.','excel-info');
 const controls=node('div',undefined,'excel-controls');
 const helpButton=node('button','? Подсказка','secondary');helpButton.type='button';
