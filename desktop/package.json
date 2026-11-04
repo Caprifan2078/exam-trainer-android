@@ -1,7 +1,7 @@
 {
   "name": "examtrainer-desktop",
   "productName": "ExamTrainer",
-  "version": "0.9.18",
+  "version": "0.9.19",
   "private": true,
   "description": "Offline exam trainer desktop QA build",
   "main": "main.cjs",
@@ -16,3 +16,4 @@
     "artifactName": "ExamTrainer-${version}-Windows-QA.${ext}"
   }
 }
+

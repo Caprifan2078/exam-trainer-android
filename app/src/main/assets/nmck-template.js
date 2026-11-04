@@ -61,6 +61,9 @@ function render(task){
  const total=task.questions.find(x=>x.id==='total');
  if(!total)throw Error('Не найден итог НМЦК');
  editable(amount,footer,task.offerRule?(task.questions.find(x=>x.id==='n0selectedTotal')||total).answer:total.answer,'Итог по выбранному предложению',task.offerRule?'='+letter(amount)+'6':'=СУММ('+letter(amount)+'6:'+letter(amount)+(task.rows.length+5)+')','total');
+ sh.spans['B'+(R+1)]=sh.cols-2;
+ fixed(1,footer+1,'Номер статьи / код по заданию (введи самостоятельно):');
+ sh.editable[letter(amount)+(R+1)]=true;
  fixed(1,footer+3,'Дата составления: __________________');
  fixed(1,footer+4,'Работник контрактной службы:');
  fixed(1,footer+5,'Должность: _______________________');
@@ -75,3 +78,4 @@ S.create=function(task){
  return render(task);
 };
 })(typeof globalThis!=='undefined'?globalThis:this);
+

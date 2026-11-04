@@ -60,3 +60,10 @@ body.exam-solving #work .excel-jump:disabled{display:none}
 body.exam-solving #work .nmck-navigation{top:auto}
 .formula-suggestions{position:relative;z-index:20;max-height:220px;overflow:auto;background:#f4f8ff;color:#172a3c;border:1px solid #7898ae;border-radius:8px;box-shadow:0 6px 18px #0005}
 .formula-suggestions[hidden]{display:none!important}.formula-suggestion{display:block;width:100%;padding:9px 12px;text-align:left;color:#172a3c;background:#f4f8ff;border:0;border-bottom:1px solid #d5e1ec;font-size:14px;min-height:40px}.formula-suggestion.active,.formula-suggestion:hover{background:#cfe7f5}
+
+
+/* Редактор остаётся внутри выбранной ячейки и не меняет ширину столбца. */
+#work .excel-grid td.excel-editing {padding:0!important;min-width:0!important;overflow:hidden!important;position:relative;box-shadow:inset 0 0 0 2px #298466;}
+#work .excel-grid td.excel-editing:focus-within {outline:none;z-index:auto;}
+#work .excel-grid td.excel-editing .excel-input {display:block!important;box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;height:100%!important;min-height:0!important;margin:0!important;padding:3px 4px!important;border:0!important;border-radius:0!important;font-size:14px!important;line-height:normal!important;}
+#review-result {white-space:pre-line;}

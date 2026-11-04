@@ -6,6 +6,19 @@ const col=n=>{let s='';for(n++;n;n=Math.floor((n-1)/26))s=String.fromCharCode(65
 const addr=(c,r)=>col(c)+String(r+1);
 const decode=a=>{const m=/^\$?([A-Z]{1,2})\$?([1-9][0-9]{0,2})$/i.exec(a);if(!m)return null;let c=0;for(const x of m[1].toUpperCase())c=c*26+x.charCodeAt(0)-64;return{c:c-1,r:Number(m[2])-1};};
 const norm=x=>typeof x==='number'?Math.round((x+Number.EPSILON)*100)/100:x;
+// Справочные фрагменты: группы доходов и разделы расходов; не полный КБК.
+const expenseSections={
+ 'Общегосударственные вопросы':'0100','Содержание органов местного самоуправления':'0100','Резервный фонд администрации':'0100',
+ 'Национальная безопасность':'0300','Обеспечение пожарной безопасности':'0300',
+ 'Дорожное хозяйство':'0400','Ремонт местных дорог':'0400','Транспортное обслуживание населения':'0400','Поддержка предпринимательства':'0400',
+ 'Жилищно-коммунальное хозяйство':'0500','Уличное освещение':'0500','Благоустройство парков':'0500',
+ 'Охрана окружающей среды':'0600','Дошкольное образование':'0700','Общее образование':'0700','Дополнительное образование детей':'0700','Молодёжная политика':'0700',
+ 'Библиотеки и культура':'0800','Социальная политика':'1000','Поддержка семей с детьми':'1000',
+ 'Физическая культура и спорт':'1100','Содержание спортивных площадок':'1100','Обслуживание муниципального долга':'1300'
+};
+const transfers=new Set(['Дотации на выравнивание бюджета','Субсидии из регионального бюджета','Субвенции на переданные полномочия','Межбюджетные трансферты']);
+function budgetCode(row){if(row.kind==='Доход')return 'гр. '+(transfers.has(row.name)?'2':'1');const v=expenseSections[row.name];return v?'рзд. '+v:'уточнить';}
+
 function create(task){
  const w={kind:task.kind,id:task.id,task,order:[],sheets:{},targets:[],hintMap:{}};
  function add(name,cols,rows){const sh={name,cols,rows,values:{},editable:{}};w.sheets[name]=sh;w.order.push(name);return sh;}
@@ -34,11 +47,11 @@ function create(task){
    sh.rows=tr+3;
  }else if(task.kind==='budget'&&task.budgetSplit){
    const sh=add('Бюджет',10,task.rows.length+11);
-   head(sh,0,['№','Статья бюджета','Раздел','План, тыс.','Факт, тыс.','Доход, тыс.','Расход, тыс.','Доля, %','Исполнение, %','Отклонение']);
+   head(sh,0,['№','Статья бюджета','Фрагмент кода','План, тыс.','Факт, тыс.','Доход, тыс.','Расход, тыс.','Доля, %','Исполнение, %','Отклонение']);
    input(sh,1,1,'Перенеси факт в доход или расход; другую ячейку оставь пустой.');
    const end=task.rows.length+3,start=task.rows.length+5;
    task.rows.forEach((row,i)=>{const r=i+3,R=r+1,id='b'+i;
-     input(sh,0,r,i+1);input(sh,1,r,row.name);input(sh,2,r,row.category||'—');input(sh,3,r,row.plan);input(sh,4,r,row.actual);
+     input(sh,0,r,i+1);input(sh,1,r,row.name);input(sh,2,r,budgetCode(row));input(sh,3,r,row.plan);input(sh,4,r,row.actual);
      for(const [c,k] of [[5,'Доход'],[6,'Расход']]){target(sh,c,r,row.kind===k?row.actual:0,'Перенеси факт из E'+R+' в столбец дохода или расхода.',row.name+' — '+k,id+k,false);w.targets[w.targets.length-1].blankIsZero=true;}
      const side=row.kind==='Доход'?'F':'G',den=task.rows.length+(row.kind==='Доход'?6:7);
      target(sh,7,r,norm(row.actual/task.summary[row.kind].actual*100),'='+side+R+'/E'+den+'*100',row.name+' — доля, %',id+'share');

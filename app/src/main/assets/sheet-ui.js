@@ -68,8 +68,8 @@ function revealSelected(){
 }
 const gridbox=node('div',undefined,'excel-grid-box');gridbox.tabIndex=0;gridbox.setAttribute('aria-label','Таблица: стрелки перемещают выделение, Enter открывает ввод');
 let inlineCell=null;
-function closeInline(){if(!inlineCell)return;bar.insertBefore(input,undo);inlineCell.classList.remove('excel-editing');const v=w?.sheets[active]?.values[inlineCell.dataset.addr];inlineCell.textContent=v&&String(v.raw).trim()?fmt(S.value(w,active,inlineCell.dataset.addr)):'';inlineCell=null;}
-function openInline(td){if(input.disabled)return;closeInline();inlineCell=td;td.classList.add('excel-editing');td.textContent='';td.appendChild(input);input.focus();input.setSelectionRange(input.value.length,input.value.length);}
+function closeInline(){if(!inlineCell)return;bar.insertBefore(input,undo);input.placeholder='Введи число или формулу =…';inlineCell.classList.remove('excel-editing');const v=w?.sheets[active]?.values[inlineCell.dataset.addr];inlineCell.textContent=v&&String(v.raw).trim()?fmt(S.value(w,active,inlineCell.dataset.addr)):'';inlineCell=null;}
+function openInline(td){if(input.disabled)return;closeInline();inlineCell=td;td.classList.add('excel-editing');td.textContent='';input.placeholder='';td.appendChild(input);input.focus();input.setSelectionRange(input.value.length,input.value.length);}
 const info=node('div','Выбирай жёлтую ячейку, вводи =формулу в строку fx. Синие значения — исходные.','excel-info');
 const controls=node('div',undefined,'excel-controls');
 const helpButton=node('button','? Подсказка','secondary');helpButton.type='button';
@@ -105,7 +105,7 @@ const kindGuides={nmck:[
   'Под таблицей находится общая НМЦК. Вводи формулы в жёлтые ячейки; «Вставить формулу» показывает пример для выбранного расчёта.',
   'Важно: пустые ячейки должны игнорироваться в СРЗНАЧ, СТАНДОТКЛОН.В и СЧЁТ. Коэффициент вариации — число в процентах (5,5 означает 5,5%).'
 ],budget:[
-  'Формулировка статьи находится в колонке B, раздел — в C, план — в D, факт — в E.',
+  'Статья находится в B, фрагмент кода классификации — в C, план — в D, факт — в E. Это не полный КБК; «уточнить» означает, что данных недостаточно.',
   'Перенеси факт из E в F для дохода или в G для расхода; другую ячейку оставь пустой. В H рассчитай долю.',
   'Суммируй доходы функцией =СУММ(F4:F19), а расходы — =СУММ(G4:G19); проверь последнюю строку диапазона.',
   'В I рассчитай процент исполнения =E4/D4*100; в J отклонение =E4-D4.',
