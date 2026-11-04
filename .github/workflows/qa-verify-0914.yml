@@ -1,4 +1,4 @@
-name: Verify packaged 0.9.24 Windows executable
+name: Verify packaged 0.9.25 Windows executable
 on:
   push:
     branches: [qa/examtrainer-0914-verify]
@@ -12,8 +12,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: ExamTrainer-0.9.24-Windows-QA
-          run-id: 41822157795
+          name: ExamTrainer-0.9.25-Windows-QA
+          run-id: 41824132541
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: qa-bin
       - name: Check exact executable and launch window
@@ -25,7 +25,7 @@ jobs:
           $exe = $files[0].FullName
           $hash = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLower()
           Write-Host "EXE SHA256: $hash"
-          if ($hash -ne '2e73bb4e4c3d354e7731dd58b107117f710f7a2027e8b7d634bc00e5ebd49778') { throw 'Unexpected EXE bytes' }
+          if ($hash -ne '7f325f7e5318219334ffd2606e77926671d2936e75fdbf2148f00ebf9cea2b5c') { throw 'Unexpected EXE bytes' }
           $sig = Get-AuthenticodeSignature $exe
           Write-Host "Signature status: $($sig.Status)"
           $started = Start-Process -FilePath $exe -PassThru
