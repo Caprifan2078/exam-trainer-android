@@ -111,7 +111,8 @@ function financial(level){
 }
 function generate(kind='nmck',level='medium'){if(!['easy','medium','hard'].includes(level))throw Error('Уровень');const t=kind==='nmck'?nmck(level):kind==='budget'?budget(level):kind==='financial'?financial(level):null;if(!t)throw Error('Тип задания');return Object.assign(t,{level,id:Date.now()+'-'+rand(1000,9999)});}
 function numeric(s){if(typeof s==='number')return s;if(typeof s!=='string')return NaN;s=s.trim().replace(/[\s\u00a0\u202f]/g,'').replace(/%$/,'').replace(',','.');return /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(s)?Number(s):NaN;}
-function check(q,s){if(s===null||s===undefined||String(s).trim()==='')return 'empty';if(typeof q.answer==='string'){return String(s).trim().toLowerCase().replace(/ё/g,'е')===q.answer.toLowerCase().replace(/ё/g,'е')?'ok':'bad';}const v=numeric(s);return Number.isFinite(v)&&Math.abs(v-q.answer)<=Math.max(0.011,Math.abs(q.answer)*1e-9)?'ok':'bad';}
+function check(q,s){if(s===null||s===undefined||String(s).trim()==='')return 'empty';if(typeof q.answer==='string'){return String(s).trim().toLowerCase().replace(/ё/g,'е')===q.answer.toLowerCase().replace(/ё/g,'е')?'ok':'bad';}const v=numeric(s);return Number.isFinite(v)&&Math.abs(v-q.answer)<=Math.max(0.005000001,Math.abs(q.answer)*Number.EPSILON*16)?'ok':'bad';}
 function grade(t,answers){const details=t.questions.map(q=>Object.assign({},q,{status:check(q,answers[q.id])})),ok=details.filter(r=>r.status==='ok').length;return{details,ok,total:details.length,percent:round(ok/details.length*100,0)};}
 return{generate,grade,check,numeric,round,bnames,pnames,metricNames,income,expense,goods};
 });
+

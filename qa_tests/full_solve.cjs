@@ -5,3 +5,11 @@ for(const level of ['easy','medium','hard'])for(const kind of ['nmck','budget','
  const g=S.grade(w);assert.equal(g.passed,g.total,kind+' '+level+' '+JSON.stringify(g.results.filter(x=>x.status!=='ok').slice(0,3)));
 }
 console.log('PASS: 450 работ решены целиком, 3 раздела x 3 уровня');
+
+assert.equal(E.check({answer:1.31},'1.30'),'bad','An error of 0.01 must not pass');
+assert.equal(E.check({answer:1.31},'1.3051'),'ok','An unrounded result that rounds correctly must pass');
+{
+ const t=E.generate('financial','medium'),w=S.create(t),x=w.targets.find(x=>x.formula);
+ S.write(w,x.sheet,x.addr,'='+String(x.answer-0.01));
+ assert.equal(S.grade(w).results.find(y=>y.id===x.id).status,'bad','Spreadsheet must reject a one-hundredth error');
+}
