@@ -1,3 +1,4 @@
+
 /* Conditions and per-cell optional formula hints; universal zoom is now in sheet-zoom.js. */
 (function(){
 'use strict';
@@ -9,7 +10,7 @@ const mk=(tag,text,css)=>{const x=document.createElement(tag);if(text!==undefine
 const nmckOptions=mk('div',undefined,'nmck-options');
 nmckOptions.id='nmck-options';
 const offerLabel=mk('label','Коммерческих предложений'),offer=mk('select');offer.id='offers-count';offerLabel.htmlFor=offer.id;
-[['random','Случайно: 3–5'],['3','3 предложения'],['4','4 предложения'],['5','5 предложений']].forEach(([v,t])=>{const e=mk('option',t);e.value=v;offer.append(e);});
+[['3','3 предложения'],['4','4 предложения'],['5','5 предложений'],['random','Случайно: 3–5']].forEach(([v,t])=>{const e=mk('option',t);e.value=v;offer.append(e);});
 nmckOptions.append(offerLabel,offer);panel.insertBefore(nmckOptions,start);
 const onKind=()=>{nmckOptions.hidden=kind.value!=='nmck';};kind.addEventListener('change',onKind);onKind();
 
@@ -61,7 +62,7 @@ function drawCondition(t){
   r.prices.forEach((p,j)=>{const label=mk('span','КП №'+(j+1));const price=mk('b',fmt(p)+' ₽');const item=mk('div',undefined,'condition-price');item.append(label,price);sub.append(item);});
   block.append(sub);content.append(block);
  });
- content.append(mk('p','Задача: сначала самостоятельно перенести цены предложений в таблицу, затем заполнить расчётные ячейки формулами Excel. Определить среднюю цену, отклонение и вариацию. Затем выбрать предложение с ближайшей ценой строго ниже средней и умножить его цену на количество. Порог вариации для учебного задания — 33%.','condition-instruction'));
+ content.append(mk('p',window.ExamMode?.allowHints()?'Задача: сначала самостоятельно перенести цены предложений в таблицу, затем заполнить расчётные ячейки формулами Excel. Определить среднюю цену, отклонение и вариацию. Затем выбрать предложение с ближайшей ценой строго ниже средней и умножить его цену на количество. Порог вариации для учебного задания — 33%.':'Задача: перенести исходные цены и выполнить расчёт. По условию выбери предложение, ближайшее к средней цене и строго ниже неё. Порог вариации — 33%.','condition-instruction'));
 }
 function suggestion(t,col,row){
  const n=t.rows.length,offers=t.rows[0].prices.length;
@@ -85,11 +86,11 @@ function suggestion(t,col,row){
 function showQuick(){
  quick.replaceChildren();
  const t=getTask(),label=document.querySelector('.excel-addr'),field=document.querySelector('.excel-input');
- if(!t||$('work').hidden||!label||!field||field.disabled){quick.hidden=true;return;}
+ if(!t||$('work').hidden||!label||!field||field.disabled||!window.ExamMode?.allowHints()){quick.hidden=true;return;}
  const match=/^([^!]+)!([A-Z]+)(\d+)$/.exec(label.textContent);
  let choices=[];
- if(match&&t.kind==='nmck'&&match[1]==='НМЦК')choices=suggestion(t,match[2],Number(match[3]));
  if(match&&t.kind==='financial'&&window.ExamFinanceHints)choices=window.ExamFinanceHints.suggest(t,match[1],match[2],Number(match[3]),window.ExamEngine);
+ if(match&&!choices.length){const hint=window.ExamMode.cellHint(match[1],match[2]+match[3]);if(hint)choices=[['Вставить формулу',hint]];}
  quick.hidden=!choices.length;
  if(!choices.length)return;
  const reveal=mk('button','Показать подсказку для '+match[2]+match[3],'excel-quick-button');reveal.type='button';quick.append(reveal);const details=mk('div');details.hidden=true;quick.append(details);reveal.addEventListener('click',()=>{details.hidden=!details.hidden;reveal.textContent=details.hidden?'Показать подсказку':'Скрыть подсказку';});details.append(mk('span',choices.map(x=>x[1]).join(' или '),'excel-quick-label'));
@@ -112,5 +113,7 @@ start.addEventListener('click',refresh);
 again.addEventListener('click',refresh);
 document.addEventListener('click',e=>{if(e.target.closest('.excel-grid')||e.target.closest('.excel-tabs')||e.target.closest('#back'))setTimeout(showQuick,0);});
 window.addEventListener('pageshow',()=>{if(!$('work').hidden)refresh();});
+window.addEventListener('exam-mode-change',()=>{if(!$('work').hidden)refresh();});
 if(!$('work').hidden)refresh();
 })();
+

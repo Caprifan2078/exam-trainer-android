@@ -22,6 +22,10 @@ $('questions').replaceChildren();$('questions').hidden=true;
 $('check').textContent='Проверить таблицу ✓';
 $('hints-button').textContent='Показать правильные значения (после проверки)';
 $('task-notes').textContent='';
+function hintsAllowed(){return !!task&&(task.practiceMode!=='exam'||!!task.helpUsed);}
+const modePanel=node('div',undefined,'mode-panel'),modeStatus=node('span','','mode-status'),unlockHelp=node('button','Нужна помощь','mode-unlock');
+unlockHelp.type='button';modePanel.append(modeStatus,unlockHelp);
+window.ExamMode={allowHints:hintsAllowed,cellHint:(sheet,addr)=>hintsAllowed()?w?.targets.find(t=>t.sheet===sheet&&t.addr===addr)?.hint:null};
 const toolbar=node('div',undefined,'excel-tool');
 const tabs=node('div',undefined,'excel-tabs');
 const bar=node('div',undefined,'excel-formula-bar');
@@ -37,7 +41,7 @@ let suggestions=null,suggestionIndex=0;
 function closeSuggestions(){suggestions=null;suggestBox.hidden=true;suggestBox.replaceChildren();}
 function acceptSuggestion(index){if(!suggestions||!suggestions.items[index])return false;const v=window.ExamFormulaComplete.insert(input.value,suggestions.start,suggestions.end,suggestions.items[index].name+'(');input.value=v.value;editDirty=true;closeSuggestions();input.focus();input.setSelectionRange(v.caret,v.caret);return true;}
 function showSuggestions(){
- closeSuggestions();if(input.disabled)return;
+ closeSuggestions();if(input.disabled||!hintsAllowed())return;
  suggestions=window.ExamFormulaComplete.candidates(input.value,input.selectionStart);if(!suggestions)return;
  suggestionIndex=0;suggestBox.hidden=false;
  suggestions.items.forEach((item,i)=>{const b=node('button',item.name+' — '+item.desc,'formula-suggestion'+(i===0?' active':''));b.type='button';b.setAttribute('role','option');b.addEventListener('mousedown',e=>e.preventDefault());b.addEventListener('click',()=>acceptSuggestion(i));suggestBox.appendChild(b);});
@@ -82,13 +86,27 @@ sheetRoot.replaceChildren(toolbar);
 const footer=node('div',undefined,'excel-check-help');$('questions').insertAdjacentElement('afterend',footer);
 const progressBox=node('div',undefined,'excel-progress'),progressLabel=node('span','Прогресс выполнения','excel-progress-label');
 const progressBar=document.createElement('progress');progressBar.max=1;progressBar.value=0;progressBar.setAttribute('aria-label','Заполнение расчётных ячеек');
-progressBox.append(progressLabel,progressBar);toolbar.prepend(progressBox);
+progressBox.append(progressLabel,progressBar);toolbar.prepend(modePanel,progressBox);
 function updateProgress(){
  if(!w)return;
  const filled=w.targets.filter(t=>String(w.sheets[t.sheet]?.values[t.addr]?.raw??'').trim()!=='').length;
  progressLabel.textContent='Заполнено '+filled+' из '+w.targets.length+' ячеек · черновик сохраняется';
  progressBar.max=Math.max(1,w.targets.length);progressBar.value=filled;
 }
+function applyMode(){
+ const exam=task?.practiceMode==='exam',allowed=hintsAllowed();
+ modeStatus.textContent=exam?(allowed?'Экзамен · с подсказками':'Экзамен · без подсказок'):'Обучение · подсказки доступны';
+ unlockHelp.hidden=!exam||allowed;helpButton.hidden=!allowed;formulaExample.hidden=!allowed;
+ $('review-example').hidden=!allowed;$('hints-button').hidden=!allowed;
+ if(!allowed){sheetHelp.hidden=true;$('hints').hidden=true;closeSuggestions();}
+ window.dispatchEvent(new Event('exam-mode-change'));
+}
+unlockHelp.addEventListener('click',()=>{
+ if(!task||task.practiceMode!=='exam'||task.helpUsed)return;
+ if(!confirm('Открыть подсказки и ответы? В этой работе результат будет отмечен как выполненный с помощью.'))return;
+ task.helpUsed=true;applyMode();saveDraft();
+ if(checked)$('score').textContent='Проверка: '+checked.passed+' из '+checked.total+' ('+checked.percent+'%) · с подсказками';
+});
 function invalidateCheck(){checked=null;$('results').hidden=true;footer.replaceChildren();}
 function jumpTo(t){
  if(!t||!w.sheets[t.sheet])return;
@@ -161,7 +179,7 @@ function restoreReference(ref){
 function firstEditable(sh){return Object.keys(sh.editable)[0]||'A1';}
 function select(a,focus=false){if(editDirty)flush();closeInline();selected=a;const sh=w.sheets[active],raw=sh.values[a];address.textContent=active+'!'+a;input.value=raw?String(raw.raw):'';editDirty=false;
  input.disabled=!sh.editable[a];commit.disabled=!sh.editable[a];
- info.textContent=!sh.editable[a]?'Исходная ячейка '+a+' защищена. Используй её в формулах.':'Жёлтая ячейка: введи число или формулу. Подсказка доступна по кнопке.';
+ info.textContent=!sh.editable[a]?'Исходная ячейка '+a+' защищена. Используй её в формулах.':(hintsAllowed()?'Жёлтая ячейка: введи число или формулу. Подсказка доступна по кнопке.':'Жёлтая ячейка: введи число или формулу.');
  for(const el of gridbox.querySelectorAll('.excel-selected'))el.classList.remove('excel-selected');
  const chosen=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(e=>e.dataset.addr===a);if(chosen){chosen.classList.add('excel-selected');revealSelected();}
  viewMemory[active]={selected:a,scrollLeft:gridbox.scrollLeft,scrollTop:gridbox.scrollTop};
@@ -177,7 +195,7 @@ function refreshValues(){if(!w)return;for(const cell of gridbox.querySelectorAll
 function check(){
  flush();checked=S.grade(w);refreshValues();
  $('results').hidden=false;$('hints').hidden=true;
- $('score').textContent='Проверка: '+checked.passed+' из '+checked.total+' ('+checked.percent+'%)';
+ $('score').textContent='Проверка: '+checked.passed+' из '+checked.total+' ('+checked.percent+'%)'+(task.practiceMode==='exam'?(task.helpUsed?' · с подсказками':' · самостоятельно'):' · обучение');
  const errors=checked.results.filter(r=>r.status!=='ok');
  const bad=errors.filter(r=>r.status==='bad'),empty=errors.filter(r=>r.status==='empty'),needs=errors.filter(r=>r.status==='need-formula');
  $('message').textContent=errors.length
@@ -198,7 +216,7 @@ function check(){
  }
  saveStats(checked.percent);$('results').scrollIntoView({block:'start',behavior:'smooth'});
 }
-function showAnswers(){const box=$('hints');box.replaceChildren();for(const r of (checked?.results||[])){const el=node('p',r.sheet+'!'+r.addr+' — '+r.label+': '+fmt(r.answer)+(r.hint?' · '+r.hint:''),'excel-answer');box.appendChild(el);}box.hidden=false;}
+function showAnswers(){if(!hintsAllowed())return;const box=$('hints');box.replaceChildren();for(const r of (checked?.results||[])){const el=node('p',r.sheet+'!'+r.addr+' — '+r.label+': '+fmt(r.answer)+(r.hint?' · '+r.hint:''),'excel-answer');box.appendChild(el);}box.hidden=false;}
 function saveDraft(){
  try{
  if(!w)return;
@@ -212,9 +230,9 @@ function saveStats(pct){try{const old=JSON.parse(localStorage.getItem('examStats
 function showWork(){$('work').hidden=false;$('home').hidden=true;document.body.classList.add('exam-solving');$('task-title').textContent=task.title+' · Таблицы';$('task-org').textContent=task.company;
  $('task-meta').textContent=task.questions.length+' исходных вопросов · '+w.targets.length+' ячеек для проверки · '+w.order.length+' лист(а)';
  $('task-notes').textContent='Жёлтые ячейки — для формул. Черновик сохраняется автоматически.';
- $('results').hidden=true;checked=null;footer.replaceChildren();renderGrid();updateProgress();window.scrollTo(0,0);}
+ $('results').hidden=true;checked=null;footer.replaceChildren();applyMode();renderGrid();updateProgress();window.scrollTo(0,0);}
 function start(){if(w)flush();if(w&&Object.values(S.save(w)).some(x=>Object.keys(x).length)&&!confirm('Создать новый вариант? Черновик предыдущего будет заменён.'))return;
- try{task=E.generate($('kind').value,$('level').value);w=S.create(task);history.length=0;for(const key of Object.keys(viewMemory))delete viewMemory[key];undo.disabled=true;active=w.order[w.order.length-1];selected='';showWork();saveDraft();}catch(e){alert('Ошибка создания таблицы: '+e.message);}}
+ try{task=E.generate($('kind').value,$('level').value);task.practiceMode=$('mode').value==='exam'?'exam':'learning';task.helpUsed=false;w=S.create(task);history.length=0;for(const key of Object.keys(viewMemory))delete viewMemory[key];undo.disabled=true;active=w.order[w.order.length-1];selected='';showWork();saveDraft();}catch(e){alert('Ошибка создания таблицы: '+e.message);}}
 gridbox.addEventListener('keydown',e=>{
  if(e.target===input)return;
  if(!w||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.key))return;
@@ -248,11 +266,11 @@ undo.addEventListener('click',()=>{
 $('start').addEventListener('click',start);$('again').addEventListener('click',start);$('check').addEventListener('click',check);
 $('hints-button').addEventListener('click',showAnswers);
 $('back').addEventListener('click',()=>{flush();saveDraft();$('work').hidden=true;$('home').hidden=false;document.body.classList.remove('exam-solving');window.scrollTo(0,0);});
-helpButton.addEventListener('click',()=>{flush();if(sheetHelp.hidden)showHelp(kindGuides[task.kind]);else sheetHelp.hidden=true;});
-formulaExample.addEventListener('click',()=>showHelp(['Доступные функции: СУММ, СРЗНАЧ, СТАНДОТКЛОН.В, ОКРУГЛ, КОРЕНЬ, ЕСЛИ, СУММЕСЛИ, СЧЁТ, МИН, МАКС, АБС.',
+helpButton.addEventListener('click',()=>{if(!hintsAllowed())return;flush();if(sheetHelp.hidden)showHelp(kindGuides[task.kind]);else sheetHelp.hidden=true;});
+formulaExample.addEventListener('click',()=>{if(!hintsAllowed())return;showHelp(['Доступные функции: СУММ, СРЗНАЧ, СТАНДОТКЛОН.В, ОКРУГЛ, КОРЕНЬ, ЕСЛИ, СУММЕСЛИ, СЧЁТ, МИН, МАКС, АБС.',
 'Поддерживаются ссылки на одну ячейку, диапазон A1:C8 и другие листы: =Баланс!C5+Баланс!D5. В формулах используй ; между аргументами.',
 'Сначала заполни промежуточные ячейки, после этого итоговые. Для редактирования нажми жёлтую ячейку и введи формулу в поле fx.',
-'Правильные значения можно увидеть только после нажатия «Проверить».']));
+'Правильные значения можно увидеть только после нажатия «Проверить».']);});
 exportButton.addEventListener('click',()=>{flush();try{const b64=window.ExamXlsx.exportBase64(w);const filename='exam-training-'+task.kind+'-'+Date.now()+'.xlsx';
  if(window.ExamNative&&typeof window.ExamNative.saveXlsx==='function')window.ExamNative.saveXlsx(filename,b64);
  else{const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));const url=URL.createObjectURL(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));const a=node('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}

@@ -2,7 +2,7 @@ plugins { id 'com.android.application' }
 android {
     namespace 'io.github.caprifan2078.examtrainer'
     compileSdk 35
-    defaultConfig { applicationId 'io.github.caprifan2078.examtrainer.qa0923'; minSdk 23; targetSdk 28; versionCode 28; versionName '0.9.23-qa' }
+    defaultConfig { applicationId 'io.github.caprifan2078.examtrainer.qa0924'; minSdk 23; targetSdk 28; versionCode 29; versionName '0.9.24-qa' }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
 

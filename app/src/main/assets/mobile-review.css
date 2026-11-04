@@ -82,3 +82,7 @@ body.exam-solving #work .nmck-navigation{top:auto}
  #work[data-nmck-sheet="yes"] .excel-grid tbody tr:nth-child(4) td,
  #work[data-nmck-sheet="yes"] .excel-grid tbody tr:nth-child(5) td{height:38px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 }
+.mode-description{font-size:12px;line-height:1.4;color:#c4d4e7;margin:5px 0 12px}
+.mode-panel{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 0 7px;padding:7px 10px;border:1px solid #456583;border-radius:9px;background:#1c344f;color:#e1f3ff;font-size:12px;font-weight:700}
+.mode-unlock{min-height:34px;padding:5px 9px;border:1px solid #84b4c6;border-radius:8px;background:#285b71;color:#fff;font-size:12px;flex-shrink:0}
+.mode-unlock[hidden]{display:none}
