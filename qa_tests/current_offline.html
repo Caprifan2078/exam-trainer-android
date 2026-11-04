@@ -375,6 +375,13 @@ body.exam-solving #work .nmck-navigation{top:auto}
 
 /* На широком экране отдаём таблице больше места, сохраняя отступы страницы. */
 @media(min-width:1000px){body.exam-solving main{max-width:min(1720px,calc(100% - 32px))}}
+/* Телефон: название уже показано над таблицей; компактные заголовки оставляют больше строк на экране. */
+@media(max-width:600px){
+ #work .excel-formula-bar{position:relative;top:auto}
+ #work[data-nmck-sheet="yes"] .excel-grid tbody tr:nth-child(-n+3){display:none}
+ #work[data-nmck-sheet="yes"] .excel-grid tbody tr:nth-child(4) td,
+ #work[data-nmck-sheet="yes"] .excel-grid tbody tr:nth-child(5) td{height:38px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+}
 
 </style></head><body>
 <header><div class="logo">∑</div><div><div class="eyebrow">ТРЕНАЖЁР ДЕМОЭКЗАМЕНА</div><h1>Экзаменатор <small>0.9.23 · учебная QA-сборка</small></h1></div></header>
