@@ -1,0 +1,1678 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0d1423"><title>Экзаменатор</title><style>
+:root{color-scheme:dark;--bg:#0d1423;--panel:#16243a;--panel2:#1d304b;--text:#eff4ff;--muted:#afbed0;--line:#304561;--accent:#83a8ff;--good:#61d6a8;--bad:#ff9292}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Roboto,Arial,sans-serif}header{display:flex;gap:12px;padding:20px max(17px,env(safe-area-inset-left));align-items:center;border-bottom:1px solid var(--line)}.logo{background:#253d63;border-radius:14px;color:#c4dbff;font-size:27px;font-weight:700;padding:7px 13px}.eyebrow{color:#94afe0;letter-spacing:1.2px;font-size:10px;font-weight:700;margin:0}h1{font-size:19px;margin:1px 0}h1 small{font-size:11px;color:var(--muted)}main{max-width:840px;margin:auto;padding:18px 16px 45px}.hero{padding:24px 19px;border-radius:20px;background:linear-gradient(132deg,#1c3255,#112037);margin-bottom:18px}.hero h2{font-size:31px;line-height:1.13;margin:8px 0 13px}.hero h2 em{color:#94c4ff;font-style:normal}.hero p:not(.eyebrow){color:#c7d5e7;margin:0}h3{margin:25px 0 9px;font-size:19px}.panel,.sourcebox,.qgroup,#results{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin:10px 0}.panel label{display:block;font-weight:700;margin:12px 0 5px}.panel label:first-child{margin-top:0}select,input{font:inherit;color:var(--text);background:#0b182b;border:1px solid #57708c;border-radius:10px;padding:12px;width:100%;min-height:45px}input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}button{font:inherit;cursor:pointer;border-radius:12px;min-height:47px;padding:11px 15px;font-weight:700}.primary{border:0;color:#0b1b31;background:linear-gradient(90deg,#9dc6ff,#c7baff);width:100%;margin:16px 0 7px}.secondary{background:transparent;color:var(--text);border:1px solid #58708e;width:100%;margin:6px 0}.back{color:#bdd8ff;background:transparent;border:0;padding:5px 0;margin:0 0 14px}.note,.muted{color:var(--muted);font-size:13px}.stats{color:var(--muted);text-align:center;margin:15px}.sourcebox h4,.qgroup h4{margin:2px 0 10px;color:#ccdcf9}.table-wrap{overflow:auto;max-width:100%;border-radius:9px;border:1px solid var(--line)}table{border-collapse:collapse;width:100%;font-size:12px;min-width:400px}th,td{border-bottom:1px solid #344a65;padding:9px 8px;white-space:nowrap;text-align:right}th:first-child,td:first-child{text-align:left;white-space:normal;min-width:150px}th{background:#273f5f;color:#dfeaff}tr:nth-child(even) td{background:#1a2a42}.question{padding:11px 0;border-top:1px solid #304561}.question:first-of-type{border-top:0}.question label{display:block;margin-bottom:7px}.question input{max-width:100%}.question select{width:100%}.status{display:block;font-size:12px;margin-top:5px;min-height:15px}.status.ok{color:var(--good)}.status.bad{color:var(--bad)}.status.empty{color:var(--muted)}#results{margin-top:18px}#results h3{margin:0}#hints{padding-top:12px}.hint{border-bottom:1px solid var(--line);padding:8px 0}.hint strong{color:var(--good)}@media(min-width:680px){.hero h2{font-size:38px}.panel{max-width:640px}.question{display:grid;grid-template-columns:1fr minmax(150px,210px);gap:12px;align-items:center}.question label{margin:0}.question .status{grid-column:2}}
+/* Beginner help and NMCQ visibility fixes (v0.7) */
+.practice-help{margin:14px 0 23px;padding:13px;border:1px solid #415876;border-radius:15px;background:#15243b}
+.practice-guide-toggle{width:100%;text-align:center;margin:0}
+.practice-help-body{padding:10px 7px 0;line-height:1.6;color:#d5e5fa;font-size:13px}
+.practice-help-body p{margin:7px 0}
+.practice-help-body[hidden],.field-hint[hidden]{display:none!important}
+.mini-help{min-width:32px;min-height:32px;margin:5px 0 2px;background:#223e62;border:1px solid #7283ad;border-radius:9px;color:#e7ecff;font-weight:800}
+.field-hint{color:#cae5fb;font-size:12px;line-height:1.45;padding:9px 12px;border-left:2px solid #8b9efa;background:#172943;margin:5px 0}
+.nmck-error{color:#ffbb9d;font-weight:700;padding:10px}
+#sources .sourcebox p.muted{margin:8px 12px 12px}
+#sources .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+#sources table{min-width:280px}
+#sources th,#sources td{white-space:normal;overflow-wrap:anywhere}
+
+
+/* Excel-like workbook editing on narrow Android screens, v0.8. */
+.excel-tool{margin:14px 0 24px;min-width:0;width:100%}
+.excel-tabs{display:flex;gap:5px;overflow-x:auto;padding:8px 0;scrollbar-width:thin}
+.excel-tab{border:1px solid #364c67;border-bottom:3px solid transparent;border-radius:9px 9px 3px 3px;padding:11px 15px;color:#d9e6f9;background:#182b46;min-width:65px;flex-shrink:0}
+.excel-tab.is-active{color:#fff;border-color:#789cd8;border-bottom:3px solid #9adeca;background:#284d76;font-weight:700}
+.excel-formula-bar{display:flex;gap:6px;align-items:center;position:sticky;top:0;z-index:15;background:#111e32;padding:10px 3px 8px;border-bottom:1px solid #415572;box-shadow:0 4px 12px #06102055}
+.excel-addr{flex-shrink:0;font-size:11px;max-width:112px;min-width:57px;overflow:hidden;text-overflow:ellipsis;background:#243c5b;padding:12px 7px;border-radius:6px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.excel-fx{font-weight:800;color:#a1d9d0;font-style:italic;font-size:16px}
+.excel-input{min-width:0;flex:1;padding:12px 9px;background:#f7fafb!important;color:#0f2742!important;border:1px solid #9ab0cc!important;border-radius:5px!important;font-family:monospace;font-size:14px}
+.excel-input:disabled{opacity:.65}
+.excel-commit{min-height:44px;min-width:44px;border-radius:8px;background:#3d8a7b;color:white;font-weight:800}
+.excel-commit:disabled{opacity:.3}
+.excel-grid-box{width:100%;max-height:65vh;overflow:auto;overscroll-behavior:contain;border:1px solid #556a83;border-radius:7px;background:#f0f3f8;-webkit-overflow-scrolling:touch}
+.excel-grid{border-collapse:separate;border-spacing:0;table-layout:fixed;width:max-content!important;min-width:100%;font-size:12px;color:#172a3c}
+.excel-grid th,.excel-grid td{border-right:1px solid #b8c5d0;border-bottom:1px solid #c8d2db;min-width:114px;width:114px;max-width:114px;min-height:33px;height:33px;vertical-align:middle;padding:6px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;font-variant-numeric:tabular-nums}
+.excel-grid th.excel-corner,.excel-grid th.excel-row{position:sticky;left:0;min-width:34px;width:34px;max-width:34px;z-index:2;background:#d7e3f0;text-align:center;color:#33546f;font-weight:600}
+.excel-grid th.excel-col{position:sticky;top:0;z-index:3;background:#d7e3f0;color:#33546f;text-align:center}
+.excel-grid th.excel-corner{z-index:4;top:0}
+.excel-grid td.excel-locked{background:#e7f1ff;color:#173654}
+.excel-grid td.excel-blank{background:#f4f5f8;color:#4d5f70}
+.excel-grid td.excel-editable{background:#fff0b0;color:#352811;cursor:pointer}
+.excel-grid td.excel-header{background:#25476d;color:#fff;text-align:center;font-weight:700}
+.excel-grid td:nth-child(3){width:270px;min-width:270px;max-width:270px;text-align:left}
+.excel-grid td.excel-selected{outline:3px solid #197a6f;outline-offset:-3px;position:relative;z-index:1}
+.excel-grid td.excel-pass{background:#c6f1cf}
+.excel-grid td.excel-fail{background:#ffd5d5}
+.excel-grid td.excel-needs{background:#ffe3a9}
+.excel-info{background:#1c304d;color:#dae6f3;font-size:12px;line-height:1.5;padding:11px 13px;border-radius:0 0 10px 10px;margin:6px 0 12px;overflow-wrap:anywhere}
+.excel-controls{display:flex;flex-wrap:wrap;gap:6px}
+.excel-controls button{flex:1 1 105px;padding:10px 8px;font-size:12px;min-height:40px}
+.excel-help{margin:13px 0;padding:11px 15px;background:#193555;border-left:3px solid #97c6ed;color:#e2eaf8;font-size:13px;line-height:1.55}
+.excel-help p{margin:9px 0}
+.excel-check-help{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.excel-err-button{background:#593848;border:1px solid #bd6b6b;border-radius:8px;padding:8px 10px;font-size:12px;color:#fff}
+.excel-answer{margin:9px 0;padding:8px 10px;border-bottom:1px solid #405675;font-size:13px;overflow-wrap:anywhere}
+@media(max-width:480px){.excel-grid td:nth-child(3){min-width:235px;width:235px;max-width:235px}.excel-grid th,.excel-grid td{font-size:11px}.excel-grid-box{max-height:60vh}}
+
+/* v0.9: readable NMCK controls and one-tap formula snippets */
+.nmck-options{margin:14px 0;padding:13px;background:#152942;border:1px solid #455d7c;border-radius:12px}
+.nmck-options[hidden],.excel-quick[hidden]{display:none!important}
+.nmck-options label{display:block;font-size:13px;margin:6px 0;color:#e2ebfb}
+.nmck-options select{width:100%;min-height:44px;margin-bottom:10px}
+.excel-quick{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:9px 4px 13px}
+.excel-quick-label{flex-basis:100%;font-size:12px;color:#b6daed}
+.excel-quick-button{min-height:44px;padding:9px 13px;border-radius:9px;border:1px solid #7bb2b4;background:#215e69;color:#f5ffff;font-size:13px;font-weight:700}
+.excel-quick-button:active{background:#377e86}
+
+
+/* v0.9.5: compact, accessible learning progress and focused mistake review. */
+.excel-progress{background:#1d3650;border:1px solid #426482;border-radius:12px;padding:10px 12px;margin:0 0 10px;display:flex;flex-direction:column;gap:6px}
+.excel-progress-label{color:#dcecff;font-size:12px;font-weight:700;line-height:1.4}
+.excel-progress progress{display:block;width:100%;height:9px;border:0;border-radius:12px;overflow:hidden;background:#0e2036;accent-color:#60d5b1}
+.excel-progress progress::-webkit-progress-bar{background:#0e2036;border-radius:12px}
+.excel-progress progress::-webkit-progress-value{background:#60d5b1;border-radius:12px}
+.excel-undo{width:40px;min-width:40px;min-height:44px;padding:7px;border:1px solid #688ca8;background:#24445f;color:#e3f7ff;border-radius:8px;font-size:21px;font-weight:700}
+.excel-undo:disabled{opacity:.32}
+.excel-err-primary{width:100%;padding:12px 10px;background:#295f6d;border:1px solid #72b9ac;color:#edfffb;border-radius:10px;font-size:13px}
+.excel-err-caption{flex-basis:100%;font-size:12px;color:#d4e6f5;margin:6px 0 0}
+@media(max-width:390px){.excel-undo{min-width:36px;width:36px}.excel-formula-bar{gap:4px}.excel-addr{min-width:48px;max-width:90px}}
+
+.excel-grid td.excel-editing{padding:0;min-width:130px;overflow:visible}.excel-grid td.excel-editing .excel-input{display:block;width:100%;min-width:130px;box-sizing:border-box;font-size:16px;padding:5px}.excel-grid td.excel-editing:focus-within{outline:2px solid #298466;z-index:2;position:relative}
+
+</style><style>
+/* Layout patterned after the supplied solved NMCK spreadsheets; mobile zoom is grid-only. */
+.nmck-condition{margin:6px 0 14px;padding:16px;background:#182c46;border:1px solid #56718d;border-radius:15px;color:#edf5ff}
+.nmck-condition[hidden],.excel-quick[hidden],.nmck-options[hidden]{display:none!important}
+.nmck-condition .condition-eyebrow{font-size:11px;letter-spacing:1.2px;color:#8ce0c8;font-weight:800}
+.nmck-condition h3{font-size:18px;margin:7px 0 10px}
+.nmck-condition p{font-size:13px;margin:6px 0 10px;line-height:1.48}
+.condition-lot{padding:11px 0;border-top:1px solid #405874}
+.condition-lot>strong{display:block;font-size:14px}
+.condition-prices{display:grid;grid-template-columns:repeat(auto-fit,minmax(98px,1fr));gap:7px}
+.condition-price{background:#28405f;border-radius:8px;padding:9px;display:flex;flex-direction:column;gap:1px}
+.condition-price span{font-size:11px;color:#c1d0e5}
+.condition-price b{font-size:14px;color:#fff;font-variant-numeric:tabular-nums}
+.condition-instruction{border-left:3px solid #72dbb2;padding:9px 10px;background:#243e58}
+.sheet-zoom{display:flex;align-items:center;gap:9px;padding:9px 3px 11px;position:relative}
+.sheet-zoom-caption{font-size:10px;color:#bbd1ea;letter-spacing:.5px;font-weight:700;margin-right:auto}
+.sheet-zoom-button,.sheet-zoom-reset{min-width:44px;height:42px;min-height:42px;border-radius:9px;border:1px solid #7ba7c3;color:#f1f8ff;background:#234b65;padding:6px 10px;font-size:19px}
+.sheet-zoom-reset{min-width:67px;font-size:14px}
+.excel-quick{display:flex;flex-wrap:wrap;gap:7px;padding:8px 0 12px}
+.excel-quick-label{width:100%;font-size:12px;color:#bbd8f4}
+.excel-quick-button{background:#205b61;color:#effffd;border:1px solid #73a6a9;border-radius:9px;padding:9px 12px;font-size:12px;min-height:42px}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid th.excel-col,
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid td{
+ min-width:var(--exam-cell-w,110px)!important;
+ width:var(--exam-cell-w,110px)!important;
+ max-width:var(--exam-cell-w,110px)!important;
+ height:var(--exam-row-h,35px);
+ padding:var(--exam-padding,6px);
+ font-size:var(--exam-font,11px)!important;
+}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid th.excel-row,
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid th.excel-corner{
+ min-width:var(--exam-index-w,37px);width:var(--exam-index-w,37px);max-width:var(--exam-index-w,37px);
+ font-size:var(--exam-font,11px);
+}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody td:nth-child(3){
+ min-width:var(--exam-name-w,265px)!important;width:var(--exam-name-w,265px)!important;max-width:var(--exam-name-w,265px)!important;
+ text-align:left;
+}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody td[colspan]{
+ width:auto!important;max-width:none!important;min-width:0!important;text-align:left;
+ white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word;
+}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody tr:nth-child(-n+3) td[colspan]{
+ background:#25436b!important;color:#f0f6ff;font-size:var(--exam-title-font,12px)!important;
+ height:var(--exam-title-h,43px);font-weight:700;
+}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody tr:nth-child(4) td,
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody tr:nth-child(5) td{
+ background:#315782!important;color:#fff!important;white-space:normal!important;overflow-wrap:break-word!important;
+ height:var(--exam-head-h,100px);text-align:center;line-height:1.25;
+ font-size:var(--exam-font,11px)!important;
+}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody tr:nth-child(n+6) td.excel-editable{
+ background:#fff0b0;color:#30260f;
+}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody td.excel-selected{outline:3px solid #28a98e!important;outline-offset:-3px}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody td.excel-fail{background:#ffd5d5!important}
+#work[data-nmck-sheet="yes"] .excel-grid-box .excel-grid tbody td.excel-pass{background:#caf3d8!important}
+@media(max-width:440px){.sheet-zoom{gap:6px}.sheet-zoom-caption{font-size:9px}.nmck-condition{padding:12px}.condition-prices{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Compact spreadsheet navigation for one-handed mobile learning. */
+.nmck-navigation{display:flex;align-items:center;gap:7px;background:#213c58;padding:9px 8px;margin:6px 0 5px;border:1px solid #41617a;border-radius:11px;position:sticky;top:52px;z-index:13}
+.nmck-navigation[hidden]{display:none!important}
+.nmck-navigation .nmck-nav-center{min-width:0;flex:1;display:flex;flex-direction:column;line-height:1.28;gap:2px}
+.nmck-nav-step{font-size:12px;color:#fcf6d9}
+.nmck-nav-detail{font-size:10px;color:#c2dded;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.nmck-nav-button{flex:none;min-width:73px;padding:8px 9px;min-height:43px;background:#285e70;color:#f2fff9;border:1px solid #71a4b8;border-radius:8px;font-weight:700;font-size:12px}
+.nmck-nav-button:disabled{opacity:.43}
+@media(max-width:390px){.nmck-navigation{gap:4px;padding:6px 5px}.nmck-nav-button{min-width:65px;padding:8px 5px;font-size:11px}}
+
+</style><style>
+/* v0.9.8 — one zoom system across NMCK, budget and all finance worksheets.
+ * Spreadsheet text may intentionally be tiny at the 15% overview setting.
+ * Formula editor and navigation are NEVER scaled, so the sheet stays editable.
+ */
+.sheet-zoom{display:grid;grid-template-columns:auto minmax(42px,1fr) auto auto auto;gap:7px;align-items:center;padding:10px;margin:8px 0 0;background:#1b3551;border:1px solid #486f91;border-radius:12px 12px 0 0}
+.sheet-zoom-caption{grid-column:1/-1;font-size:12px;letter-spacing:.2px;color:#e0eeff;font-weight:800}
+.sheet-zoom-button,.sheet-zoom-fit,.sheet-zoom-percent{display:flex;align-items:center;justify-content:center;border-radius:8px;min-height:43px;padding:8px;border:1px solid #729ebe;color:#ecfaff;background:#235574}
+.sheet-zoom-button{font-size:22px;width:43px;min-width:43px}
+.sheet-zoom-percent{font-size:14px;min-width:66px;background:#154552;font-weight:800}
+.sheet-zoom-fit{font-size:13px;min-width:69px}
+.sheet-zoom-button:disabled{opacity:.35}
+.sheet-zoom-range{appearance:auto;-webkit-appearance:auto;width:100%;min-width:40px;min-height:26px;height:26px;padding:0;margin:0;accent-color:#68dcb5;background:transparent;border:0;outline-offset:3px}
+.sheet-zoom-hint{font-size:11px;color:#d1e5f8;background:#172b42;margin:0 0 7px;padding:7px 10px;border:1px solid #385a77;border-top:0;border-radius:0 0 10px 10px}
+#work .excel-grid-box{touch-action:pan-x pan-y;max-height:65vh;scrollbar-width:thin}
+#work .excel-grid-box .excel-grid{width:max-content!important;min-width:100%;table-layout:fixed}
+#work .excel-grid-box .excel-grid th.excel-col,
+#work .excel-grid-box .excel-grid td{
+ min-width:var(--exam-cell-w,110px)!important;
+ width:var(--exam-cell-w,110px)!important;
+ max-width:var(--exam-cell-w,110px)!important;
+ height:var(--exam-row-h,35px);
+ padding:var(--exam-padding,6px);
+ font-size:var(--exam-font,11px)!important;
+ box-sizing:border-box
+}
+#work .excel-grid-box .excel-grid th.excel-row,
+#work .excel-grid-box .excel-grid th.excel-corner{
+ min-width:var(--exam-index-w,37px)!important;
+ width:var(--exam-index-w,37px)!important;
+ max-width:var(--exam-index-w,37px)!important;
+ font-size:var(--exam-font,11px)!important
+}
+#work .excel-grid-box .excel-grid td[data-addr^="B"]:not([colspan]){
+ width:var(--exam-name-w,265px)!important;
+ min-width:var(--exam-name-w,265px)!important;
+ max-width:var(--exam-name-w,265px)!important;
+ text-align:left;
+}
+#work .excel-grid-box .excel-grid td.excel-header{
+ white-space:normal!important;
+ overflow-wrap:break-word;
+ height:var(--exam-head-h,90px);
+ line-height:1.25;
+ vertical-align:middle
+}
+#work .excel-grid-box .excel-grid td[colspan]{
+ min-width:0!important;width:auto!important;max-width:none!important;
+ white-space:normal!important;text-align:left;overflow-wrap:break-word
+}
+#work .excel-grid-box .excel-grid td.excel-selected{outline:3px solid #0ca68f;outline-offset:-3px;position:relative;z-index:1}
+#work .excel-grid-box .excel-grid td.excel-editable{cursor:pointer}
+#work .excel-grid-box .excel-grid td.excel-locked{user-select:text}
+#work .excel-grid-box .excel-grid td.excel-pass{background:#c3efd3!important}
+#work .excel-grid-box .excel-grid td.excel-fail{background:#ffcccc!important}
+#work .excel-grid-box .excel-grid td.excel-needs{background:#ffe3a1!important}
+#work .excel-formula-bar{top:0;border-radius:9px 9px 0 0}
+#work .excel-info{font-size:13px}
+.nmck-navigation{top:53px}
+#work .hero{padding:15px 16px;margin:10px 0 14px}
+#work .hero h2{font-size:22px;line-height:1.25;margin:5px 0}
+#work .hero p:not(.eyebrow){font-size:12px}
+#work h3{margin:16px 0 8px;font-size:17px}
+#work .excel-tool{margin-top:7px}
+@media(max-width:390px){
+ .sheet-zoom{gap:5px;padding:8px 6px;grid-template-columns:40px minmax(26px,1fr) 40px 61px 63px}
+ .sheet-zoom-button{min-width:40px;width:40px}
+ .sheet-zoom-percent{min-width:61px;font-size:13px}
+ .sheet-zoom-fit{min-width:63px;font-size:12px}
+}
+
+/* Less scrolling before practice: task terms stay above NMCK table but may be folded. */
+.condition-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.condition-toggle{background:#244c66;border:1px solid #6d99b6;color:#eafaff;min-height:40px;border-radius:9px;padding:7px 11px;font-size:12px}
+.condition-body[hidden]{display:none!important}
+.condition-body h3{margin-top:10px}
+@media(max-width:390px){.condition-heading{gap:4px}.condition-toggle{padding:6px 8px;font-size:11px}}
+
+</style><style>
+/* v0.9.9 — make the actual worksheet the focus on a narrow Android phone. */
+#work .back{display:inline-flex;align-items:center;min-height:36px;margin:0 0 8px;padding:4px 5px;font-size:13px}
+#work .hero{padding:10px 13px!important;margin:0 0 8px!important;border-radius:12px}
+#work .hero .eyebrow{font-size:9px}
+#work .hero h2{font-size:18px!important;line-height:1.2;margin:2px 0 3px!important}
+#work .hero p:not(.eyebrow){font-size:11px!important;line-height:1.35;margin:0!important}
+#work h3{font-size:15px!important;margin:9px 0 6px!important}
+#work .excel-tool{margin:5px 0 11px}
+#work .excel-progress{padding:7px 9px;border-radius:9px;margin:0 0 5px;gap:4px}
+#work .excel-progress-label{font-size:11px}
+#work .excel-progress progress{height:6px}
+#work .excel-tabs{padding:3px 0;gap:4px}
+#work .excel-tab{min-height:34px;padding:6px 12px;font-size:12px}
+#work .excel-formula-bar{padding:5px 2px;gap:4px}
+#work .excel-addr{min-width:53px;max-width:84px;font-size:10px;padding:9px 6px}
+#work .excel-fx{font-size:14px}
+#work .excel-input{min-height:41px;height:41px;font-size:13px;padding:7px}
+#work .excel-commit,#work .excel-undo{min-width:39px;width:39px;min-height:40px;padding:4px;border-radius:8px}
+#work .excel-cell-context{padding:5px 9px;background:#25435e;color:#f1faff;line-height:1.35;font-size:11px;overflow-wrap:anywhere;border-left:3px solid #74d8af;border-radius:0 0 6px 6px}
+#work .nmck-navigation{position:relative;top:auto;padding:5px 7px;margin:4px 0;gap:5px;border-radius:8px}
+#work .nmck-navigation .nmck-nav-button{min-width:80px;min-height:38px;padding:5px 8px}
+#work .nmck-nav-step{font-size:11px}
+#work .nmck-nav-detail{font-size:10px}
+#work .sheet-zoom{padding:6px;margin:4px 0 0;gap:5px;border-radius:9px 9px 0 0}
+#work .sheet-zoom-caption{font-size:11px}
+#work .sheet-zoom-button,#work .sheet-zoom-percent,#work .sheet-zoom-fit{min-height:37px;padding:5px 7px}
+#work .sheet-zoom-button{height:37px;min-width:36px;width:36px}
+#work .sheet-zoom-hint{padding:5px 8px;font-size:10px;margin-bottom:4px}
+#work .excel-info{padding:8px 9px;margin:4px 0;font-size:11px}
+#work .excel-controls button{min-height:38px;font-size:11px;padding:7px 5px}
+#work #task-notes{margin:4px 0;font-size:11px}
+#work>.muted{display:none}
+#work #check{margin-top:4px}
+#work .nmck-condition{padding:9px 10px;margin:3px 0 5px;border-radius:10px}
+#work .condition-body{max-height:270px;overflow-y:auto;overscroll-behavior:contain}
+#work .condition-body h3{font-size:14px!important;margin:6px 0!important}
+#work .nmck-condition p{font-size:11px;line-height:1.35;margin:3px 0 6px}
+#work .condition-lot{padding:6px 0}
+#work .condition-lot strong{font-size:12px}
+#work .condition-prices{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+#work .condition-price{padding:5px 6px;border-radius:6px;min-width:0}
+#work .condition-price span{font-size:9px}
+#work .condition-price b{font-size:11px;overflow-wrap:anywhere}
+#work .condition-instruction{padding:6px 8px}
+#work .condition-heading{gap:5px}
+#work .condition-toggle{min-height:35px}
+#work .excel-quick{padding:4px 0;gap:5px}
+#work .excel-quick-label{font-size:11px}
+#work .excel-quick-button{min-height:37px;padding:6px 9px;font-size:11px}
+@media(min-width:650px){#work .condition-body{max-height:400px}}
+@media(max-width:360px){
+ #work .sheet-zoom{grid-template-columns:34px minmax(30px,1fr) 34px 55px 60px}
+ #work .sheet-zoom-button{width:34px;min-width:34px}
+ #work .sheet-zoom-percent{min-width:55px}
+ #work .sheet-zoom-fit{min-width:60px}
+ #work .condition-prices{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+#work .condition-heading{display:flex;flex-wrap:wrap;gap:6px}
+#work .condition-heading .condition-eyebrow{flex:1 0 100%}
+#work .condition-heading button{flex:1;min-width:108px;min-height:34px;font-size:11px;padding:5px 8px}
+#work .condition-jump{color:#10253e;background:#9ee5ca;border:1px solid #caf5e5;border-radius:8px;font-weight:800}
+
+/* Телефон: хорошо читаемый ввод; компьютер: больше места под таблицу и клавиатуру. */
+@media(max-width:600px){#work .excel-input{font-size:16px}#work .excel-grid-box{max-height:48vh}#work .excel-tool{min-width:0}#work .nmck-condition{scroll-margin-top:8px}}
+@media(min-width:900px){#work .excel-grid-box{max-height:68vh}#work .excel-input{font-size:16px}#work .excel-grid-box:focus{outline:2px solid #74d8af;outline-offset:2px}}
+
+</style><style>
+/* v0.9.9 review: keep spreadsheet visible without two phone screens of introductions. */
+body.exam-solving > header{padding:6px 15px;min-height:44px;gap:8px}
+body.exam-solving > header .logo{font-size:18px;padding:3px 9px;border-radius:8px}
+body.exam-solving > header .eyebrow{display:none}
+body.exam-solving > header h1{font-size:15px;line-height:1.2}
+body.exam-solving main{padding-top:5px}
+body.exam-solving #work>.back{margin:0 0 3px;padding:5px 0;min-height:30px;font-size:12px}
+body.exam-solving #work>.hero{background:none;border:0;padding:2px 0 5px;margin:0 0 5px;border-radius:0}
+body.exam-solving #work>.hero .eyebrow{display:none}
+body.exam-solving #work>.hero h2{font-size:16px;line-height:1.3;margin:0;color:#e9f3ff;font-weight:800}
+body.exam-solving #work>.hero #task-org{font-size:11px;margin:2px 0;color:#bacde5}
+body.exam-solving #work>.hero #task-meta{display:none}
+body.exam-solving #work>h3:first-of-type{display:none}
+body.exam-solving #work>#task-notes{display:none}
+body.exam-solving #work .excel-tool{margin:4px 0 14px}
+body.exam-solving #work .excel-progress{padding:6px 9px;margin:0 0 4px;gap:3px;border-radius:8px}
+body.exam-solving #work .excel-progress-label{font-size:11px;line-height:1.25}
+body.exam-solving #work .excel-progress progress{height:6px}
+body.exam-solving #work .excel-tabs{padding:4px 0;gap:5px}
+body.exam-solving #work .excel-tab{min-height:35px;padding:6px 12px;font-size:12px}
+body.exam-solving #work .excel-formula-bar{padding:5px 2px;gap:5px}
+body.exam-solving #work .excel-addr{padding:9px 5px;font-size:11px}
+body.exam-solving #work .excel-input{padding:9px 6px;min-height:40px;font-size:13px}
+body.exam-solving #work .excel-undo,body.exam-solving #work .excel-commit{height:40px;min-height:40px;min-width:39px;padding:6px}
+body.exam-solving #work .nmck-navigation{padding:5px 7px;margin:4px 0;border-radius:8px;top:44px}
+body.exam-solving #work .nmck-nav-button{min-height:38px;padding:6px 7px;font-size:12px}
+body.exam-solving #work .nmck-nav-step{font-size:11px}
+body.exam-solving #work .nmck-nav-detail{font-size:10px}
+body.exam-solving #work .sheet-zoom{padding:5px 7px;margin:4px 0 0;gap:5px}
+body.exam-solving #work .sheet-zoom-caption{font-size:10px;line-height:1.2}
+body.exam-solving #work .sheet-zoom-button,body.exam-solving #work .sheet-zoom-percent,body.exam-solving #work .sheet-zoom-fit{min-height:37px;height:37px;padding:5px}
+body.exam-solving #work .sheet-zoom-hint{display:none}
+body.exam-solving #work .excel-grid-box{max-height:70vh}
+body.exam-solving #work .excel-info{margin:4px 0 7px;padding:7px 9px;font-size:11px;line-height:1.35}
+body.exam-solving #work .excel-controls button{min-height:36px}
+body.exam-solving #work .nmck-condition{padding:9px 11px;margin:5px 0 7px;border-radius:10px}
+body.exam-solving #work .condition-heading{gap:8px}
+body.exam-solving #work .condition-eyebrow{font-size:10px}
+body.exam-solving #work .condition-toggle{font-size:11px;min-height:33px;padding:5px 8px}
+body.exam-solving #work .condition-preview{margin-top:5px}
+body.exam-solving #work .condition-preview-row{display:flex;flex-direction:column;gap:0;margin:0;padding:3px 0;border-top:1px solid #2b4763;line-height:1.4;font-size:11px}
+body.exam-solving #work .condition-preview-row b{font-size:11px}
+body.exam-solving #work .condition-preview-row span{color:#bfd7e8;overflow-wrap:anywhere;font-size:11px}
+body.exam-solving #work .condition-preview-row:first-child{border-top:0}
+body.exam-solving #work .condition-preview[hidden]{display:none!important}
+body.exam-solving #work .condition-body{margin-top:8px}
+body.exam-solving #work .condition-body h3{font-size:15px}
+body.exam-solving #work .condition-body p{font-size:12px}
+@media(max-width:390px){body.exam-solving main{padding-left:11px;padding-right:11px}body.exam-solving #work .sheet-zoom{grid-template-columns:38px minmax(32px,1fr) 38px 60px 62px}body.exam-solving #work .sheet-zoom-button{min-width:38px;width:38px}}
+
+/* Jump directly to the first editable result without losing the full Excel template. */
+body.exam-solving #work .excel-progress-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+body.exam-solving #work .excel-progress-label{min-width:0;flex:1}
+body.exam-solving #work .excel-jump{flex-shrink:0;min-height:28px;padding:4px 8px;border-radius:7px;border:1px solid #5893b3;background:#245475;color:#eefaff;font-size:11px}
+body.exam-solving #work .excel-jump:disabled{display:none}
+
+@media(max-width:600px){body.exam-solving #work .excel-grid-box{max-height:48vh}}
+
+/* The navigation is relative in mobile-workflow.css; undo the old sticky offset. */
+body.exam-solving #work .nmck-navigation{top:auto}
+.formula-suggestions{position:relative;z-index:20;max-height:220px;overflow:auto;background:#f4f8ff;color:#172a3c;border:1px solid #7898ae;border-radius:8px;box-shadow:0 6px 18px #0005}
+.formula-suggestions[hidden]{display:none!important}.formula-suggestion{display:block;width:100%;padding:9px 12px;text-align:left;color:#172a3c;background:#f4f8ff;border:0;border-bottom:1px solid #d5e1ec;font-size:14px;min-height:40px}.formula-suggestion.active,.formula-suggestion:hover{background:#cfe7f5}
+
+</style><style>#review-result{white-space:pre-line}</style></head><body>
+<header><div class="logo">∑</div><div><div class="eyebrow">ТРЕНАЖЁР ДЕМОЭКЗАМЕНА</div><h1>Экзаменатор <small>0.9.18 · браузерная QA-сборка</small></h1></div></header>
+<main>
+<section id="home"><div class="hero"><p class="eyebrow">РАСЧЁТЫ ВЫПОЛНЯЕШЬ САМ · ПОДСКАЗКИ ПО ЖЕЛАНИЮ</p><h2>Учись решать.<br><em>Проверяй себя.</em></h2><p>Новые компании, показатели и суммы для каждого задания. Формулы вводишь ты — приложение только проверяет готовую таблицу.</p></div>
+<div class="panel"><label for="kind">Тип задания</label><select id="kind"><option value="nmck">НМЦК — коммерческие предложения</option><option value="budget">Муниципальный бюджет</option><option value="financial">Финансовый анализ</option></select>
+<label for="level">Сложность</label><select id="level"><option value="easy">Лёгкая</option><option value="medium" selected>Обычная</option><option value="hard">Сложная</option></select><button class="primary" id="start">Создать случайный вариант →</button></div>
+<details class="panel"><summary>Как читать бюджетные коды</summary><p>Код бюджетной классификации состоит из нескольких частей. Например, в части кода доходов элемент 01 обозначает федеральный бюджет, 02 — бюджет субъекта РФ. Значение 00 зависит от позиции и контекста. Код 2 00 00000 00 может обозначать безвозмездные поступления, то есть доход, а не расход. Определяй статью по полному коду и действующему справочнику; примеры не заменяют полные КБК.</p></details><p class="note">Данные учебные, без реальных предприятий. Интернет и регистрация не нужны.</p><div class="stats" id="stats"></div></section>
+<section id="work" hidden><button class="back" id="back">‹ К выбору задания</button><div class="hero"><p class="eyebrow">ПРАКТИЧЕСКОЕ ЗАДАНИЕ</p><h2 id="task-title"></h2><p id="task-org"></p><p id="task-meta" class="muted"></p></div>
+<h3>01 · Таблица Excel</h3><div id="sources"></div><p class="note" id="task-notes"></p>
+<section id="written-review" class="panel" hidden><h3>Письменный вывод</h3><p>Напиши вывод по заданию своими словами. Проверка ищет основные признаки и может ошибаться — перечитай замечания.</p><textarea id="review-text" rows="5" style="width:100%;box-sizing:border-box" placeholder="Например: фактические доходы ..."></textarea><button type="button" id="review-check">Проверить вывод</button><button type="button" id="review-example">Показать пример вывода</button><p id="review-result" aria-live="polite"></p></section><h3 id="verification-title">02 · Проверка таблицы</h3><p class="muted">Выбери жёлтую ячейку, введи формулу в fx и нажми ✓. Кнопки «Ячейка ← / →» помогут перейти к следующему расчёту. Масштаб таблицы регулируется от 15% до 250%.</p><div id="questions"></div>
+<button class="primary" id="check">Проверить ответы ✓</button><button class="secondary" id="again">Новый случайный вариант ↻</button>
+<div id="results" hidden><h3 id="score"></h3><p id="message"></p><button id="hints-button" class="secondary">Показать правильные ответы и формулы</button><div id="hints" hidden></div></div></section>
+</main>
+<script>
+/* Offline exam engine: synthetic data, independent arithmetic answer key. */
+(function(root,factory){const x=factory();root.ExamEngine=x;if(typeof module!=='undefined'&&module.exports)module.exports=x;})(typeof globalThis!=='undefined'?globalThis:this,function(){
+'use strict';
+const pre=['Северный','Балтийский','Волжский','Сибирский','Лесной','Центральный','Прибрежный','Ладожский','Уральский','Московский','Новый','Ясный','Современный','Открытый','Полярный','Степной','Озёрный','Невский','Восточный','Дальний','Зелёный','Надёжный','Первый','Городской','Региональный'];
+const suf=['Ресурс','Вектор','Альянс','Поставка','Сервис','Стандарт','Инвест','Логистик','Технологии','Контур','Спектр','Прогресс','Проект','Меридиан','Партнёр','Центр','Формат','Импульс','Базис','Элемент','Эксперт','Транзит','Модуль','Профиль','Капитал','Горизонт'];
+const goods=[
+['Офисные кресла',4500,24000],['Рабочие столы',5000,28000],['Шкафы для документов',6000,38000],['Источники бесперебойного питания',4000,45000],['Проекторы',25000,160000],['Документ-камеры',9000,65000],['Планшеты для обучения',12000,60000],['Сетевые коммутаторы',7000,85000],['Маршрутизаторы',5000,42000],['Внешние накопители',4000,36000],['Лазерные принтеры',12000,65000],['Мониторы',10000,55000],['Веб-камеры',2000,20000],['Огнетушители',1500,12000],['Аптечки первой помощи',1800,12000],['Уборочные тележки',4000,28000],['Контейнеры для отходов',6000,48000],['Библиотечные стеллажи',6000,40000],['Садовые скамейки',7000,46000],['Учебные микроскопы',9000,75000],['Лабораторные весы',8000,80000],['Доски магнитно-маркерные',5000,35000],['Сушилки для рук',4000,26000],['Электрические водонагреватели',8000,55000],['Ноутбуки для учебных классов',39000,119000],['Многофункциональные принтеры',19000,85000],['Интерактивные панели',95000,320000],['Дизельные генераторы',185000,670000],['Школьные парты',8500,37000],['Автобусы для школьников',4500000,8200000],['Автомобили-водовозы',4600000,7600000],['Пожарные насосы',72000,360000],['Медицинские холодильники',35000,165000],['Уличные светильники',5000,30000],['Архивные шкафы',6500,32000],['Дорожные ограждения, комплект',15000,85000],['Снегоуборочные машины',85000,390000],['Системы видеонаблюдения',37000,260000],['Спортивные тренажёры',28000,210000],['Серверные станции',125000,590000],['Промышленные кондиционеры',73000,260000],['Станции водоочистки',220000,1250000]];
+const income=['Налог на доходы физических лиц','Земельный налог','Налог на имущество физических лиц','Единый сельскохозяйственный налог','Налог по упрощённой системе налогообложения','Доходы от аренды муниципального имущества','Аренда земельных участков','Продажа муниципального имущества','Доходы от платных муниципальных услуг','Государственная пошлина','Штрафы за нарушение благоустройства','Дотации на выравнивание бюджета','Субсидии из регионального бюджета','Субвенции на переданные полномочия','Межбюджетные трансферты','Плата за негативное воздействие на окружающую среду','Поступления от возмещения ущерба','Доходы от концессий','Доходы от размещения рекламных конструкций','Иные неналоговые доходы'];
+const expense=['Общегосударственные вопросы','Содержание органов местного самоуправления','Национальная безопасность','Обеспечение пожарной безопасности','Дорожное хозяйство','Ремонт местных дорог','Транспортное обслуживание населения','Поддержка предпринимательства','Жилищно-коммунальное хозяйство','Уличное освещение','Благоустройство парков','Капитальный ремонт зданий','Охрана окружающей среды','Вывоз коммунальных отходов','Дошкольное образование','Общее образование','Дополнительное образование детей','Библиотеки и культура','Социальная политика','Поддержка семей с детьми','Физическая культура и спорт','Содержание спортивных площадок','Обслуживание муниципального долга','Резервный фонд администрации','Молодёжная политика'];
+const bnames=[['1150','Основные средства'],['1110','Нематериальные активы'],['1170','Долгосрочные вложения'],['1100','Внеоборотные активы'],['1210','Запасы'],['1230','Дебиторская задолженность'],['1240','Краткосрочные вложения'],['1250','Денежные средства'],['1260','Прочие оборотные активы'],['1200','Оборотные активы'],['1600','Баланс, актив'],['1300','Собственный капитал'],['1400','Долгосрочные обязательства'],['1510','Краткосрочные займы'],['1520','Кредиторская задолженность'],['1540','Прочие краткосрочные обязательства'],['1500','Краткосрочные обязательства'],['1700','Баланс, пассив']];
+const pnames=[['2110','Выручка'],['2120','Себестоимость (расход)'],['2100','Валовая прибыль'],['2220','Коммерческие расходы'],['2200','Прибыль от продаж'],['2320','Проценты к получению'],['2330','Проценты к уплате'],['2340','Прочие доходы'],['2350','Прочие расходы'],['2300','Прибыль до налогообложения'],['2410','Налог на прибыль (расход)'],['2400','Чистая прибыль']];
+const metricNames=[
+['Ликвидность','Коэффициент текущей ликвидности','Оборотные активы / краткосрочные обязательства'],
+['Ликвидность','Коэффициент абсолютной ликвидности','(Денежные средства + краткосрочные вложения) / краткосрочные обязательства'],
+['Ликвидность','Коэффициент быстрой ликвидности','(Деньги + вложения + дебиторская задолженность) / краткосрочные обязательства'],
+['Ликвидность','Обеспеченность оборотными средствами','(Капитал − внеоборотные активы) / оборотные активы'],
+['Оборачиваемость','Оборачиваемость активов, обороты','Выручка / средние активы'],
+['Оборачиваемость','Оборачиваемость оборотных активов, обороты','Выручка / средние оборотные активы'],
+['Оборачиваемость','Оборачиваемость дебиторской задолженности','Выручка / средняя дебиторская задолженность'],
+['Оборачиваемость','Оборачиваемость кредиторской задолженности','Выручка / средняя кредиторская задолженность (учебный вариант)'],
+['Оборачиваемость','Оборачиваемость запасов','Выручка / средние запасы (учебный вариант)'],
+['Оборачиваемость','Фондоотдача','Выручка / средняя стоимость основных средств'],
+['Оборачиваемость, дни','Период оборота активов, дни','365 × средние активы / выручка'],
+['Оборачиваемость, дни','Период оборота оборотных активов, дни','365 × средние оборотные активы / выручка'],
+['Оборачиваемость, дни','Период оборота дебиторской задолженности, дни','365 × средняя дебиторская задолженность / выручка'],
+['Оборачиваемость, дни','Период оборота кредиторской задолженности, дни','365 × средняя кредиторская задолженность / выручка'],
+['Оборачиваемость, дни','Период оборота запасов, дни','365 × средние запасы / выручка'],
+['Оборачиваемость, дни','Период оборота основных средств, дни','365 × средние основные средства / выручка'],
+['Финансовая устойчивость','Коэффициент автономии','Капитал / активы'],
+['Финансовая устойчивость','Коэффициент финансовой зависимости','Активы / капитал'],
+['Финансовая устойчивость','Соотношение заёмных и собственных средств','Обязательства / капитал'],
+['Финансовая устойчивость','Маневренность собственного капитала','(Капитал − внеоборотные активы) / капитал'],
+['Финансовая устойчивость','Коэффициент финансовой устойчивости','(Собственный капитал + долгосрочные обязательства) / валюта баланса'],
+['Рентабельность','ROA — рентабельность активов, %','Чистая прибыль / средние активы × 100'],
+['Рентабельность','ROS — рентабельность продаж, %','Чистая прибыль / выручка × 100'],
+['Рентабельность','ROE — рентабельность собственного капитала, %','Чистая прибыль / собственный капитал × 100']
+];
+const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a, pick=a=>a[rand(0,a.length-1)], round=(n,d=2)=>Math.round((n+Number.EPSILON)*Math.pow(10,d))/Math.pow(10,d);
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){let j=rand(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;}
+function company(){return pick(['ООО','АО'])+' «'+pick(pre)+' '+pick(suf)+'»';}
+function question(id,label,value,hint,group){return{id,label,answer:typeof value==='number'?round(value):value,hint,group};}
+function nmck(level){
+ const count=level==='easy'?1:level==='medium'?2:3, offers=level==='easy'?3:level==='medium'?4:5;
+ const rows=[],questions=[];let total=0;
+ for(const [i,g] of shuffle(goods).slice(0,count).entries()){
+   const qty=g[0].includes('Автобусы')||g[0].includes('водовозы')?rand(1,3):rand(2,15);
+   const center=rand(Math.ceil(g[1]/100),Math.floor(g[2]/100))*100;
+   const prices=Array.from({length:offers},()=>Math.round(center*rand(91,109)/100/10)*10);
+   const sum=prices.reduce((a,b)=>a+b,0),avg=sum/offers,sd=Math.sqrt(prices.reduce((a,b)=>a+(b-avg)**2,0)/(offers-1)),cv=100*sd/avg,amount=round(avg)*qty;
+   rows.push({name:g[0],quantity:qty,prices});
+   const group='Позиция '+(i+1);
+   questions.push(question('n'+i+'sum','Сумма цен предложений, руб.',sum,'Сложить предложения',group));
+   questions.push(question('n'+i+'avg','Средняя цена, руб.',avg,'Сумма цен / количество предложений',group));
+   if(level!=='easy'){
+      questions.push(question('n'+i+'sd','Выборочное стандартное отклонение, руб.',sd,'Корень из суммы квадратов отклонений / (n−1)',group));
+      questions.push(question('n'+i+'cv','Коэффициент вариации, %',cv,'Стандартное отклонение / средняя цена × 100',group));
+   }
+   questions.push(question('n'+i+'amount','Стоимость позиции, руб.',amount,'Количество × округлённая до копеек средняя цена',group));
+   total+=amount;
+ }
+ questions.push(question('total','Итоговая НМЦК, руб.',total,'Сумма стоимостей позиций','Итог'));
+ return {kind:'nmck',title:'Расчёт НМЦК',company:company(),rows,questions,notes:'Учебный метод сопоставимых рыночных цен. Применяется выборочное стандартное отклонение (n−1).'};
+}
+function budget(level){
+ const count=level==='easy'?10:level==='medium'?16:24;
+ const names=shuffle(income).slice(0,Math.floor(count*.45)).map(name=>({name,kind:'Доход'})).concat(shuffle(expense).slice(0,count-Math.floor(count*.45)).map(name=>({name,kind:'Расход'})));
+ const rows=shuffle(names),questions=[],summary={Доход:{plan:0,actual:0},Расход:{plan:0,actual:0}};
+ rows.forEach((r,i)=>{
+   r.plan=rand(35,20000)*100;r.actual=round(r.plan*rand(76,121)/100,0);
+   summary[r.kind].plan+=r.plan;summary[r.kind].actual+=r.actual;
+   questions.push(question('b'+i+'kind',r.name+' — доход или расход?',r.kind,'Определи экономический смысл статьи','Классификация'));
+   if(level!=='easy')questions.push(question('b'+i+'pct',r.name+' — исполнение, %',100*r.actual/r.plan,'Исполнено / план × 100','Проценты'));
+   if(level==='hard')questions.push(question('b'+i+'diff',r.name+' — отклонение, тыс. руб.',r.actual-r.plan,'Исполнено − план','Отклонения'));
+ });
+ for(const kind of ['Доход','Расход']){
+   questions.push(question(kind+'plan',kind+'ы — план, тыс. руб.',summary[kind].plan,'Сумма всех плановых показателей','Итоги'));
+   questions.push(question(kind+'actual',kind+'ы — факт, тыс. руб.',summary[kind].actual,'Сумма всех фактических показателей','Итоги'));
+   if(level!=='easy')questions.push(question(kind+'pct',kind+'ы — исполнение, %',100*summary[kind].actual/summary[kind].plan,'Факт / план × 100','Итоги'));
+ }
+ const saldo=summary.Доход.actual-summary.Расход.actual;
+ questions.push(question('status','Дефицит или профицит',saldo>0?'Профицит':saldo<0?'Дефицит':'Сбалансирован','Сравни доходы и расходы (без отдельного показателя сальдо)','Итоги'));
+ return {kind:'budget',title:'Муниципальный бюджет',company:'Муниципальный район «'+pick(pre)+'»',rows,summary,questions,notes:'План и исполнение даны в тысячах рублей. Статьи и числа вымышлены; коды бюджетной классификации не подставляются.'};
+}
+function financial(level){
+ const balance={},pl={};
+ for(const yr of ['2023','2024','2025']){
+   const fixed=rand(300,1400)*100,imm=rand(10,140)*100,longInv=rand(20,240)*100,inv=rand(80,260)*100,ar=rand(80,450)*100,short=rand(10,170)*100,cash=rand(40,260)*100,other=rand(10,50)*100;
+   const nca=fixed+imm+longInv,ca=inv+ar+short+cash+other,A=nca+ca,eq=round(A*rand(40,68)/100,0),ld=round((A-eq)*rand(25,60)/100,0),cl=A-eq-ld,ap=round(cl*rand(32,55)/100,0),loan=round((cl-ap)*rand(35,72)/100,0);
+   balance[yr]={'1150':fixed,'1110':imm,'1170':longInv,'1100':nca,'1210':inv,'1230':ar,'1240':short,'1250':cash,'1260':other,'1200':ca,'1600':A,'1300':eq,'1400':ld,'1510':loan,'1520':ap,'1540':cl-ap-loan,'1500':cl,'1700':A};
+ }
+ for(const yr of ['2024','2025']){
+   const A=balance[yr]['1600'],rev=round(A*rand(96,205)/100,0),cost=-round(rev*rand(52,77)/100,0),gross=rev+cost,comm=-round(rev*rand(8,19)/100,0),sale=gross+comm,interestIn=round(rev*rand(1,12)/1000,0),interestOut=-round(rev*rand(3,30)/1000,0),otherIn=round(rev*rand(1,15)/1000,0),otherOut=-round(rev*rand(4,25)/1000,0),pretax=sale+interestIn+interestOut+otherIn+otherOut,tax=-round(Math.max(0,pretax)*0.2,0);
+   pl[yr]={'2110':rev,'2120':cost,'2100':gross,'2220':comm,'2200':sale,'2320':interestIn,'2330':interestOut,'2340':otherIn,'2350':otherOut,'2300':pretax,'2410':tax,'2400':pretax+tax};
+ }
+ const questions=[],metrics=[];
+ // Средние величины нужны внутри формул, но не являются самостоятельными заданиями.
+ for(let m=0;m<metricNames.length;m++){
+   const meta=metricNames[m],values={};
+   for(const yr of ['2025','2024']){
+     const b=balance[yr],prev=balance[String(Number(yr)-1)],p=pl[yr],A=b['1600'],CA=b['1200'],CL=b['1500'],EQ=b['1300'],NCA=b['1100'],REV=p['2110'],NET=p['2400'],short=b['1240'],cash=b['1250'],AR=b['1230'],LD=b['1400'],av=c=>(b[c]+prev[c])/2;
+     const f=[
+      CA/CL,(cash+short)/CL,(cash+short+AR)/CL,(EQ-NCA)/CA,REV/av('1600'),REV/av('1200'),REV/av('1230'),REV/av('1520'),REV/av('1210'),REV/av('1150'),
+      365*av('1600')/REV,365*av('1200')/REV,365*av('1230')/REV,365*av('1520')/REV,365*av('1210')/REV,365*av('1150')/REV,
+      EQ/A,A/EQ,(LD+CL)/EQ,(EQ-NCA)/EQ,(EQ+LD)/A,100*NET/av('1600'),100*NET/REV,100*NET/EQ
+     ];
+     values[yr]=round(f[m]);questions.push(question('f'+m+yr,meta[1]+' — '+yr,f[m],meta[2],meta[0]));
+   }
+   metrics.push({name:meta[1],section:meta[0],formula:meta[2],values});
+ }
+ return {kind:'financial',title:'Финансовый анализ',company:company(),balance,pl,metrics,questions,notes:'Учебная отчётность в тыс. рублей. Расчёт показателей по учебным формулам, которые можно посмотреть после проверки.'};
+}
+function generate(kind='nmck',level='medium'){if(!['easy','medium','hard'].includes(level))throw Error('Уровень');const t=kind==='nmck'?nmck(level):kind==='budget'?budget(level):kind==='financial'?financial(level):null;if(!t)throw Error('Тип задания');return Object.assign(t,{level,id:Date.now()+'-'+rand(1000,9999)});}
+function numeric(s){if(typeof s==='number')return s;if(typeof s!=='string')return NaN;s=s.trim().replace(/[\s\u00a0\u202f]/g,'').replace(/%$/,'').replace(',','.');return /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(s)?Number(s):NaN;}
+function check(q,s){if(s===null||s===undefined||String(s).trim()==='')return 'empty';if(typeof q.answer==='string'){return String(s).trim().toLowerCase().replace(/ё/g,'е')===q.answer.toLowerCase().replace(/ё/g,'е')?'ok':'bad';}const v=numeric(s);return Number.isFinite(v)&&Math.abs(v-q.answer)<=Math.max(0.011,Math.abs(q.answer)*1e-9)?'ok':'bad';}
+function grade(t,answers){const details=t.questions.map(q=>Object.assign({},q,{status:check(q,answers[q.id])})),ok=details.filter(r=>r.status==='ok').length;return{details,ok,total:details.length,percent:round(ok/details.length*100,0)};}
+return{generate,grade,check,numeric,round,bnames,pnames,metricNames,income,expense,goods};
+});
+
+</script><script>
+/* v0.7 supplemental generator. Loads after engine.js, before app.js. */
+(function(root){
+'use strict';
+const E=root.ExamEngine;
+if(!E) throw new Error('ExamEngine is missing');
+const originalGenerate=E.generate;
+const rand=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[rand(0,a.length-1)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=rand(0,i);[a[j],a[i]]=[a[i],a[j]];}return a;};
+const rnd=(n,d=2)=>E.round(n,d);
+const q=(id,label,answer,hint,group)=>({id,label,answer:typeof answer==='number'?rnd(answer):answer,hint,group});
+/* Realistic categories, synthetic numbers. Rows are leaf-level items: no duplicate totals. */
+const spend=[
+['Оплата труда педагогов муниципальных школ','Образование',68000,320000],
+['Питание учащихся в школах','Образование',14000,78000],
+['Ремонт школьных зданий и классов','Образование',8000,65000],
+['Содержание детских садов','Образование',35000,220000],
+['Приобретение учебников и пособий','Образование',1400,13000],
+['Оплата труда сотрудников администраций','Общегосударственные вопросы',16000,110000],
+['Содержание зданий органов местного самоуправления','Общегосударственные вопросы',3000,25000],
+['Эксплуатация муниципальных информационных систем','Общегосударственные вопросы',1500,24000],
+['Ремонт покрытия местных автомобильных дорог','Национальная экономика',18000,190000],
+['Зимняя уборка и содержание дорог','Национальная экономика',4000,35000],
+['Субсидии на муниципальные автобусные маршруты','Национальная экономика',3000,54000],
+['Нанесение дорожной разметки и установка знаков','Национальная экономика',900,15000],
+['Поддержка крестьянских хозяйств','Национальная экономика',800,18000],
+['Электроэнергия для уличного освещения','Жилищно-коммунальное хозяйство',4000,37000],
+['Замена аварийных участков водопроводных сетей','Жилищно-коммунальное хозяйство',8000,90000],
+['Благоустройство парков, площадей и скверов','Жилищно-коммунальное хозяйство',2500,32000],
+['Капремонт муниципального жилья','Жилищно-коммунальное хозяйство',4000,88000],
+['Содержание контейнерных площадок','Жилищно-коммунальное хозяйство',700,11000],
+['Поддержка малоимущих семей','Социальная политика',11000,105000],
+['Выплаты семьям с детьми','Социальная политика',18000,155000],
+['Доставка социальных работников','Социальная политика',900,14000],
+['Содержание домов культуры','Культура и кинематография',4000,46000],
+['Комплектование библиотечных фондов','Культура и кинематография',300,7500],
+['Реставрация памятников местного значения','Культура и кинематография',800,18000],
+['Содержание спортивных площадок и залов','Физическая культура и спорт',1600,24000],
+['Проведение районных спортивных соревнований','Физическая культура и спорт',350,6500],
+['Гранты детским спортивным секциям','Физическая культура и спорт',500,10000],
+['Содержание муниципальной пожарной охраны','Национальная безопасность',2000,25000],
+['Противопожарное оборудование и инвентарь','Национальная безопасность',300,7800],
+['Охрана и мониторинг общественных территорий','Национальная безопасность',500,13000],
+['Ликвидация несанкционированных свалок','Охрана окружающей среды',700,16000],
+['Мониторинг состояния водоёмов','Охрана окружающей среды',200,6500],
+['Обслуживание муниципального долга','Обслуживание долга',500,18000],
+['Резервный фонд местной администрации','Общегосударственные вопросы',1000,15000],
+['Содержание молодёжных центров','Молодёжная политика',700,12000],
+['Профилактические мероприятия в школах','Здравоохранение',300,7000]
+];
+const earn=[
+['Налог на доходы физических лиц','Налоговые доходы',230000,1100000],
+['Налог, взимаемый по упрощённой системе','Налоговые доходы',38000,220000],
+['Земельный налог','Налоговые доходы',9000,80000],
+['Налог на имущество физических лиц','Налоговые доходы',5000,45000],
+['Единый сельскохозяйственный налог','Налоговые доходы',800,23000],
+['Государственная пошлина','Налоговые доходы',700,8000],
+['Арендная плата за муниципальные помещения','Неналоговые доходы',4500,44000],
+['Аренда муниципальных земельных участков','Неналоговые доходы',3800,36000],
+['Плата за оказание муниципальных услуг','Неналоговые доходы',500,16000],
+['Доходы от продажи муниципального имущества','Неналоговые доходы',1200,29000],
+['Штрафы и возмещение причинённого ущерба','Неналоговые доходы',400,8500],
+['Дотации на выравнивание бюджетной обеспеченности','Безвозмездные поступления',80000,580000],
+['Субсидии из бюджета субъекта РФ','Безвозмездные поступления',52000,420000],
+['Субвенции на переданные государственные полномочия','Безвозмездные поступления',50000,510000],
+['Иные межбюджетные трансферты','Безвозмездные поступления',6500,120000]
+];
+function newBudget(level){
+ const n=level==='easy'?10:level==='medium'?16:24;
+ const nIncome=Math.round(n*.42);
+ const expenseItems=shuffle(spend).slice(0,n-nIncome);
+ const incomeItems=shuffle(earn).slice(0,nIncome);
+ const rows=shuffle([
+  ...incomeItems.map(([name,category,min,max])=>({name,category,kind:'Доход',plan:rand(Math.ceil(min/50),Math.floor(max/50))*50})),
+  ...expenseItems.map(([name,category,min,max])=>({name,category,kind:'Расход',plan:rand(Math.ceil(min/50),Math.floor(max/50))*50}))
+ ]);
+ // Amounts are thousand rubles. Both deficit and surplus scenarios are possible.
+ const plannedExpense=rows.filter(r=>r.kind==='Расход').reduce((s,r)=>s+r.plan,0);
+ const plannedIncome=rows.filter(r=>r.kind==='Доход').reduce((s,r)=>s+r.plan,0);
+ const targetIncome=plannedExpense*rand(82,118)/100;
+ for(const r of rows)if(r.kind==='Доход')r.plan=Math.max(50,Math.round(r.plan*targetIncome/plannedIncome/50)*50);
+ for(const r of rows)r.actual=Math.max(0,Math.round(r.plan*rand(80,116)/100));
+ const questions=[],summary={Доход:{plan:0,actual:0},Расход:{plan:0,actual:0}};
+ rows.forEach((r,i)=>{
+  summary[r.kind].plan+=r.plan;summary[r.kind].actual+=r.actual;
+  questions.push(q('b'+i+'kind',r.name+' — доход или расход?',r.kind,
+    'Доходы пополняют бюджет; расходы — направления финансирования.', 'Распределение статей'));
+  if(level!=='easy')questions.push(q('b'+i+'pct',r.name+' — исполнение, %',100*r.actual/r.plan,
+    'Исполнение = фактическая сумма / плановая сумма × 100.','Исполнение бюджета'));
+  if(level==='hard')questions.push(q('b'+i+'diff',r.name+' — отклонение, тыс. руб.',r.actual-r.plan,
+    'Отклонение = исполнено − запланировано.','Отклонения'));
+ });
+ for(const k of ['Доход','Расход']){
+  const s=summary[k],label=k==='Доход'?'Доходы':'Расходы';
+  questions.push(q(k+'plan',label+' — всего запланировано, тыс. руб.',s.plan,
+    'Сумма плановых значений только соответствующего типа.','Итоги'));
+  questions.push(q(k+'actual',label+' — всего исполнено, тыс. руб.',s.actual,
+    'Сумма фактических значений только соответствующего типа.','Итоги'));
+  if(level!=='easy')questions.push(q(k+'pct',label+' — исполнение, %',100*s.actual/s.plan,
+    'Всего исполнено / всего запланировано × 100.','Итоги'));
+ }
+ const saldo=summary.Доход.actual-summary.Расход.actual;
+ questions.push(q('status','Результат: дефицит, профицит или сбалансирован',saldo>0?'Профицит':saldo<0?'Дефицит':'Сбалансирован',
+   'Сравни фактические доходы и расходы: доходы выше — профицит, ниже — дефицит.','Итоги'));
+ return {kind:'budget',title:'Бюджет муниципального района',company:'Муниципальный район «'+pick(['Сосновский','Приозёрный','Заречный','Лесной','Каменский','Берёзовский','Родниковский','Луговой'])+'»',
+ rows,summary,questions,notes:'Учебные суммы в тыс. руб. Конкретные статьи отражают типичные муниципальные расходы и поступления; цифры вымышлены. Общие разделы не складываются с подстатьями повторно.'};
+}
+const BALANCE_CODES=[
+['1110','Нематериальные активы'],['1120','Результаты исследований и разработок'],['1130','Нематериальные поисковые активы'],['1140','Материальные поисковые активы'],['1150','Основные средства'],['1160','Доходные вложения в материальные ценности'],['1170','Долгосрочные финансовые вложения'],['1180','Отложенные налоговые активы'],['1190','Прочие внеоборотные активы'],['1100','ИТОГО внеоборотные активы'],
+['1210','Запасы'],['1215','Долгосрочные активы к продаже'],['1220','НДС по приобретённым ценностям'],['1230','Дебиторская задолженность'],['1240','Краткосрочные финансовые вложения'],['1250','Денежные средства и эквиваленты'],['1260','Прочие оборотные активы'],['1200','ИТОГО оборотные активы'],['1600','БАЛАНС (актив)'],
+['1310','Уставный капитал'],['1320','Собственные акции (вычитается)'],['1340','Переоценка внеоборотных активов'],['1350','Добавочный капитал'],['1360','Резервный капитал'],['1370','Нераспределённая прибыль'],['1300','ИТОГО капитал и резервы'],
+['1410','Долгосрочные заёмные средства'],['1420','Отложенные налоговые обязательства'],['1430','Оценочные долгосрочные обязательства'],['1450','Прочие долгосрочные обязательства'],['1400','ИТОГО долгосрочные обязательства'],
+['1510','Краткосрочные заёмные средства'],['1520','Кредиторская задолженность'],['1530','Доходы будущих периодов'],['1540','Оценочные обязательства'],['1550','Прочие краткосрочные обязательства'],['1500','ИТОГО краткосрочные обязательства'],['1700','БАЛАНС (пассив)']
+];
+const PROFIT_CODES=[
+['2110','Выручка'],['2120','Себестоимость продаж (расход)'],['2100','Валовая прибыль'],
+['2210','Коммерческие расходы'],['2220','Управленческие расходы'],['2200','Прибыль от продаж'],
+['2310','Доходы от участия в других организациях'],['2320','Проценты к получению'],['2330','Проценты к уплате'],['2340','Прочие доходы'],['2350','Прочие расходы'],
+['2300','Прибыль до налогообложения'],['2410','Налог на прибыль, всего'],['2411','Текущий налог на прибыль'],['2412','Отложенный налог на прибыль'],['2460','Прочее'],['2400','Чистая прибыль (убыток)']
+];
+E.bnames.splice(0,E.bnames.length,...BALANCE_CODES);
+E.pnames.splice(0,E.pnames.length,...PROFIT_CODES);
+function financialCodes(t){
+ for(const yr of ['2023','2024','2025']){
+  const b=t.balance[yr];
+  // Break out sub-lines without changing totals or coefficient inputs.
+  const intangible=b['1110'];b['1120']=Math.floor(intangible*.12);b['1130']=0;b['1140']=0;b['1110']=intangible-b['1120'];
+  const investments=b['1170'];b['1160']=Math.floor(investments*.12);b['1180']=Math.floor(investments*.09);b['1190']=Math.floor(investments*.06);b['1170']=investments-b['1160']-b['1180']-b['1190'];
+  const other=b['1260'];b['1215']=0;b['1220']=Math.floor(other*.25);b['1260']=other-b['1220'];
+  const eq=b['1300'];b['1310']=Math.floor(eq*.22);b['1320']=0;b['1340']=Math.floor(eq*.04);b['1350']=Math.floor(eq*.08);b['1360']=Math.floor(eq*.025);b['1370']=eq-b['1310']-b['1340']-b['1350']-b['1360'];
+  const ld=b['1400'];b['1410']=Math.floor(ld*.85);b['1420']=Math.floor(ld*.05);b['1430']=Math.floor(ld*.04);b['1450']=ld-b['1410']-b['1420']-b['1430'];
+  const otherDebt=b['1540'];b['1530']=Math.floor(otherDebt*.22);b['1550']=Math.floor(otherDebt*.28);b['1540']=otherDebt-b['1530']-b['1550'];
+ }
+ for(const yr of ['2024','2025']){
+  const p=t.pl[yr],old=p['2220'];p['2210']=Math.round(old*.38);p['2220']=old-p['2210'];
+  p['2310']=0;p['2411']=p['2410'];p['2412']=0;p['2460']=0;
+ }
+ t.notes+=' Добавлены строки бухгалтерской отчётности: нулевые и ненулевые, итоги согласованы. Коды строк — источник для расчётов, а не дополнительные готовые ответы.';
+ return t;
+}
+E.generate=function(kind,level){
+ const t=kind==='budget'?newBudget(level):originalGenerate(kind,level);
+ if(kind==='financial')financialCodes(t);
+ if(kind==='nmck')t.notes+=' Все предложения должны быть видны выше: при отсутствии таблицы создание задания считается ошибкой.';
+ t.difficulty=level;t.id=t.id||String(Date.now())+'-'+rand(100000,999999);
+ root.ExamCurrentTask=t;
+ return t;
+};
+E.spendCategories=spend;
+E.incomeCategories=earn;
+})(typeof globalThis!=='undefined'?globalThis:this);
+
+</script><script>
+/* v0.9: independently selectable 3/4/5 quotations and 1/2/3 procurement positions. */
+(function(root){
+'use strict';
+const E=root.ExamEngine;
+if(!E)throw Error('Exam engine missing');
+const prev=E.generate;
+const rnd=(lo,hi)=>lo+Math.floor(Math.random()*(hi-lo+1));
+const round=(n,d=2)=>E.round(n,d);
+const q=(id,label,v,hint,group)=>({id,label,answer:typeof v==='number'?round(v):v,hint,group});
+function nmck(level,opts){
+ opts=opts||{};
+ if(typeof document!=='undefined'){
+   if(opts.offers==null){const el=document.getElementById('offers-count');if(el)opts.offers=el.value;}
+   if(opts.lots==null){const el=document.getElementById('lot-count');if(el)opts.lots=el.value;}
+ }
+ const offers=[3,4,5].includes(Number(opts.offers))?Number(opts.offers):rnd(3,5);
+ const lots=1; // Один контракт и одна закупаемая позиция с 3–5 ценовыми источниками.
+ const generated=prev('nmck','hard'),rows=[],questions=[];
+ let total=0;
+ for(let i=0;i<lots;i++){
+   const product=generated.rows[i],prices=product.prices.slice(0,offers);
+   if(level==='hard'&&rnd(1,12)===1){const k=rnd(0,offers-1);prices[k]=Math.round(prices[k]*rnd(165,205)/100/10)*10;}
+   const sum=prices.reduce((a,b)=>a+b,0),avg=sum/offers;
+   const sd=Math.sqrt(prices.reduce((a,b)=>a+(b-avg)**2,0)/(offers-1));
+   const cv=100*sd/avg,uniformity=cv<=33?'Однородны':'Неоднородны';
+   const chosen=prices.filter(x=>x<avg).sort((a,b)=>b-a)[0];
+   const amount=round(round(avg)*product.quantity),id='n'+i,group='Позиция '+(i+1);
+   rows.push({name:product.name,quantity:product.quantity,prices});
+   questions.push(q(id+'sum','Сумма коммерческих предложений, руб.',sum,'SUM/СУММ цен поставщиков',group));
+   questions.push(q(id+'avg','Средняя цена за единицу, руб.',avg,'AVERAGE/СРЗНАЧ по ценам поставщиков',group));
+   questions.push(q(id+'sd','Выборочное стандартное отклонение, руб.',sd,'STDEV.S/СТАНДОТКЛОН.В по ценам (n-1)',group));
+   questions.push(q(id+'cv','Коэффициент вариации, %',cv,'Отклонение / средняя цена × 100',group));
+   questions.push(q(id+'amount','Начальная цена позиции, руб.',amount,'ROUND/ОКРУГЛ(средняя;2) × количество',group));
+   questions.push(q(id+'selected','Выбранная цена, руб.',chosen===undefined?'Нет цены ниже средней':chosen,'Выбери предложение, ближайшее к средней цене и строго ниже неё',group));
+   questions.push(q(id+'selectedTotal','Сумма выбранного предложения, руб.',chosen===undefined?'Нет цены ниже средней':round(chosen*product.quantity),'Выбранная цена × количество',group));
+   questions.push(q(id+'uniformity','Однородность цен',uniformity,'IF/ЕСЛИ: вариация не более 33%',group));
+   total+=amount;
+ }
+ questions.push(q('total','НМЦК всей закупки, руб.',round(total),'SUM/СУММ всех позиций','Итог'));
+ return{kind:'nmck',title:'Расчёт начальной (максимальной) цены контракта',company:generated.company,
+  rows,questions,offers,lots,manualPrices:true,offerRule:true,id:generated.id||Date.now().toString()+'-'+rnd(100,999),difficulty:level,
+  notes:'Учебный метод сопоставимых рыночных цен. На каждую позицию '+offers+' коммерческих предложений; позиций '+lots+'. Коэффициент вариации указывается в процентах, порог для учебной проверки — 33%. Данные вымышлены.'};
+}
+E.generate=function(kind,level,options){const t=kind==='nmck'?nmck(level,options):prev(kind,level);if(kind==='budget')t.budgetSplit=true;root.ExamCurrentTask=t;return t;};
+})(typeof globalThis!=='undefined'?globalThis:this);
+
+</script><script>
+/* ExamTrainer v0.8: spreadsheet-style practice engine; no eval(), no network. */
+(function(root,factory){const m=factory();root.ExamSheets=m;if(typeof module!=='undefined'&&module.exports)module.exports=m;})(typeof globalThis!=='undefined'?globalThis:this,function(){
+'use strict';
+const MAX_ROWS=145,MAX_COLS=17;
+const col=n=>{let s='';for(n++;n;n=Math.floor((n-1)/26))s=String.fromCharCode(65+(n-1)%26)+s;return s;};
+const addr=(c,r)=>col(c)+String(r+1);
+const decode=a=>{const m=/^\$?([A-Z]{1,2})\$?([1-9][0-9]{0,2})$/i.exec(a);if(!m)return null;let c=0;for(const x of m[1].toUpperCase())c=c*26+x.charCodeAt(0)-64;return{c:c-1,r:Number(m[2])-1};};
+const norm=x=>typeof x==='number'?Math.round((x+Number.EPSILON)*100)/100:x;
+function create(task){
+ const w={kind:task.kind,id:task.id,task,order:[],sheets:{},targets:[],hintMap:{}};
+ function add(name,cols,rows){const sh={name,cols,rows,values:{},editable:{}};w.sheets[name]=sh;w.order.push(name);return sh;}
+ function input(sh,c,r,value){if(value!==null&&value!==undefined)sh.values[addr(c,r)]={raw:value,locked:true};}
+ function head(sh,row,arr){arr.forEach((a,i)=>input(sh,i,row,a));}
+ function target(sh,c,r,answer,hint,label,id,formula=true){const a=addr(c,r);sh.editable[a]=true;w.targets.push({sheet:sh.name,addr:a,answer,hint,label,id,formula});w.hintMap[sh.name+'!'+a]=hint;}
+ if(task.kind==='nmck'){
+   const sh=add('НМЦК',15,task.rows.length+8);
+   head(sh,0,['№','Закупаемый товар / работа / услуга','Ед.','Кол-во','КП1','КП2','КП3','КП4','КП5','Сумма КП','Средняя цена','Станд. отклонение','Вариация, %','НМЦК позиции','Комментарий']);
+   input(sh,1,1,'Цены за 1 единицу, руб. ЗАПОЛНЯЙ ЖЁЛТЫЕ ЯЧЕЙКИ ФОРМУЛАМИ.');
+   const offerCount=task.rows[0].prices.length;
+   task.rows.forEach((row,i)=>{
+     const r=i+3,id='n'+i;
+     input(sh,0,r,i+1);input(sh,1,r,row.name);input(sh,2,r,'шт.');input(sh,3,r,row.quantity);
+     row.prices.forEach((price,k)=>input(sh,4+k,r,price));
+     const last=col(4+offerCount-1),range='E'+(r+1)+':'+last+(r+1);
+     const get=idSuffix=>task.questions.find(q=>q.id===id+idSuffix);
+     for(const [c,suffix,hint] of [[9,'sum','Сложи все цены: =SUM('+range+')'],[10,'avg','Среднее: =AVERAGE('+range+') или =J'+(r+1)+'/'+offerCount],[11,'sd','Выборочное отклонение: =STDEV.S('+range+')'],[12,'cv','Коэффициент вариации: =L'+(r+1)+'/K'+(r+1)+'*100'],[13,'amount','Стоимость: =ROUND(K'+(r+1)+';2)*D'+(r+1)]]){
+       const q=get(suffix);if(q)target(sh,c,r,q.answer,hint,q.label,q.id);
+     }
+     const hom=task.questions.find(q=>q.id===id+'uniformity');
+     if(hom)target(sh,14,r,hom.answer,'Однородность: =IF(M'+(r+1)+'<=33;"Однородны";"Неоднородны")',hom.label,hom.id);
+   });
+   const tr=task.rows.length+4;input(sh,1,tr,'ВСЕГО НМЦК, руб.');const total=task.questions.find(q=>q.id==='total');
+   target(sh,13,tr,total.answer,'Сложи стоимости всех позиций: =SUM(N4:N'+(task.rows.length+3)+')','Итог НМЦК','total');
+   sh.rows=tr+3;
+ }else if(task.kind==='budget'&&task.budgetSplit){
+   const sh=add('Бюджет',10,task.rows.length+11);
+   head(sh,0,['№','Статья бюджета','Раздел','План, тыс.','Факт, тыс.','Доход, тыс.','Расход, тыс.','Доля, %','Исполнение, %','Отклонение']);
+   input(sh,1,1,'Перенеси факт в доход или расход; другую ячейку оставь пустой.');
+   const end=task.rows.length+3,start=task.rows.length+5;
+   task.rows.forEach((row,i)=>{const r=i+3,R=r+1,id='b'+i;
+     input(sh,0,r,i+1);input(sh,1,r,row.name);input(sh,2,r,row.category||'—');input(sh,3,r,row.plan);input(sh,4,r,row.actual);
+     for(const [c,k] of [[5,'Доход'],[6,'Расход']]){target(sh,c,r,row.kind===k?row.actual:0,'Перенеси факт из E'+R+' в столбец дохода или расхода.',row.name+' — '+k,id+k,false);w.targets[w.targets.length-1].blankIsZero=true;}
+     const side=row.kind==='Доход'?'F':'G',den=task.rows.length+(row.kind==='Доход'?6:7);
+     target(sh,7,r,norm(row.actual/task.summary[row.kind].actual*100),'='+side+R+'/E'+den+'*100',row.name+' — доля, %',id+'share');
+     for(const [c,suffix,hint] of [[8,'pct','=E'+R+'/D'+R+'*100'],[9,'diff','=E'+R+'-D'+R]]){const q=task.questions.find(q=>q.id===id+suffix);if(q)target(sh,c,r,q.answer,hint,q.label,q.id);}
+   });
+   for(const [k,d,side] of [['Доход',0,'F'],['Расход',1,'G']]){const r=start+d,R=r+1;input(sh,1,r,(d?'РАСХОДЫ':'ДОХОДЫ')+' — ВСЕГО');
+     for(const [c,suffix,hint] of [[3,'plan',`=СУММЕСЛИ(${side}4:${side}${end};">0";D4:D${end})`],[4,'actual',`=СУММ(${side}4:${side}${end})`],[8,'pct','=E'+R+'/D'+R+'*100']]){const q=task.questions.find(q=>q.id===k+suffix);if(q)target(sh,c,r,q.answer,hint,q.label,q.id);}
+   }
+   input(sh,1,start+3,'ДЕФИЦИТ / ПРОФИЦИТ');const st=task.questions.find(q=>q.id==='status');
+   target(sh,4,start+3,st.answer,'=ЕСЛИ(E'+(start+1)+'>E'+(start+2)+';"Профицит";ЕСЛИ(E'+(start+1)+'<E'+(start+2)+';"Дефицит";"Сбалансирован"))',st.label,st.id,false);sh.rows=start+6;
+ }else if(task.kind==='budget'){
+   const sh=add('Бюджет',10,task.rows.length+11);
+   head(sh,0,['№','Статья бюджета','Раздел','План, тыс.','Факт, тыс.','Доход/расход','Доля, %','Исполнение, %','Отклонение','Примечание']);
+   input(sh,1,1,'Доля = факт статьи / итог факта соответствующей группы × 100.');
+   task.rows.forEach((row,i)=>{
+     const r=i+3,id='b'+i;
+     input(sh,0,r,i+1);input(sh,1,r,row.name);input(sh,2,r,row.category||'—');input(sh,3,r,row.plan);input(sh,4,r,row.actual);
+     const qkind=task.questions.find(q=>q.id===id+'kind');
+     target(sh,5,r,row.kind,'Определи, поступление это или расход. Впиши «Доход» или «Расход».',qkind.label,qkind.id,false);
+     target(sh,6,r,norm(row.actual/task.summary[row.kind].actual*100),'Доля статьи от фактического итога группы: =E'+(r+1)+'/E'+(task.rows.length+(row.kind==='Доход'?6:7))+'*100. Сначала заполни итог группы.',row.name+' — доля, %',id+'share');
+     const qpct=task.questions.find(q=>q.id===id+'pct');if(qpct)target(sh,7,r,qpct.answer,'=E'+(r+1)+'/D'+(r+1)+'*100',qpct.label,qpct.id);
+     const qdiff=task.questions.find(q=>q.id===id+'diff');if(qdiff)target(sh,8,r,qdiff.answer,'=E'+(r+1)+'-D'+(r+1),qdiff.label,qdiff.id);
+   });
+   const start=task.rows.length+5;for(const [k,d] of [['Доход',0],['Расход',1]]){
+     const r=start+d;input(sh,1,r,(d?'РАСХОДЫ':'ДОХОДЫ')+' — ВСЕГО');
+     for(const [c,suffix] of [[3,'plan'],[4,'actual'],[7,'pct']]){
+       const q=task.questions.find(q=>q.id===k+suffix);if(q)target(sh,c,r,q.answer,
+         c===7?'=E'+(r+1)+'/D'+(r+1)+'*100':`=SUMIF(F4:F${task.rows.length+3};"${k}";${c===3?'D':'E'}4:${c===3?'D':'E'}${task.rows.length+3})`,q.label,q.id);
+     }
+   }
+   input(sh,1,start+3,'ДЕФИЦИТ / ПРОФИЦИТ');const st=task.questions.find(q=>q.id==='status');
+   target(sh,4,start+3,st.answer,
+     'Сравни доходы и расходы: =IF(E'+(start+1)+'>E'+(start+2)+';"Профицит";IF(E'+(start+1)+'<E'+(start+2)+';"Дефицит";"Сбалансирован"))',
+     st.label,st.id,false);
+   sh.rows=start+6;
+ }else if(task.kind==='financial'){
+   for(const [name,codes,data,years] of [['Баланс',windowOrEngine().bnames,task.balance,['2025','2024','2023']],['ОФР',windowOrEngine().pnames,task.pl,['2025','2024']]]){
+     const sh=add(name,years.length+2,codes.length+4);
+     head(sh,0,['Код','Показатель',...years]);
+     codes.forEach(([code,label],i)=>{const r=i+2;input(sh,0,r,code);input(sh,1,r,label);years.forEach((y,j)=>input(sh,j+2,r,data[y][code]??0));});
+   }
+   const sh=add('Анализ',4,task.questions.length/2+4);
+   head(sh,0,['Раздел','Расчётный показатель','2025','2024']);
+   const paired=new Map();task.questions.forEach(q=>{const year=q.id.endsWith('2025')?'2025':'2024';const prefix=q.id.slice(0,-4);if(!paired.has(prefix))paired.set(prefix,{});paired.get(prefix)[year]=q;});
+   let r=2;for(const [key,qs] of paired){const q=qs['2025']||qs['2024'];input(sh,0,r,q.group||'');input(sh,1,r,q.label.replace(/\s*[—-]\s*202[45]$/,''));
+      for(const [year,c] of [['2025',2],['2024',3]])if(qs[year]){
+        const item=qs[year];target(sh,c,r,item.answer,item.hint+' (формулы вводятся со ссылками вида Баланс!C5 или ОФР!C7)',item.label,item.id);
+      }r++;
+   }sh.rows=r+2;
+ }else throw Error('Unsupported task: '+task.kind);
+ return w;
+}
+let _engine=null;
+function windowOrEngine(){return _engine||(typeof globalThis!=='undefined'?globalThis.ExamEngine:null)||{};}
+function setEngine(e){_engine=e;}
+function sheetCell(sh,a){return sh.values[a]||{raw:'',locked:!sh.editable[a]};}
+function write(w,sheet,a,raw){const sh=w.sheets[sheet],pos=decode(a);if(!sh||!pos||pos.c>=sh.cols||pos.r>=sh.rows)throw Error('#REF!');const cel=sheetCell(sh,a);if(cel.locked)throw Error('Исходные данные менять нельзя');if(String(raw).length>300)throw Error('Слишком длинная формула');sh.values[a]={raw:String(raw),locked:false};}
+function lex(src){const localDecimals=src.includes(';')||!/[A-ZА-ЯЁ_][A-ZА-ЯЁ_0-9.]*\(/i.test(src);const out=[];let i=0;while(i<src.length){if(/\s/.test(src[i])){i++;continue;}const rem=src.slice(i);
+let m;if(src[i]==='"'){let j=i+1,text='';while(j<src.length){if(src[j]==='"'){if(src[j+1]==='"'){text+='"';j+=2;continue;}break;}text+=src[j++];}if(j>=src.length)throw Error('#ФОРМУЛА!');out.push({t:'str',v:text});i=j+1;continue;}
+if(src[i]==="'"){let j=src.indexOf("'",i+1);if(j<0)throw Error('#ФОРМУЛА!');out.push({t:'ident',v:src.slice(i+1,j)});i=j+1;continue;}
+if((m=(localDecimals?/^(?:\d+(?:[.,]\d+)?|\.\d+)(?:[eE][+-]?\d+)?/:/^(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?/).exec(rem))){out.push({t:'num',v:Number(m[0].replace(',','.'))});i+=m[0].length;continue;}
+if((m=/^[A-ZА-ЯЁ_\$][A-ZА-ЯЁ_0-9.$]*/i.exec(rem))){out.push({t:'ident',v:m[0]});i+=m[0].length;continue;}
+if(rem.startsWith('>=')||rem.startsWith('<=')||rem.startsWith('<>')){out.push({t:rem.slice(0,2)});i+=2;continue;}
+if('+-*/^(),;:!<>=%.'.includes(src[i])){out.push({t:src[i]});i++;continue;}
+throw Error('#ФОРМУЛА!');}
+if(out.length>400)throw Error('#ФОРМУЛА!');out.push({t:'end'});return out;
+}
+function calc(w,sheet,a,stack){const sh=w.sheets[sheet];if(!sh)throw Error('#REF!');const cell=sh.values[a];if(!cell||cell.raw===undefined||cell.raw===null||String(cell.raw)==='')return 0;
+const raw=cell.raw;if(typeof raw==='number')return raw;if(typeof raw!=='string'||!raw.startsWith('=')){const n=Number(raw.trim().replace(/\s/g,'').replace(',','.'));return raw.trim()!==''&&Number.isFinite(n)?n:raw;}
+const key=sheet+'!'+a;if(stack.includes(key))throw Error('#ЦИКЛ!');if(stack.length>75)throw Error('#ЦИКЛ!');stack.push(key);
+try{const tokens=lex(raw.slice(1));let ix=0;const peek=()=>tokens[ix].t;const take=t=>{if(peek()!==t)throw Error('#ФОРМУЛА!');return tokens[ix++];};
+function val(v){if(Array.isArray(v))return v.flat(Infinity).map(val);if(v===null||v==='')return null;if(typeof v==='number')return v;if(typeof v==='string'){const n=Number(v.replace(',','.'));return Number.isFinite(n)?n:v;}return v;}
+function num(v){v=val(v);if(v===null)return 0;if(typeof v!=='number'||!Number.isFinite(v))throw Error('#ЗНАЧ!');return v;}
+function apply(name,args){const fn=name.toUpperCase().replace(/\./g,'');const flatten=args.flat(Infinity).map(val);const nums=flatten.filter(n=>typeof n==='number'&&Number.isFinite(n));const v=i=>num(args[i]??0);
+switch(fn){
+case 'SUM':case 'СУММ':return nums.reduce((a,b)=>a+b,0);
+case 'AVERAGE':case 'СРЗНАЧ':if(!nums.length)throw Error('#ДЕЛ/0!');return nums.reduce((a,b)=>a+b,0)/nums.length;
+case 'STDEVS':case 'СТАНДОТКЛОНВ':if(nums.length<2)throw Error('#ДЕЛ/0!');{const avg=nums.reduce((a,b)=>a+b,0)/nums.length;return Math.sqrt(nums.reduce((a,b)=>a+(b-avg)**2,0)/(nums.length-1));}
+case 'SQRT':case 'КОРЕНЬ':return Math.sqrt(v(0));
+case 'ROUND':case 'ОКРУГЛ':{let digits=v(1);if(!Number.isInteger(digits)||Math.abs(digits)>10)throw Error('#ЗНАЧ!');const n=v(0);return Math.sign(n)*Math.round((Math.abs(n)+Number.EPSILON)*10**digits)/10**digits;}
+case 'ABS':case 'ABSOLUTE':case 'АБС':return Math.abs(v(0));
+case 'COUNT':case 'СЧЁТ':return nums.length;
+case 'MIN':case 'МИН':return Math.min(...nums);
+case 'MAX':case 'МАКС':return Math.max(...nums);
+case 'IF':case 'ЕСЛИ':return args[0]?args[1]:args[2];
+case 'SUMIF':case 'СУММЕСЛИ':{if(!Array.isArray(args[0])||!Array.isArray(args[2]))throw Error('#ЗНАЧ!');const criteria=String(args[1]);const m=/^(>=|<=|<>|>|<|=)(-?\d+(?:[.,]\d+)?)$/.exec(criteria);const match=x=>{if(!m)return String(x).toLowerCase()===criteria.toLowerCase();if(x===null||x===''||typeof x!=='number')return false;const n=Number(m[2].replace(',','.'));return m[1]==='>'?x>n:m[1]==='<'?x<n:m[1]==='>='?x>=n:m[1]==='<='?x<=n:m[1]==='<>'?x!==n:x===n;};return args[0].reduce((s,x,i)=>s+(match(x)?num(args[2][i]||0):0),0);}
+case 'COUNTIF':case 'СЧЁТЕСЛИ':{if(!Array.isArray(args[0]))throw Error('#ЗНАЧ!');return args[0].filter(x=>String(x).toLowerCase()===String(args[1]).toLowerCase()).length;}
+default:throw Error('#ИМЯ?');}}
+function ref(shName,cell){const p=decode(cell);if(!p||!w.sheets[shName]||p.c>=w.sheets[shName].cols||p.r>=w.sheets[shName].rows)throw Error('#REF!');return calc(w,shName,addr(p.c,p.r),stack);}
+function range(shName,from,to){const a=decode(from),b=decode(to);if(!a||!b||!w.sheets[shName]||a.r>=w.sheets[shName].rows||b.r>=w.sheets[shName].rows||a.c>=w.sheets[shName].cols||b.c>=w.sheets[shName].cols)throw Error('#REF!');if(a.r>b.r||a.c>b.c||(b.r-a.r+1)*(b.c-a.c+1)>500)throw Error('#REF!');const data=[];for(let r=a.r;r<=b.r;r++)for(let c=a.c;c<=b.c;c++){const key=addr(c,r),item=w.sheets[shName].values[key];data.push(item&&String(item.raw).trim()!==''?ref(shName,key):null);}return data;}
+function primary(){if(peek()==='-'){take('-');return -num(primary());}if(peek()==='+'){take('+');return num(primary());}if(peek()==='('){take('(');const v=expression();take(')');return v;}
+if(peek()==='num')return take('num').v;if(peek()==='str')return take('str').v;
+if(peek()==='ident'){
+ const id=take('ident').v;
+ if(peek()==='('){
+  take('(');
+  // Excel IF/ЕСЛИ evaluates only the branch selected by the condition.
+  if(id.toUpperCase()==='IF'||id.toUpperCase()==='ЕСЛИ'){
+    function separator(){if(peek()!==';'&&peek()!==',')throw Error('#ФОРМУЛА!');ix++;}
+    function skipBranch(){let depth=0;while(true){const t=peek();if(t==='end')throw Error('#ФОРМУЛА!');if(depth===0&&(t===')'||t===';'||t===','))return;if(t==='(')depth++;else if(t===')')depth--;ix++;}}
+    const condition=expression();separator();let chosen;
+    if(condition){chosen=expression();}else skipBranch();
+    separator();
+    if(condition)skipBranch();else chosen=expression();
+    take(')');return chosen;
+  }
+  const args=[];if(peek()!==')')do{args.push(expression());if(peek()!==';'&&peek()!==',')break;ix++;}while(true);take(')');return apply(id,args);
+ }
+ let s=sheet,cell=id;
+ if(peek()==='!'){take('!');s=id;cell=take('ident').v;}
+ if(!decode(cell))throw Error('#ИМЯ?');
+ if(peek()===':'){take(':');let tok=take('ident').v,refSheet=s;if(peek()==='!'){take('!');refSheet=tok;tok=take('ident').v;}if(refSheet!==s)throw Error('#REF!');return range(s,cell,tok);}
+ return ref(s,cell);
+ }
+ throw Error('#ФОРМУЛА!');}
+function powered(){let x=primary();while(peek()==='^'||peek()==='%'){if(peek()==='%'){take('%');x=num(x)/100;}else{take('^');x=num(x)**num(primary());}}return x;}
+function term(){let x=powered();while(peek()==='*'||peek()==='/'){const op=tokens[ix++].t,other=num(powered());x=op==='*'?num(x)*other:other===0?(()=>{throw Error('#ДЕЛ/0!');})():num(x)/other;}return x;}
+function additive(){let x=term();while(peek()==='+'||peek()==='-'){const op=tokens[ix++].t,y=num(term());x=op==='+'?num(x)+y:num(x)-y;}return x;}
+function expression(){let x=additive();while(['=','>','<','>=','<=','<>'].includes(peek())){const op=tokens[ix++].t,y=additive();switch(op){case '=':x=x===y;break;case '<>':x=x!==y;break;case '>':x=x>y;break;case '<':x=x<y;break;case '>=':x=x>=y;break;case '<=':x=x<=y;break;}}return x;}
+const result=expression();if(peek()!=='end')throw Error('#ФОРМУЛА!');if(typeof result==='number'&&!Number.isFinite(result))throw Error('#ЗНАЧ!');return result;
+}finally{stack.pop();}}
+function value(w,s,a){try{return calc(w,s,a,[]);}catch(e){return /^#/.test(e.message)?e.message:'#ОШИБКА!';}}
+function grade(w){let passed=0;const results=[];for(const t of w.targets){const cel=w.sheets[t.sheet].values[t.addr],raw=cel?.raw||'',v=value(w,t.sheet,t.addr);let status=t.blankIsZero&&t.answer===0?'ok':'empty';if(String(raw).trim()){if(typeof v==='string'&&v.startsWith('#'))status='bad';else{const good=typeof t.answer==='number'?typeof v==='number'&&Math.abs(v-t.answer)<=(t.tolerance??Math.max(.011,Math.abs(t.answer)*1e-9)):String(v).trim().toLowerCase().replace(/ё/g,'е')===String(t.answer).toLowerCase().replace(/ё/g,'е');status=good?(t.formula&&(!String(raw).startsWith('=')||(w.template==='nmck-solved'&&!/\$?[A-Z]{1,2}\$?[1-9][0-9]{0,2}(?![0-9])/i.test(String(raw))))?'need-formula':'ok'):'bad';}}
+ if(status==='ok')passed++;results.push({...t,value:v,status,raw});}
+ return{passed,total:w.targets.length,percent:Math.round(passed/w.targets.length*100),results};}
+function save(w){const entries={};for(const name of w.order){const sh=w.sheets[name];entries[name]=Object.fromEntries(Object.entries(sh.values).filter(([k,v])=>!v.locked).map(([k,v])=>[k,v.raw]));}return entries;}
+function load(w,entries){for(const [name,table] of Object.entries(entries||{}))if(w.sheets[name])for(const [a,v] of Object.entries(table))if(w.sheets[name].editable[a])write(w,name,a,v);}
+return{create,setEngine,col,addr,decode,write,value,grade,save,load};
+});
+</script><script>
+/* v0.9.3 — NMCK working sheet matches supplied solved Excel templates (3 or 5 KP). */
+(function(root) {
+'use strict';
+const S=root.ExamSheets,E=root.ExamEngine;
+if(!S||!E)throw Error('NMCK template requires both engines');
+const original=S.create;
+const letter=n=>S.col(n);
+function render(task){
+ const n=task.rows[0].prices.length;
+ if(n<3||n>5)throw Error('Ожидается 3–5 коммерческих предложений');
+ // A:D identity/quantity; E.. offers; then avg, SD, coefficient, calculation, price per item, final amount.
+ const avg=4+n,sd=avg+1,cv=avg+2,calc=avg+3,unit=avg+4,amount=avg+5;
+ const name='НМЦК',sh={name,cols:amount+1,rows:Math.max(17,task.rows.length+13),values:{},editable:{},spans:{}};
+ sh.spans.A1=sh.cols;sh.spans.A2=sh.cols;sh.spans.A3=sh.cols;
+ sh.spans.E4=n;sh.spans[letter(avg)+'4']=3;sh.spans[letter(calc)+'4']=3;
+ const w={kind:'nmck',id:task.id,task,order:[name],sheets:{[name]:sh},targets:[],hintMap:{},template:'nmck-solved'};
+ function fixed(c,r,value){if(value!==null&&value!==undefined)sh.values[S.addr(c,r)]={raw:value,locked:true};}
+ function editable(c,r,value,label,hint,id){const a=S.addr(c,r);sh.editable[a]=true;w.targets.push({sheet:name,addr:a,answer:value,label,hint,id,formula:true});w.hintMap[name+'!'+a]=hint;}
+ fixed(0,0,'Обоснование начальной (максимальной) цены контракта');
+ fixed(0,1,'Лот № 1 — '+task.rows.map(x=>x.name).join('; '));
+ fixed(0,2,'Используемый метод: сопоставимых рыночных цен (анализа рынка)');
+ fixed(0,3,'№');fixed(1,3,'Наименование предмета товара (работы, услуги)');
+ fixed(2,3,'Ед. изм.');fixed(3,3,'Кол-во');
+ fixed(4,3,'Источник информации о цене (руб./ед. изм.)');
+ fixed(avg,3,'Однородность выявленных цен');
+ fixed(calc,3,'НМЦК методом сопоставимых рыночных цен');
+ fixed(0,4,'№');fixed(1,4,'Предмет закупки');fixed(2,4,'Ед. изм.');fixed(3,4,'Объём');
+ for(let k=0;k<n;k++)fixed(4+k,4,'Коммерческое предложение №'+(k+1));
+ fixed(avg,4,'Средняя цена за единицу, руб.');
+ fixed(sd,4,'Среднее квадратичное отклонение, руб.');
+ fixed(cv,4,'Коэффициент вариации V, % (≤33)');
+ fixed(calc,4,'Расчёт НМЦК по формуле, руб.');
+ fixed(unit,4,task.offerRule?'Выбранная цена ниже средней, руб./ед.':'Цена за единицу, руб.');
+ fixed(amount,4,'НМЦК позиции, руб.');
+ task.rows.forEach((row,i)=>{
+  const r=i+5,R=r+1,id='n'+i;
+  fixed(0,r,i+1);fixed(1,r,row.name);fixed(2,r,'Штуки');fixed(3,r,row.quantity);
+  row.prices.forEach((v,k)=>{
+   if(!task.manualPrices){fixed(4+k,r,v);return;}
+   const a=S.addr(4+k,r);sh.editable[a]=true;
+   const hint='Впиши цену КП №'+(k+1)+' из условия задания числом, без знака рубля.';
+   w.targets.push({sheet:name,addr:a,answer:v,label:'Цена КП №'+(k+1),hint,id:id+'price'+k,formula:false,tolerance:0.001});w.hintMap[name+'!'+a]=hint;
+  });
+  const area='E'+R+':'+letter(avg-1)+R;
+  const q=suffix=>task.questions.find(x=>x.id===id+suffix);
+  const mean=q('avg'),deviation=q('sd'),variation=q('cv'),total=q('amount');
+  if(!mean||!deviation||!variation||!total)throw Error('В задании НМЦК недостаёт обязательного показателя');
+  editable(avg,r,mean.answer,'Средняя цена, руб.','=СРЗНАЧ('+area+')',id+'avg');
+  editable(sd,r,deviation.answer,'Среднее квадратичное отклонение','=СТАНДОТКЛОН.В('+area+')',id+'sd');
+  editable(cv,r,variation.answer,'Коэффициент вариации, %','='+letter(sd)+R+'/'+letter(avg)+R+'*100',id+'cv');
+  editable(calc,r,total.answer,'Расчёт НМЦК позиции','=ОКРУГЛ('+letter(avg)+R+';2)*D'+R,id+'calc');
+  const chosen=q('selected'),chosenTotal=q('selectedTotal');
+  if(task.offerRule&&chosen){editable(unit,r,chosen.answer,'Выбранное предложение','Выбери цену, ближайшую к средней и строго меньше неё; введи число или ссылку на предложение.',id+'selected');w.targets[w.targets.length-1].formula=false;}
+  else editable(unit,r,E.round(mean.answer),'Цена за одну единицу','=ОКРУГЛ('+letter(avg)+R+';2)',id+'unit');
+  editable(amount,r,task.offerRule&&chosenTotal?chosenTotal.answer:total.answer,'Сумма выбранного предложения',task.offerRule?'=ЕСЛИ('+letter(unit)+R+'="Нет цены ниже средней";"Нет цены ниже средней";'+letter(unit)+R+'*D'+R+')':'='+letter(unit)+R+'*D'+R,id+'amount');
+ });
+ const footer=task.rows.length+5,R=footer+1;
+ sh.spans['B'+R]=sh.cols-2;
+ for(const rr of [footer+4,footer+5,footer+6,footer+7,footer+8])sh.spans['B'+rr]=sh.cols-1;
+ fixed(1,footer,'В результате проведённого расчёта Н(М)ЦК составляет, руб.:');
+ const total=task.questions.find(x=>x.id==='total');
+ if(!total)throw Error('Не найден итог НМЦК');
+ editable(amount,footer,task.offerRule?(task.questions.find(x=>x.id==='n0selectedTotal')||total).answer:total.answer,'Итог по выбранному предложению',task.offerRule?'='+letter(amount)+'6':'=СУММ('+letter(amount)+'6:'+letter(amount)+(task.rows.length+5)+')','total');
+ fixed(1,footer+3,'Дата составления: __________________');
+ fixed(1,footer+4,'Работник контрактной службы:');
+ fixed(1,footer+5,'Должность: _______________________');
+ fixed(1,footer+6,'ФИО: _____________________________');
+ fixed(1,footer+7,'Подпись: _________________________');
+ sh.rows=footer+10;
+ w.nmckLayout={offers:n,lots:task.rows.length,dataStart:6,dataEnd:task.rows.length+5,footerRow:R,avg:letter(avg),sd:letter(sd),cv:letter(cv),calc:letter(calc),unit:letter(unit),amount:letter(amount)};
+ return w;
+}
+S.create=function(task){
+ if(!task||task.kind!=='nmck')return original(task);
+ return render(task);
+};
+})(typeof globalThis!=='undefined'?globalThis:this);
+
+</script><script>
+/* Small XLSX writer (ZIP STORE + OOXML), no external dependency or network. */
+(function(root,factory){const m=factory();root.ExamXlsx=m;if(typeof module!=='undefined'&&module.exports)module.exports=m;})(typeof globalThis!=='undefined'?globalThis:this,function(){'use strict';
+const enc=new TextEncoder();
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+const funcs=[['СТАНДОТКЛОН.В','STDEV.S'],['СУММЕСЛИ','SUMIF'],['СЧЁТЕСЛИ','COUNTIF'],['СРЗНАЧ','AVERAGE'],['ОКРУГЛ','ROUND'],['КОРЕНЬ','SQRT'],['СУММ','SUM'],['ЕСЛИ','IF'],['СЧЁТ','COUNT'],['МИН','MIN'],['МАКС','MAX']];
+function fexp(f){
+ const src=f.slice(1), localDecimals=src.includes(';')||!/[A-ZА-ЯЁ_][A-ZА-ЯЁ_0-9.]*\(/i.test(src);
+ // Do not translate function names or argument separators inside string literals.
+ let result='',outside='',quoted=false;
+ function emit(){let part=outside;for(const [ru,en] of funcs)part=part.replace(new RegExp(ru.replace('.','\\.')+'(?=\\s*\\()','gi'),en);if(localDecimals)part=part.replace(/(\d),(?=\d)/g,'$1.');result+=part.replace(/;/g,',');outside='';}
+ for(let i=0;i<src.length;i++){const ch=src[i];if(ch==='"'){if(!quoted){emit();quoted=true;result+=ch;}else if(src[i+1]==='"'){result+='""';i++;}else{quoted=false;result+=ch;}}else if(quoted)result+=ch;else outside+=ch;}emit();return result;
+}
+function xcell(a,cell,editable,sh){if(cell===undefined||cell.raw===undefined||cell.raw===null||cell.raw==='')return '';const raw=cell.raw,number=Number(a.replace(/[A-Z]/gi,'')),style=editable?'2':(sh.spans&&number<=5?'3':number===1?'1':'0');
+ if(typeof raw==='number')return `<c r="${a}" s="${style}"><v>${raw}</v></c>`;
+ if(String(raw).startsWith('='))return `<c r="${a}" s="${style}"><f>${esc(fexp(String(raw)))}</f></c>`;
+ // Editable numeric inputs must be numbers in Excel: AVERAGE ignores text cells.
+ const cleaned=String(raw).trim().replace(/[\s\u00a0\u202f]/g,'').replace(',','.');
+ if(editable && /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(cleaned) && Number.isFinite(Number(cleaned)))return `<c r="${a}" s="${style}"><v>${Number(cleaned)}</v></c>`;
+ return `<c r="${a}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${esc(String(raw))}</t></is></c>`;}
+function sheetXML(sh){const rows=[];for(let r=0;r<sh.rows;r++){let cells='';for(let c=0;c<sh.cols;c++){let a='',n=c+1;while(n){a=String.fromCharCode(65+(n-1)%26)+a;n=Math.floor((n-1)/26);}a+=r+1;cells+=xcell(a,sh.values[a],!!sh.editable[a],sh);}
+ if(cells){const height=sh.spans&&(r===3?' ht="62" customHeight="1"':r===4?' ht="95" customHeight="1"':r<3?' ht="37" customHeight="1"':'');rows.push(`<row r="${r+1}"${height||''}>${cells}</row>`);}}
+ const merges=Object.entries(sh.spans||{}).filter(([,span])=>Number.isInteger(span)&&span>1).map(([a,span])=>{const m=/^([A-Z]+)([0-9]+)$/.exec(a);if(!m)return '';let n=0;for(const x of m[1])n=n*26+x.charCodeAt(0)-64;return '<mergeCell ref="'+a+':'+column(n+span-2)+m[2]+'"/>';}).filter(Boolean);
+ const mergeXML=merges.length?'<mergeCells count="'+merges.length+'">'+merges.join('')+'</mergeCells>':'';
+ return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><dimension ref="A1:${column(sh.cols-1)}${sh.rows}"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="18"/><cols><col min="1" max="1" width="12" customWidth="1"/><col min="2" max="2" width="44" customWidth="1"/><col min="3" max="${sh.cols}" width="18" customWidth="1"/></cols><sheetData>${rows.join('')}</sheetData>${mergeXML}</worksheet>`;}
+function column(c){let s='';for(c++;c;c=Math.floor((c-1)/26))s=String.fromCharCode(65+(c-1)%26)+s;return s;}
+const types=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>`;
+const rels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+const style=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="10"/><name val="Aptos"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Aptos"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1C3760"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFF0B2"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFill="1" applyFont="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFill="1" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+const crcTable=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;crcTable[n]=c>>>0;}
+const crc32=buf=>{let c=0xFFFFFFFF;for(const x of buf)c=crcTable[(c^x)&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0;};
+function pack(files){let locals=[],centrals=[],offset=0;const int16=(d,o,x)=>d.setUint16(o,x,true),int32=(d,o,x)=>d.setUint32(o,x,true);
+for(const [name,content] of files){const fname=enc.encode(name),b=enc.encode(content),crc=crc32(b),lh=new Uint8Array(30+fname.length),dv=new DataView(lh.buffer);
+int32(dv,0,0x04034b50);int16(dv,4,20);int16(dv,6,0x800);int16(dv,8,0);int32(dv,14,crc);int32(dv,18,b.length);int32(dv,22,b.length);int16(dv,26,fname.length);lh.set(fname,30);locals.push(lh,b);
+const ch=new Uint8Array(46+fname.length),cd=new DataView(ch.buffer);int32(cd,0,0x02014b50);int16(cd,4,20);int16(cd,6,20);int16(cd,8,0x800);int32(cd,16,crc);int32(cd,20,b.length);int32(cd,24,b.length);int16(cd,28,fname.length);int32(cd,42,offset);ch.set(fname,46);centrals.push(ch);offset+=lh.length+b.length;}
+const centralOffset=offset,centralSize=centrals.reduce((s,b)=>s+b.length,0),end=new Uint8Array(22),dv=new DataView(end.buffer);int32(dv,0,0x06054b50);int16(dv,8,files.length);int16(dv,10,files.length);int32(dv,12,centralSize);int32(dv,16,centralOffset);
+const all=[...locals,...centrals,end],total=all.reduce((s,b)=>s+b.length,0),out=new Uint8Array(total);let pos=0;for(const b of all){out.set(b,pos);pos+=b.length;}return out;}
+function exportBytes(w){const files=[['[Content_Types].xml',types],['_rels/.rels',rels]];
+const workbook=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${w.order.map((s,i)=>`<sheet name="${esc(s)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')}</sheets><calcPr fullCalcOnLoad="1" calcMode="auto"/></workbook>`;
+const wrels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${w.order.map((s,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')}<Relationship Id="rId${w.order.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+files.push(['xl/workbook.xml',workbook],['xl/_rels/workbook.xml.rels',wrels],['xl/styles.xml',style]);
+for(let i=0;i<w.order.length;i++)files.push(['xl/worksheets/sheet'+(i+1)+'.xml',sheetXML(w.sheets[w.order[i]])]);
+files.push(['docProps/core.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Экзаменатор — тренировочная работа</dc:title></cp:coreProperties>']);
+// Keep the content type list synchronized with worksheets.
+files[0][1]=types.replace('</Types>',w.order.map((s,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')+'</Types>');
+return pack(files);}
+function exportBase64(w){const bytes=exportBytes(w);let s='';for(let i=0;i<bytes.length;i+=32768)s+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(s);}
+return{exportBytes,exportBase64};
+});
+</script><script>
+/* The list only contains functions that the workbook parser can calculate. */
+(function(root,factory){const api=factory();root.ExamFormulaComplete=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){'use strict';
+const catalog=[['СУММ','SUM','Сумма'],['СРЗНАЧ','AVERAGE','Среднее'],['СТАНДОТКЛОН.В','STDEV.S','Выборочное отклонение'],['ОКРУГЛ','ROUND','Округление'],['ЕСЛИ','IF','Условие'],['СУММЕСЛИ','SUMIF','Сумма по условию'],['СЧЁТЕСЛИ','COUNTIF','Число ячеек по условию'],['СЧЁТ','COUNT','Число числовых ячеек'],['КОРЕНЬ','SQRT','Квадратный корень'],['АБС','ABS','Модуль'],['МИН','MIN','Минимум'],['МАКС','MAX','Максимум']];
+function candidates(value,cursor){
+ const s=String(value),at=Math.max(0,Math.min(s.length,Number.isInteger(cursor)?cursor:s.length));if(!s.trimStart().startsWith('='))return null;
+ const before=s.slice(0,at);let quoted=false;for(let i=0;i<before.length;i++)if(before[i]==='"'){if(quoted&&before[i+1]==='"')i++;else quoted=!quoted;}if(quoted)return null;
+ const m=/(?:^|[=+\-*/^(;,])\s*([A-Za-zА-Яа-яЁё.]+)$/.exec(before);if(!m)return null;
+ const prefix=m[1].toUpperCase().replace(/Ё/g,'Е'),start=at-m[1].length;
+ const items=[];for(const [ru,en,desc] of catalog){const match=x=>x.toUpperCase().replace(/Ё/g,'Е').startsWith(prefix);if(match(ru))items.push({name:ru,desc});if(match(en))items.push({name:en,desc});}
+ return items.length?{start,end:at,items}:null;
+}
+function insert(value,start,end,text){const str=String(value),pos=Math.max(0,Math.min(str.length,start)),stop=Math.max(pos,Math.min(str.length,end));return{value:str.slice(0,pos)+text+str.slice(stop),caret:pos+text.length};}
+return{catalog,candidates,insert};});
+
+</script><script>
+/* ExamTrainer v0.8: mobile spreadsheet as the primary, not a form quiz. */
+(function(){'use strict';
+/* Android System WebView compatibility: replaceChildren() is absent in older builds. */
+if(typeof Element.prototype.replaceChildren!=='function'){
+ Element.prototype.replaceChildren=function(...children){
+   while(this.firstChild)this.removeChild(this.firstChild);
+   for(const x of children)this.appendChild(typeof x==='string'?document.createTextNode(x):x);
+ };
+}
+
+const $=id=>document.getElementById(id),E=window.ExamEngine,S=window.ExamSheets;
+S.setEngine(E);
+let task=null,w=null,active='',selected='',checked=null,editDirty=false,pendingReference=null;
+const history=[];
+const viewMemory={};
+const fmt=n=>typeof n==='number'?new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(n):String(n??'');
+const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=String(text);if(cls)e.className=cls;return e;};
+const sheetRoot=$('sources');
+$('work').querySelector('h3').textContent='01 · Таблица Excel';
+$('verification-title').textContent='02 · Проверь свою работу';
+$('questions').replaceChildren();$('questions').hidden=true;
+$('check').textContent='Проверить таблицу ✓';
+$('hints-button').textContent='Показать правильные значения (после проверки)';
+$('task-notes').textContent='';
+const toolbar=node('div',undefined,'excel-tool');
+const tabs=node('div',undefined,'excel-tabs');
+const bar=node('div',undefined,'excel-formula-bar');
+const address=node('span','A1','excel-addr');address.setAttribute('aria-label','Адрес выбранной ячейки');
+const fx=node('span','fx','excel-fx');
+const input=node('input',undefined,'excel-input');input.type='text';input.autocomplete='off';input.spellcheck=false;input.placeholder='Введи число или формулу =…';
+input.setAttribute('aria-label','Ввод формул');
+const commit=node('button','✓','excel-commit');commit.type='button';commit.setAttribute('aria-label','Применить формулу');
+const undo=node('button','↶','excel-undo');undo.type='button';undo.setAttribute('aria-label','Отменить последнюю формулу');undo.disabled=true;
+bar.append(address,fx,input,undo,commit);
+const suggestBox=node('div',undefined,'formula-suggestions');suggestBox.hidden=true;suggestBox.setAttribute('role','listbox');
+let suggestions=null,suggestionIndex=0;
+function closeSuggestions(){suggestions=null;suggestBox.hidden=true;suggestBox.replaceChildren();}
+function acceptSuggestion(index){if(!suggestions||!suggestions.items[index])return false;const v=window.ExamFormulaComplete.insert(input.value,suggestions.start,suggestions.end,suggestions.items[index].name+'(');input.value=v.value;editDirty=true;closeSuggestions();input.focus();input.setSelectionRange(v.caret,v.caret);return true;}
+function showSuggestions(){
+ closeSuggestions();if(input.disabled)return;
+ suggestions=window.ExamFormulaComplete.candidates(input.value,input.selectionStart);if(!suggestions)return;
+ suggestionIndex=0;suggestBox.hidden=false;
+ suggestions.items.forEach((item,i)=>{const b=node('button',item.name+' — '+item.desc,'formula-suggestion'+(i===0?' active':''));b.type='button';b.setAttribute('role','option');b.addEventListener('mousedown',e=>e.preventDefault());b.addEventListener('click',()=>acceptSuggestion(i));suggestBox.appendChild(b);});
+}
+function moveSuggestion(delta){if(!suggestions)return;const n=suggestions.items.length;suggestionIndex=(suggestionIndex+delta+n)%n;Array.from(suggestBox.children).forEach((x,i)=>x.classList.toggle('active',i===suggestionIndex));}
+
+const cellContext=node('div','Выбери ячейку для расчёта','excel-cell-context');
+cellContext.setAttribute('role','status');
+function updateCellContext(){
+ if(!w||!active||!selected)return;
+ const sh=w.sheets[active],p=S.decode(selected);
+ if(!p)return;
+ const row=p.r+1,heading=String(sh.values['B'+row]?.raw??'').trim();
+ const col=S.col(p.c),head=String(sh.values[col+(w.kind==='nmck'?5:1)]?.raw??'').trim();
+ const name=heading&&heading.length>120?heading.slice(0,117)+'…':heading;
+ const label=[active+'!'+selected,head,name].filter(Boolean).join(' · ');
+ cellContext.textContent=label;
+ cellContext.title=label;
+}
+function revealSelected(){
+ const el=gridbox.querySelector('td.excel-selected'),viewport=gridbox.getBoundingClientRect();
+ if(!el||viewport.width<1)return;
+ const rect=el.getBoundingClientRect();
+ if(rect.right>viewport.right-12)gridbox.scrollLeft+=rect.right-viewport.right+12;
+ else if(rect.left<viewport.left+12)gridbox.scrollLeft-=viewport.left+12-rect.left;
+ if(rect.bottom>viewport.bottom-8)gridbox.scrollTop+=rect.bottom-viewport.bottom+8;
+ else if(rect.top<viewport.top+8)gridbox.scrollTop-=viewport.top+8-rect.top;
+}
+const gridbox=node('div',undefined,'excel-grid-box');gridbox.tabIndex=0;gridbox.setAttribute('aria-label','Таблица: стрелки перемещают выделение, Enter открывает ввод');
+let inlineCell=null;
+function closeInline(){if(!inlineCell)return;bar.insertBefore(input,undo);inlineCell.classList.remove('excel-editing');const v=w?.sheets[active]?.values[inlineCell.dataset.addr];inlineCell.textContent=v&&String(v.raw).trim()?fmt(S.value(w,active,inlineCell.dataset.addr)):'';inlineCell=null;}
+function openInline(td){if(input.disabled)return;closeInline();inlineCell=td;td.classList.add('excel-editing');td.textContent='';td.appendChild(input);input.focus();input.setSelectionRange(input.value.length,input.value.length);}
+const info=node('div','Выбирай жёлтую ячейку, вводи =формулу в строку fx. Синие значения — исходные.','excel-info');
+const controls=node('div',undefined,'excel-controls');
+const helpButton=node('button','? Подсказка','secondary');helpButton.type='button';
+const sheetHelp=node('div',undefined,'excel-help');sheetHelp.hidden=true;
+const exportButton=node('button','Скачать XLSX','secondary');exportButton.type='button';
+const formulaExample=node('button','Примеры формул','secondary');formulaExample.type='button';
+controls.append(helpButton,formulaExample,exportButton);
+toolbar.append(tabs,bar,suggestBox,cellContext,gridbox,info,controls,sheetHelp);
+sheetRoot.replaceChildren(toolbar);
+const footer=node('div',undefined,'excel-check-help');$('questions').insertAdjacentElement('afterend',footer);
+const progressBox=node('div',undefined,'excel-progress'),progressLabel=node('span','Прогресс выполнения','excel-progress-label');
+const progressBar=document.createElement('progress');progressBar.max=1;progressBar.value=0;progressBar.setAttribute('aria-label','Заполнение расчётных ячеек');
+progressBox.append(progressLabel,progressBar);toolbar.prepend(progressBox);
+function updateProgress(){
+ if(!w)return;
+ const filled=w.targets.filter(t=>String(w.sheets[t.sheet]?.values[t.addr]?.raw??'').trim()!=='').length;
+ progressLabel.textContent='Заполнено '+filled+' из '+w.targets.length+' ячеек · черновик сохраняется';
+ progressBar.max=Math.max(1,w.targets.length);progressBar.value=filled;
+}
+function invalidateCheck(){checked=null;$('results').hidden=true;footer.replaceChildren();}
+function jumpTo(t){
+ if(!t||!w.sheets[t.sheet])return;
+ flush();active=t.sheet;selected=t.addr;renderGrid();
+ const cell=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(x=>x.dataset.addr===t.addr);
+ if(cell)cell.scrollIntoView({block:'nearest',inline:'center'});
+ bar.scrollIntoView({block:'start'});
+}
+const kindGuides={nmck:[
+  'Найди цены в условии над таблицей и впиши их в жёлтые ячейки E–I. Количество указано в колонке D.',
+  'В НМЦК вычисления начинаются со строки 6. Диапазон коммерческих предложений — E6:G6 (3 КП), E6:H6 (4 КП), E6:I6 (5 КП).',
+  'В первой расчётной колонке введи =СРЗНАЧ(E6:G6), в следующей =СТАНДОТКЛОН.В(E6:G6). Для 4 или 5 КП расширь диапазон.',
+  'Коэффициент вариации = отклонение / средняя цена × 100. Для учебного задания выбери цену предложения, ближайшую к средней, но строго ниже неё, и умножь на количество.',
+  'Под таблицей находится общая НМЦК. Вводи формулы в жёлтые ячейки; «Вставить формулу» показывает пример для выбранного расчёта.',
+  'Важно: пустые ячейки должны игнорироваться в СРЗНАЧ, СТАНДОТКЛОН.В и СЧЁТ. Коэффициент вариации — число в процентах (5,5 означает 5,5%).'
+],budget:[
+  'Формулировка статьи находится в колонке B, раздел — в C, план — в D, факт — в E.',
+  'Перенеси факт из E в F для дохода или в G для расхода; другую ячейку оставь пустой. В H рассчитай долю.',
+  'Суммируй доходы функцией =СУММ(F4:F19), а расходы — =СУММ(G4:G19); проверь последнюю строку диапазона.',
+  'В I рассчитай процент исполнения =E4/D4*100; в J отклонение =E4-D4.',
+  'Результат: фактические доходы минус фактические расходы. Положительное значение — профицит, отрицательное — дефицит.'
+],financial:[
+  'На вкладке «Баланс» три года и коды строк: 1100/1200/1600 — актив, 1300/1400/1500/1700 — пассив.',
+  'На вкладке «ОФР» выручка 2110, чистая прибыль 2400. На вкладке «Анализ» жёлтые поля под 2025 и 2024 — твои ответы.',
+  'Переключайся между листами и используй ссылки: =Баланс!C5/Баланс!C9. Реальные адреса найди по коду строки.',
+  'Средняя величина за год = (показатель на конец года + показатель на конец прошлого года) / 2.',
+  'Периоды оборота в днях = 365/коэффициент оборачиваемости. Для рентабельности проценты указывай числом, например 5,25 вместо 0,0525.'
+]};
+function showHelp(lines){sheetHelp.replaceChildren();for(const line of lines)sheetHelp.appendChild(node('p',line));sheetHelp.hidden=false;sheetHelp.scrollIntoView({block:'nearest'});}
+function renderGrid(){const sh=w.sheets[active];tabs.replaceChildren();for(const name of w.order){const b=node('button',name,'excel-tab'+(name===active?' is-active':''));b.type='button';b.addEventListener('click',()=>{
+ if(!pendingReference&&editDirty&&!input.disabled&&input.value.trim().startsWith('=')){
+  const refState={sheet:active,addr:selected,value:input.value,start:input.selectionStart??input.value.length,end:input.selectionEnd??input.value.length};flush();pendingReference=refState;closeSuggestions();
+ }else if(!pendingReference)flush();
+ viewMemory[active]={selected,scrollLeft:gridbox.scrollLeft,scrollTop:gridbox.scrollTop};
+ if(pendingReference&&name===pendingReference.sheet){restoreReference(null);return;}
+ active=name;selected=viewMemory[name]?.selected||'';renderGrid();
+ if(viewMemory[name]){gridbox.scrollLeft=viewMemory[name].scrollLeft||0;gridbox.scrollTop=viewMemory[name].scrollTop||0;}
+ if(pendingReference)info.textContent='Выбери нужную ячейку на этом листе: её ссылка добавится к формуле. Для отмены вернись на исходный лист.';else saveDraft();
+});tabs.appendChild(b);}
+const table=node('table',undefined,'excel-grid');const thead=node('thead'),hr=node('tr');hr.appendChild(node('th','', 'excel-corner'));
+for(let c=0;c<sh.cols;c++)hr.appendChild(node('th',S.col(c),'excel-col'));thead.appendChild(hr);table.appendChild(thead);
+const tbody=node('tbody');for(let r=0;r<sh.rows;r++){
+ const tr=node('tr');tr.appendChild(node('th',r+1,'excel-row'));for(let c=0;c<sh.cols;c++){
+   const a=S.addr(c,r),raw=sh.values[a],editable=!!sh.editable[a];
+   const td=node('td',raw&&String(raw.raw).trim()!==''?fmt(S.value(w,active,a)):'',editable?'excel-editable':raw?'excel-locked':'excel-blank');
+   td.dataset.addr=a;td.title=raw?.raw?.toString()||a;
+   const colspan=sh.spans&&sh.spans[a];if(Number.isInteger(colspan)&&colspan>1){td.colSpan=colspan;c+=colspan-1;}
+   if(r===0)td.classList.add('excel-header');
+   if(selected===a)td.classList.add('excel-selected');
+   td.addEventListener('click',()=>{
+    if(pendingReference){restoreReference(active+'!'+a);}
+    else if(editDirty && !input.disabled && selected!==a && input.value.trim().startsWith('=')){
+      const pos=input.selectionStart??input.value.length,end=input.selectionEnd??pos;
+      const v=window.ExamFormulaComplete.insert(input.value,pos,end,a);input.value=v.value;
+      editDirty=true;closeSuggestions();input.focus();input.setSelectionRange(v.caret,v.caret);
+      info.textContent='Добавлена ссылка '+a+'. Продолжи формулу и нажми ✓ для сохранения.';
+    }else {select(a);if(editable)openInline(td);}
+   });tr.appendChild(td);
+ }tbody.appendChild(tr);}
+ table.appendChild(tbody);gridbox.replaceChildren(table);
+ const savedView=viewMemory[active]?.selected===selected?{...viewMemory[active]}:null;
+ select(selected||firstEditable(sh),false);
+ if(savedView){gridbox.scrollLeft=savedView.scrollLeft||0;gridbox.scrollTop=savedView.scrollTop||0;}
+ else revealSelected();}
+function restoreReference(ref){
+ const saved=pendingReference;if(!saved)return;pendingReference=null;editDirty=false;active=saved.sheet;selected=saved.addr;renderGrid();
+ const v=window.ExamFormulaComplete.insert(saved.value,saved.start,saved.end,ref||'');input.value=v.value;editDirty=true;closeSuggestions();input.focus();input.setSelectionRange(v.caret,v.caret);
+ info.textContent=ref?'Добавлена ссылка '+ref+'. Продолжи формулу и нажми ✓.':'Выбор ссылки отменён. Продолжи формулу.';
+}
+function firstEditable(sh){return Object.keys(sh.editable)[0]||'A1';}
+function select(a,focus=false){if(editDirty)flush();closeInline();selected=a;const sh=w.sheets[active],raw=sh.values[a];address.textContent=active+'!'+a;input.value=raw?String(raw.raw):'';editDirty=false;
+ input.disabled=!sh.editable[a];commit.disabled=!sh.editable[a];
+ info.textContent=!sh.editable[a]?'Исходная ячейка '+a+' защищена. Используй её в формулах.':'Жёлтая ячейка: введи число или формулу. Подсказка доступна по кнопке.';
+ for(const el of gridbox.querySelectorAll('.excel-selected'))el.classList.remove('excel-selected');
+ const chosen=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(e=>e.dataset.addr===a);if(chosen){chosen.classList.add('excel-selected');revealSelected();}
+ viewMemory[active]={selected:a,scrollLeft:gridbox.scrollLeft,scrollTop:gridbox.scrollTop};
+ if(focus&&!input.disabled)input.focus();updateProgress();updateCellContext();}
+function flush(){if(pendingReference)restoreReference(null);if(!w||!active||!selected||!editDirty)return;closeSuggestions();try{
+ const previous=w.sheets[active].values[selected]?.raw??'';
+ S.write(w,active,selected,input.value);
+ if(String(previous)!==String(input.value)){history.push({sheet:active,addr:selected,raw:previous});if(history.length>30)history.shift();}
+ undo.disabled=!history.length;
+ editDirty=false;closeInline();invalidateCheck();refreshValues();saveDraft();updateProgress();info.textContent='Формула сохранена. Выбери следующую ячейку или проверь работу.';}catch(e){info.textContent=e.message;}}
+function refreshValues(){if(!w)return;for(const cell of gridbox.querySelectorAll('td[data-addr]')){const v=w.sheets[active].values[cell.dataset.addr];cell.textContent=v&&String(v.raw).trim()!==''?fmt(S.value(w,active,cell.dataset.addr)):'';cell.classList.remove('excel-pass','excel-fail','excel-needs');}
+ if(checked)for(const r of checked.results)if(r.sheet===active){const el=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(x=>x.dataset.addr===r.addr);if(el)el.classList.add(r.status==='ok'?'excel-pass':r.status==='need-formula'?'excel-needs':'excel-fail');}}
+function check(){
+ flush();checked=S.grade(w);refreshValues();
+ $('results').hidden=false;$('hints').hidden=true;
+ $('score').textContent='Проверка: '+checked.passed+' из '+checked.total+' ('+checked.percent+'%)';
+ const errors=checked.results.filter(r=>r.status!=='ok');
+ const bad=errors.filter(r=>r.status==='bad'),empty=errors.filter(r=>r.status==='empty'),needs=errors.filter(r=>r.status==='need-formula');
+ $('message').textContent=errors.length
+  ? 'Ошибочные значения: '+bad.length+' · нет формулы: '+needs.length+' · пустые поля: '+empty.length+'. Исправляй их по одной — результаты обновятся после повторной проверки.'
+  : 'Отлично! Все расчёты выполнены правильно, с формулами.';
+ footer.replaceChildren();
+ if(errors.length){
+  const first=bad[0]||needs[0]||empty[0];
+  const main=node('button','Перейти к исправлению: '+first.sheet+'!'+first.addr,'excel-err-primary');
+  main.type='button';main.addEventListener('click',()=>jumpTo(first));footer.appendChild(main);
+  const caption=node('p','Ниже — первые 6 проблемных ячеек. Остальные откроются после их исправления.','excel-err-caption');
+  footer.appendChild(caption);
+  for(const r of errors.slice(0,6)){
+   const label=r.status==='need-formula'?'Число без формулы':r.status==='empty'?'Не заполнено':'Ошибка в расчёте';
+   const b=node('button',r.sheet+'!'+r.addr+' · '+label,'excel-err-button');b.type='button';
+   b.addEventListener('click',()=>jumpTo(r));footer.appendChild(b);
+  }
+ }
+ saveStats(checked.percent);$('results').scrollIntoView({block:'start',behavior:'smooth'});
+}
+function showAnswers(){const box=$('hints');box.replaceChildren();for(const r of (checked?.results||[])){const el=node('p',r.sheet+'!'+r.addr+' — '+r.label+': '+fmt(r.answer)+(r.hint?' · '+r.hint:''),'excel-answer');box.appendChild(el);}box.hidden=false;}
+function saveDraft(){
+ try{
+ if(!w)return;
+ viewMemory[active]={selected,scrollLeft:gridbox.scrollLeft,scrollTop:gridbox.scrollTop};
+ localStorage.setItem('examSheetsDraft',JSON.stringify({task,entries:S.save(w),active,viewMemory}));
+ }catch(e){}
+}
+function restoreDraft(){try{const v=JSON.parse(localStorage.getItem('examSheetsDraft')||'null');if(!v?.task?.kind||!Array.isArray(v.task.questions))return;task=v.task;w=S.create(task);S.load(w,v.entries);active=w.sheets[v.active]?v.active:w.order[0];Object.assign(viewMemory,v.viewMemory||{});selected=viewMemory[active]?.selected||'';showWork();}catch(e){}}
+function saveStats(pct){try{const old=JSON.parse(localStorage.getItem('examStats')||'{"count":0,"best":0}');old.count++;old.best=Math.max(old.best,pct);localStorage.setItem('examStats',JSON.stringify(old));$('stats').textContent=`Проверено работ: ${old.count} · Лучший результат ${old.best}%`;}catch(e){}}
+function showWork(){$('work').hidden=false;$('home').hidden=true;document.body.classList.add('exam-solving');$('task-title').textContent=task.title+' · Таблицы';$('task-org').textContent=task.company;
+ $('task-meta').textContent=task.questions.length+' исходных вопросов · '+w.targets.length+' ячеек для проверки · '+w.order.length+' лист(а)';
+ $('task-notes').textContent='Жёлтые ячейки — для формул. Черновик сохраняется автоматически.';
+ $('results').hidden=true;checked=null;footer.replaceChildren();renderGrid();updateProgress();window.scrollTo(0,0);}
+function start(){if(w)flush();if(w&&Object.values(S.save(w)).some(x=>Object.keys(x).length)&&!confirm('Создать новый вариант? Черновик предыдущего будет заменён.'))return;
+ try{task=E.generate($('kind').value,$('level').value);w=S.create(task);history.length=0;for(const key of Object.keys(viewMemory))delete viewMemory[key];undo.disabled=true;active=w.order[w.order.length-1];selected='';showWork();saveDraft();}catch(e){alert('Ошибка создания таблицы: '+e.message);}}
+gridbox.addEventListener('keydown',e=>{
+ if(e.target===input)return;
+ if(!w||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.key))return;
+ const sh=w.sheets[active],p=S.decode(selected);if(!p)return;
+ if(e.key==='Enter'){if(sh.editable[selected]){e.preventDefault();input.focus();}return;}
+ let c=p.c+(e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0),r=p.r+(e.key==='ArrowDown'?1:e.key==='ArrowUp'?-1:0);
+ if(c<0||r<0||c>=sh.cols||r>=sh.rows)return;
+ const cell=gridbox.querySelector('td[data-addr="'+S.addr(c,r)+'"]');if(cell){e.preventDefault();cell.click();}
+});
+input.addEventListener('click',e=>e.stopPropagation());
+input.addEventListener('input',()=>{editDirty=true;showSuggestions();});input.addEventListener('click',showSuggestions);input.addEventListener('keydown',e=>{
+ if(suggestions&&e.key==='ArrowDown'){e.preventDefault();moveSuggestion(1);return;}
+ if(suggestions&&e.key==='ArrowUp'){e.preventDefault();moveSuggestion(-1);return;}
+ if(suggestions&&(e.key==='Enter'||e.key==='Tab')){e.preventDefault();acceptSuggestion(suggestionIndex);return;}
+ if(suggestions&&e.key==='Escape'){e.preventDefault();closeSuggestions();return;}
+ if(e.key==='Tab'){
+  const cells=Array.from(gridbox.querySelectorAll('td.excel-editable[data-addr]')),index=cells.findIndex(c=>c.dataset.addr===selected),next=index+(e.shiftKey?-1:1);
+  if(index>=0&&next>=0&&next<cells.length){e.preventDefault();flush();cells[next].click();input.focus();}return;
+ }
+ if(e.key==='Enter'){e.preventDefault();flush();input.blur();}else if(e.key==='Escape'){e.preventDefault();select(selected);}});
+commit.addEventListener('click',flush);
+undo.addEventListener('click',()=>{
+ if(pendingReference)restoreReference(null);
+ if(!w||!history.length)return;
+ const item=history.pop();if(!w.sheets[item.sheet]?.editable[item.addr])return;
+ S.write(w,item.sheet,item.addr,item.raw);undo.disabled=!history.length;invalidateCheck();
+ editDirty=false;input.value=String(item.raw??'');active=item.sheet;selected=item.addr;renderGrid();refreshValues();saveDraft();updateProgress();
+ info.textContent='Последнее изменение отменено. Можно ввести другую формулу.';
+});
+$('start').addEventListener('click',start);$('again').addEventListener('click',start);$('check').addEventListener('click',check);
+$('hints-button').addEventListener('click',showAnswers);
+$('back').addEventListener('click',()=>{flush();saveDraft();$('work').hidden=true;$('home').hidden=false;document.body.classList.remove('exam-solving');window.scrollTo(0,0);});
+helpButton.addEventListener('click',()=>{flush();if(sheetHelp.hidden)showHelp(kindGuides[task.kind]);else sheetHelp.hidden=true;});
+formulaExample.addEventListener('click',()=>showHelp(['Доступные функции: СУММ, СРЗНАЧ, СТАНДОТКЛОН.В, ОКРУГЛ, КОРЕНЬ, ЕСЛИ, СУММЕСЛИ, СЧЁТ, МИН, МАКС, АБС.',
+'Поддерживаются ссылки на одну ячейку, диапазон A1:C8 и другие листы: =Баланс!C5+Баланс!D5. В формулах используй ; между аргументами.',
+'Сначала заполни промежуточные ячейки, после этого итоговые. Для редактирования нажми жёлтую ячейку и введи формулу в поле fx.',
+'Правильные значения можно увидеть только после нажатия «Проверить».']));
+exportButton.addEventListener('click',()=>{flush();try{const b64=window.ExamXlsx.exportBase64(w);const filename='exam-training-'+task.kind+'-'+Date.now()+'.xlsx';
+ if(window.ExamNative&&typeof window.ExamNative.saveXlsx==='function')window.ExamNative.saveXlsx(filename,b64);
+ else{const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));const url=URL.createObjectURL(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));const a=node('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
+ }catch(e){alert('Не удалось сохранить XLSX: '+e.message);}});
+restoreDraft();try{const st=JSON.parse(localStorage.getItem('examStats')||'{}');$('stats').textContent='Проверено работ: '+(st.count||0)+' · Лучший результат '+(st.best||0)+'%';}catch(e){}
+})();
+</script><script>
+/* Financial-analysis formula suggestions based on the actual balance / P&L cells.
+   Reference code-to-row mapping ensures source links work with expanded BFO codes. */
+(function(root,factory){
+ const api=factory();
+ root.ExamFinanceHints=api;
+ if(typeof module!=='undefined'&&module.exports)module.exports=api;
+})(typeof globalThis!=='undefined'?globalThis:this,function(){
+ 'use strict';
+ function suggest(task,sheet,col,row,engine){
+  if(!task||task.kind!=='financial'||sheet!=='Анализ'||!['C','D'].includes(col))return [];
+  const i=row-3,metric=task.metrics?.[i];
+  if(!metric)return [];
+  const year=col==='C'?'2025':'2024',before=col==='C'?'D':'E';
+  const codeRow=(codes,code)=>{
+   const pos=codes.findIndex(line=>String(line[0])===code);
+   if(pos<0)throw Error('Missing financial statement code '+code);
+   return pos+3;
+  };
+  const balance=(code,yearcol=col)=>'Баланс!'+yearcol+codeRow(engine.bnames,code);
+  const pnl=(code)=>'ОФР!'+col+codeRow(engine.pnames,code);
+  const capital=balance('1300'),assets=balance('1600'),longterm=balance('1400'),current=balance('1500'),noncurrent=balance('1100');
+  const net=pnl('2400'),revenue=pnl('2110');
+  const avg=(code)=>'(('+balance(code)+'+'+balance(code,before)+')/2)';
+  const ca=balance('1200'), cash=balance('1250'), short=balance('1240'), ar=balance('1230');
+  const turnCodes=['1600','1200','1230','1520','1210','1150'];
+  const iMetric=task.metrics.indexOf(metric);
+  if(iMetric>=4&&iMetric<=15){
+   const a=avg(turnCodes[(iMetric-4)%6]);
+   return [['Формула для выбранной ячейки',iMetric<10?'='+revenue+'/'+a:'=365*'+a+'/'+revenue]];
+  }
+  const formulaByName={
+   'Коэффициент текущей ликвидности':'='+ca+'/'+current,
+   'Коэффициент абсолютной ликвидности':'=('+cash+'+'+short+')/'+current,
+   'Коэффициент быстрой ликвидности':'=('+cash+'+'+short+'+'+ar+')/'+current,
+   'Обеспеченность оборотными средствами':'=('+capital+'-'+noncurrent+')/'+ca,
+   'Коэффициент автономии': '='+capital+'/'+assets,
+   'Коэффициент финансовой зависимости':'='+assets+'/'+capital,
+   'Соотношение заёмных и собственных средств':'=('+longterm+'+'+current+')/'+capital,
+   'Маневренность собственного капитала':'=('+capital+'-'+noncurrent+')/'+capital,
+   'Коэффициент финансовой устойчивости':'=('+capital+'+'+longterm+')/'+assets,
+   'ROA — рентабельность активов, %':'='+net+'/(('+assets+'+'+balance('1600',before)+')/2)*100',
+   'ROS — рентабельность продаж, %':'='+net+'/'+revenue+'*100',
+   'ROE — рентабельность собственного капитала, %':'='+net+'/'+capital+'*100'
+  };
+  const formula=formulaByName[metric.name];
+  return formula?[['Пример формулы: '+metric.name,formula]]:[];
+ }
+ return{suggest};
+});
+</script><script>
+/* Conditions and per-cell optional formula hints; universal zoom is now in sheet-zoom.js. */
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const kind=$('kind'),start=$('start'),again=$('again'),panel=kind&&kind.closest('.panel');
+const tool=document.querySelector('.excel-tool'),grid=tool&&tool.querySelector('.excel-grid-box');
+if(!panel||!grid)return;
+const mk=(tag,text,css)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=String(text);if(css)x.className=css;return x;};
+const nmckOptions=mk('div',undefined,'nmck-options');
+nmckOptions.id='nmck-options';
+const offerLabel=mk('label','Коммерческих предложений'),offer=mk('select');offer.id='offers-count';offerLabel.htmlFor=offer.id;
+[['random','Случайно: 3–5'],['3','3 предложения'],['4','4 предложения'],['5','5 предложений']].forEach(([v,t])=>{const e=mk('option',t);e.value=v;offer.append(e);});
+nmckOptions.append(offerLabel,offer);panel.insertBefore(nmckOptions,start);
+const onKind=()=>{nmckOptions.hidden=kind.value!=='nmck';};kind.addEventListener('change',onKind);onKind();
+
+const condition=mk('section',undefined,'nmck-condition');const source=$('sources');
+source.insertBefore(condition,tool);
+const quick=mk('div',undefined,'excel-quick');tool.insertBefore(quick,grid);
+
+const fmt=x=>new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(x);
+function getTask(){
+ const now=window.ExamCurrentTask;
+ if(!now&&$('work').hidden)return null;
+ if(now&&now.kind==='nmck')return now;
+ try{return JSON.parse(localStorage.getItem('examSheetsDraft')||'null')?.task||now;}catch(e){return now;}
+}
+function drawCondition(t){
+ condition.replaceChildren();
+ if(!t||t.kind!=='nmck'){condition.hidden=true;document.getElementById('work').dataset.nmckSheet='no';return;}
+ condition.hidden=false;document.getElementById('work').dataset.nmckSheet='yes';
+ const top=mk('div',undefined,'condition-heading');
+ top.append(mk('div','ОДИН КОНТРАКТ · '+t.rows[0].prices.length+' ЦЕН','condition-eyebrow'));
+ const btn=mk('button',undefined,'condition-toggle');btn.type='button';
+ const content=mk('div',undefined,'condition-body');
+ const preview=mk('div',undefined,'condition-preview');
+ for(const [i,row] of t.rows.entries()){
+  const item=mk('p',undefined,'condition-preview-row');
+  item.append(mk('b',(i+1)+'. '+row.name+' · '+row.quantity+' шт.'));
+  item.append(mk('span','КП: '+row.prices.map(fmt).join(' / ')+' ₽'));
+  preview.append(item);
+ }
+ let collapsed=true;
+ try{collapsed=localStorage.getItem('exam-condition-collapsed')!=='false';}catch(e){}
+ const update=()=>{content.hidden=collapsed;preview.hidden=!collapsed;btn.textContent=collapsed?'Подробнее ↓':'Скрыть подробности ↑';btn.setAttribute('aria-expanded',String(!collapsed));};
+ btn.addEventListener('click',()=>{collapsed=!collapsed;update();try{localStorage.setItem('exam-condition-collapsed',String(collapsed));}catch(e){}});
+ const goTable=mk('button','К таблице ↓','condition-jump');
+ goTable.type='button';
+ goTable.addEventListener('click',()=>{
+  const formula=document.querySelector('.excel-formula-bar');
+  if(formula)formula.scrollIntoView({block:'start',behavior:'smooth'});
+ });
+ top.append(btn,goTable);condition.append(top,preview,content);update();
+ content.append(mk('h3','Обоснование начальной (максимальной) цены контракта'));
+ content.append(mk('p','Заказчик: '+t.company));
+ content.append(mk('p','Метод: сопоставимых рыночных цен (анализа рынка). По каждому предложению указана цена за одну единицу товара или услуги.'));
+ t.rows.forEach((r,i)=>{
+  const block=mk('div',undefined,'condition-lot');
+  block.append(mk('strong','Позиция № '+(i+1)+': '+r.name));
+  block.append(mk('p','Единица измерения: штуки. Количество: '+r.quantity+'. Коммерческих предложений: '+r.prices.length+'.'));
+  const sub=mk('div',undefined,'condition-prices');
+  r.prices.forEach((p,j)=>{const label=mk('span','КП №'+(j+1));const price=mk('b',fmt(p)+' ₽');const item=mk('div',undefined,'condition-price');item.append(label,price);sub.append(item);});
+  block.append(sub);content.append(block);
+ });
+ content.append(mk('p','Задача: сначала самостоятельно перенести цены предложений в таблицу, затем заполнить расчётные ячейки формулами Excel. Определить среднюю цену, отклонение и вариацию. Затем выбрать предложение с ближайшей ценой строго ниже средней и умножить его цену на количество. Порог вариации для учебного задания — 33%.','condition-instruction'));
+}
+function suggestion(t,col,row){
+ const n=t.rows.length,offers=t.rows[0].prices.length;
+ const avg=String.fromCharCode(69+offers),sd=String.fromCharCode(70+offers),cv=String.fromCharCode(71+offers);
+ const calc=String.fromCharCode(72+offers),unit=String.fromCharCode(73+offers),amount=String.fromCharCode(74+offers);
+ if(row>=6&&row<=5+n){
+  const range='E'+row+':'+String.fromCharCode(68+offers)+row;
+  const formulas={
+   [avg]:['СРЗНАЧ','=СРЗНАЧ('+range+')'],
+   [sd]:['Отклонение','=СТАНДОТКЛОН.В('+range+')'],
+   [cv]:['Вариация, %','='+sd+row+'/'+avg+row+'*100'],
+   [calc]:['Расчёт НМЦК','=ОКРУГЛ('+avg+row+';2)*D'+row],
+   [unit]:['Выбери предложение','Выбери цену ниже средней и ближе всех к ней'],
+   [amount]:['НМЦК позиции','='+unit+row+'*D'+row]
+  };
+  return formulas[col]?[formulas[col]]:[];
+ }
+ if(col===amount&&row===n+6)return[['Итог НМЦК','=СУММ('+amount+'6:'+amount+(n+5)+')']];
+ return [];
+}
+function showQuick(){
+ quick.replaceChildren();
+ const t=getTask(),label=document.querySelector('.excel-addr'),field=document.querySelector('.excel-input');
+ if(!t||$('work').hidden||!label||!field||field.disabled){quick.hidden=true;return;}
+ const match=/^([^!]+)!([A-Z]+)(\d+)$/.exec(label.textContent);
+ let choices=[];
+ if(match&&t.kind==='nmck'&&match[1]==='НМЦК')choices=suggestion(t,match[2],Number(match[3]));
+ if(match&&t.kind==='financial'&&window.ExamFinanceHints)choices=window.ExamFinanceHints.suggest(t,match[1],match[2],Number(match[3]),window.ExamEngine);
+ quick.hidden=!choices.length;
+ if(!choices.length)return;
+ const reveal=mk('button','Показать подсказку для '+match[2]+match[3],'excel-quick-button');reveal.type='button';quick.append(reveal);const details=mk('div');details.hidden=true;quick.append(details);reveal.addEventListener('click',()=>{details.hidden=!details.hidden;reveal.textContent=details.hidden?'Показать подсказку':'Скрыть подсказку';});details.append(mk('span',choices.map(x=>x[1]).join(' или '),'excel-quick-label'));
+ for(const [caption,formula] of choices){
+  if(!formula.startsWith('='))continue;
+  const b=mk('button',caption,'excel-quick-button');b.type='button';b.title=formula;
+  b.addEventListener('click',()=>{
+   field.value=formula;field.dispatchEvent(new Event('input',{bubbles:true}));field.focus();
+   const info=document.querySelector('.excel-info');if(info)info.textContent='Формула вставлена. Нажми ✓ для расчёта и затем проверь результат.';
+  });details.append(b);
+ }
+}
+function refresh(){
+ const t=getTask();
+ drawCondition(t);
+ showQuick();
+}
+const kindChanged=()=>{if(!$('work').hidden)refresh();};
+start.addEventListener('click',refresh);
+again.addEventListener('click',refresh);
+document.addEventListener('click',e=>{if(e.target.closest('.excel-grid')||e.target.closest('.excel-tabs')||e.target.closest('#back'))setTimeout(showQuick,0);});
+window.addEventListener('pageshow',()=>{if(!$('work').hidden)refresh();});
+if(!$('work').hidden)refresh();
+})();
+
+</script><script>
+/* v0.9.8 — universal in-grid zoom for NMCK, municipal budget and financial analysis.
+ * Zoom only the spreadsheet; input and navigation remain comfortably touch-sized.
+ * Pure math exports are deliberately testable in Node without any browser globals.
+ */
+(function(root,factory){
+ 'use strict';
+ const api=factory();
+ root.ExamSheetZoom=api;
+ if(typeof module!=='undefined'&&module.exports)module.exports=api;
+ if(typeof document!=='undefined')api.attach(document);
+})(typeof globalThis!=='undefined'?globalThis:this,function(){
+ 'use strict';
+ const MIN=.15,MAX=2.5,STEP=.05;
+ const clamp=x=>Math.max(MIN,Math.min(MAX,Math.round((Number(x)||1)*100)/100));
+ const snap=x=>clamp(Math.round(clamp(x)/STEP)*STEP);
+ function fitScale(width,columns,nameColumn=true){
+  if(!Number.isFinite(width)||width<=0||!Number.isInteger(columns)||columns<1)return 1;
+  const base=37+Math.max(0,columns-1)*110+(nameColumn&&columns>=2?155:0);
+  return snap(Math.min(1,(width-12)/base));
+ }
+ const points={cell:110,row:35,font:11,padding:6,index:37,name:265,titleFont:12,titleHeight:43,headerHeight:90};
+ function attach(doc){
+  const tool=doc.querySelector('.excel-tool'),grid=tool?.querySelector('.excel-grid-box'),work=doc.getElementById('work');
+  if(!tool||!grid||!work||tool.querySelector('.sheet-zoom'))return;
+  const create=(tag,txt,cls)=>{const el=doc.createElement(tag);if(txt!==undefined)el.textContent=txt;if(cls)el.className=cls;return el;};
+  const bar=create('div',undefined,'sheet-zoom');
+  const caption=create('span','Масштаб · НМЦК, бюджет, финанализ','sheet-zoom-caption');
+  const minus=create('button','−','sheet-zoom-button');
+  const plus=create('button','+','sheet-zoom-button');
+  const percent=create('button','100%','sheet-zoom-percent');
+  const fit=create('button','Вписать','sheet-zoom-fit');
+  const range=create('input',undefined,'sheet-zoom-range');
+  range.type='range';range.min='15';range.max='250';range.step='5';range.value='100';
+  range.setAttribute('aria-label','Масштаб таблицы от 15 до 250 процентов');
+  range.setAttribute('title','Изменить масштаб таблицы');
+  for(const b of [minus,plus,percent,fit])b.type='button';
+  minus.setAttribute('aria-label','Уменьшить таблицу');
+  plus.setAttribute('aria-label','Увеличить таблицу');
+  percent.setAttribute('aria-label','Масштаб 100 процентов');
+  fit.setAttribute('aria-label','Уместить всю таблицу по ширине экрана');
+  bar.append(caption,minus,range,plus,percent,fit);
+  const hint=create('p','Сведи или разведи два пальца в таблице. Уменьшение — до 15%.','sheet-zoom-hint');
+  tool.insertBefore(bar,grid);tool.insertBefore(hint,grid);
+  const KEY='exam-sheet-zoom-v098';
+  let scale=1;
+  try{const value=Number(localStorage.getItem(KEY));if(value>=MIN&&value<=MAX)scale=snap(value);}catch(e){}
+  function apply(value,{persist=true}={}){
+   const next=snap(value);
+   if(Math.abs(next-scale)<.001&&grid.style.getPropertyValue('--exam-cell-w'))return;
+   scale=next;
+   const dims=[['--exam-cell-w','cell'],['--exam-row-h','row'],['--exam-font','font'],['--exam-padding','padding'],
+      ['--exam-index-w','index'],['--exam-name-w','name'],['--exam-title-font','titleFont'],
+      ['--exam-title-h','titleHeight'],['--exam-head-h','headerHeight']];
+   dims.forEach(([prop,key])=>grid.style.setProperty(prop,(points[key]*next).toFixed(2)+'px'));
+   percent.textContent=Math.round(next*100)+'%';percent.title='Нажми для 100%';
+   range.value=String(Math.round(next*100));
+   minus.disabled=next<=MIN;plus.disabled=next>=MAX;
+   if(persist)try{localStorage.setItem(KEY,String(next));}catch(e){}
+  }
+  function widthFit(){
+   const columns=grid.querySelectorAll('thead th.excel-col').length;
+   apply(fitScale(grid.clientWidth,columns),{persist:true});
+   // The headers and long text can render wider than the estimated column sum.
+   // Shrink until the REAL table fits, not just until the estimate says it fits.
+   const table=grid.querySelector?.('.excel-grid');
+   if(!table)return;
+   for(let n=0;n<48;n++){
+    const renderedWidth=table.getBoundingClientRect().width;
+    if(!Number.isFinite(renderedWidth)||renderedWidth<=grid.clientWidth+1||scale<=MIN)break;
+    apply(scale-.05);
+   }
+   fit.title=scale<=MIN&&table.getBoundingClientRect().width>grid.clientWidth+1
+    ?'Достигнут минимум 15% — прокручивай таблицу вправо'
+    :'Таблица вписана в ширину экрана';
+  }
+  minus.addEventListener('click',()=>apply(scale-.1));
+  plus.addEventListener('click',()=>apply(scale+.1));
+  percent.addEventListener('click',()=>apply(1));
+  fit.addEventListener('click',widthFit);
+  range.addEventListener('input',()=>apply(Number(range.value)/100));
+  let pinch=null;
+  const distance=(a,b)=>Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+  const center=(a,b)=>({x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2});
+  grid.addEventListener('touchstart',e=>{
+   if(e.touches.length!==2)return;
+   const d=distance(e.touches[0],e.touches[1]);
+   if(d<5)return;
+   const mid=center(e.touches[0],e.touches[1]),rect=grid.getBoundingClientRect();
+   pinch={distance:d,scale,
+     contentX:(grid.scrollLeft+mid.x-rect.left)/scale,
+     contentY:(grid.scrollTop+mid.y-rect.top)/scale};
+  },{passive:true});
+  grid.addEventListener('touchmove',e=>{
+   if(!pinch||e.touches.length!==2)return;
+   if(e.cancelable)e.preventDefault();
+   const d=distance(e.touches[0],e.touches[1]);if(d<5)return;
+   const mid=center(e.touches[0],e.touches[1]),rect=grid.getBoundingClientRect();
+   apply(pinch.scale*d/pinch.distance);
+   grid.scrollLeft=Math.max(0,pinch.contentX*scale-(mid.x-rect.left));
+   grid.scrollTop=Math.max(0,pinch.contentY*scale-(mid.y-rect.top));
+  },{passive:false});
+  const clear=e=>{if(!e||e.touches.length<2)pinch=null;};
+  grid.addEventListener('touchend',clear,{passive:true});
+  grid.addEventListener('touchcancel',()=>{pinch=null;},{passive:true});
+  grid.addEventListener('wheel',e=>{
+   if(!e.ctrlKey||!grid.contains(e.target))return;
+   e.preventDefault();apply(scale+(e.deltaY<0?.1:-.1));
+  },{passive:false});
+  apply(scale,{persist:false});
+  // Keep controls visible and useful on every sheet/tab without rebuilding listeners.
+  return {getScale:()=>scale,setScale:apply,fit:widthFit};
+ }
+ return{MIN,MAX,STEP,clamp,snap,fitScale,attach};
+});
+
+</script><script>
+/* Universal editable-cell navigation: NMCK, budget, balance analysis. */
+(function() {
+'use strict';
+const $=id=>document.getElementById(id),tool=document.querySelector('.excel-tool'),grid=tool&&tool.querySelector('.excel-grid-box');
+if(!tool||!grid)return;
+const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e;};
+const strip=node('div',undefined,'nmck-navigation');
+strip.setAttribute('aria-label','Переход по расчётным ячейкам');
+const prev=node('button','← Ячейка','nmck-nav-button'),next=node('button','Ячейка →','nmck-nav-button');
+const center=node('div',undefined,'nmck-nav-center'),counter=node('strong','Шаг 1','nmck-nav-step'),detail=node('span','Выберите ячейку','nmck-nav-detail');
+center.append(counter,detail);strip.append(prev,center,next);
+for(const b of [prev,next])b.type='button';
+const zoom=tool.querySelector('.sheet-zoom');tool.insertBefore(strip,zoom||grid);
+function visible(){return !$('work').hidden;}
+function editable(){return Array.from(grid.querySelectorAll('td.excel-editable[data-addr]'));}
+function selected(){const value=tool.querySelector('.excel-addr')?.textContent||'';const i=value.lastIndexOf('!');return i>=0?value.slice(i+1):'';}
+function go(index){
+ const all=editable();if(!all.length)return;
+ const i=Math.max(0,Math.min(index,all.length-1)),cell=all[i];
+ tool.querySelector('.excel-commit')?.click();
+ cell.click();cell.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
+ requestAnimationFrame(update);
+}
+function update(){
+ const on=visible();strip.hidden=!on;if(!on)return;
+ const all=editable();const current=selected(),idx=all.findIndex(e=>e.dataset.addr===current);
+ if(all.length===0){counter.textContent='Лист исходных данных';detail.textContent='Можно увеличить таблицу. Для расчётов открой лист «Анализ».';
+   prev.disabled=true;next.disabled=true;return;}
+ if(idx<0){counter.textContent='Выбери жёлтую ячейку';detail.textContent='Нажми на нужное поле в таблице';}
+ else{
+  counter.textContent='Расчёт '+(idx+1)+' из '+all.length;
+  const info=tool.querySelector('.excel-info')?.textContent||'';
+  detail.textContent=current+(info?' · '+info:'');
+ }
+ prev.disabled=idx<=0;next.disabled=idx<0||idx>=all.length-1;
+}
+prev.addEventListener('click',()=>{const a=editable(),i=a.findIndex(e=>e.dataset.addr===selected());go(i-1);});
+next.addEventListener('click',()=>{const a=editable(),i=a.findIndex(e=>e.dataset.addr===selected());go(i+1);});
+/* When a formula is saved, advance to the next calculation rather than
+   forcing users to hunt for the next yellow cell in a wide spreadsheet. */
+const commit=tool.querySelector('.excel-commit');
+if(commit)commit.addEventListener('click',()=>requestAnimationFrame(update));
+const address=tool.querySelector('.excel-addr');
+if(address){new MutationObserver(()=>update()).observe(address,{childList:true,characterData:true,subtree:true});}
+$('start').addEventListener('click',()=>setTimeout(update,0));
+$('again').addEventListener('click',()=>setTimeout(update,0));
+$('back').addEventListener('click',()=>setTimeout(update,0));
+tool.querySelector('.excel-tabs')?.addEventListener('click',()=>setTimeout(update,0));
+window.addEventListener('pageshow',()=>setTimeout(update,0));
+update();
+})();
+
+</script><script>
+/* Offline study aid: transparent, limited keyword feedback, not an AI grader. */
+(function(root){'use strict';
+function facts(t){
+ if(t.kind==='budget'){
+  const inc=t.summary['Доход'].actual, exp=t.summary['Расход'].actual, delta=inc-exp;
+  const status=delta>0?'профицит':delta<0?'дефицит':'сбалансирован';
+  const ranking=(t.rows||[]).length?['Доход','Расход'].map(kind=>{const rows=t.rows.filter(r=>r.kind===kind).sort((a,b)=>b.actual-a.actual),sum=t.summary[kind].actual;if(!rows.length)return '';const line=r=>r.name+' — '+r.actual+' тыс. руб. ('+(sum?(r.actual/sum*100).toFixed(2).replace('.',',')+'%':'доля не определена')+')';const high=rows.slice(0,3),low=rows.slice(Math.max(3,rows.length-3));return (kind==='Доход'?'Доходная':'Расходная')+' часть. Наибольшие статьи: '+high.map(line).join('; ')+(low.length?'. Наименьшие из остальных: '+low.map(line).join('; '):'')+'.';}).join('\n'):'';
+  return {status,example:'Фактические доходы составили '+inc+' тыс. руб., расходы — '+exp+' тыс. руб. '+(delta===0?'Бюджет сбалансирован.':`Доходы ${delta>0?'превысили расходы':'оказались ниже расходов'} на ${Math.abs(delta)} тыс. руб.; сложился ${status}.`)+(ranking?'\n'+ranking+'\nРекомендация: изучить основные статьи доходов и расходов и возможности их изменения. По одной структуре бюджета нельзя установить причины результата.':'')};
+ }
+ if(t.kind==='nmck'){
+  const total=t.questions.find(q=>q.id==='total').answer;
+  const problematic=t.rows.map((r,i)=>{const mean=r.prices.reduce((a,b)=>a+b,0)/r.prices.length;return {i,cv:100*Math.sqrt(r.prices.reduce((a,b)=>a+(b-mean)**2,0)/(r.prices.length-1))/mean};}).filter(x=>x.cv>33);
+  const row=t.rows[0],avg=row.prices.reduce((a,b)=>a+b,0)/row.prices.length,sd=Math.sqrt(row.prices.reduce((a,b)=>a+(b-avg)**2,0)/(row.prices.length-1)),cv=sd/avg*100,selected=row.prices.filter(x=>x<avg).sort((a,b)=>b-a)[0],indexes=selected===undefined?[]:row.prices.map((x,i)=>x===selected?i+1:0).filter(Boolean);
+  if(t.offerRule)return {problematic,avg,cv,selected,indexes,example:(problematic.length?'Предварительный учебный расчёт: ':'')+'Коэффициент вариации равен '+cv.toFixed(2).replace('.',',')+'%; '+(cv<=33?'он не превышает 33%, предложения однородны.':'он превышает 33%; предложения неоднородны, требуется дополнительный анализ цен.')+' Средняя цена контракта за единицу — '+avg.toFixed(2).replace('.',',')+' руб.; расчёт по средней цене с учётом количества — '+total+' руб. '+(selected===undefined?'Цены ниже средней нет: выбрать предложение по учебному правилу невозможно.':'По правилу задания выбрано предложение № '+indexes.join(' или № ')+' по цене '+selected+' руб. за единицу: оно ближе всех к средней цене и строго меньше её. Сумма выбранного предложения — '+(selected*row.quantity)+' руб.')};
+  return {problematic,avg,cv,selected,indexes,example:(problematic.length?'Предварительный учебный расчёт НМЦК: ':'НМЦК одного контракта по учебному методу составляет ')+total+' руб. '+(problematic.length?'По позициям '+problematic.map(x=>x.i+1).join(', ')+' коэффициент вариации превышает 33%; необходим дополнительный анализ цен.':'Коэффициент вариации по каждой позиции не превышает 33%; цены в учебном примере однородны.')};
+ }
+ if(t.kind==='financial' && t.pl?.['2025'] && t.pl?.['2024']){
+  const newer=t.pl['2025'],older=t.pl['2024'],revChange=newer['2110']-older['2110'],profitChange=newer['2400']-older['2400'];
+  const direction=x=>x>0?'увеличился':x<0?'уменьшился':'не изменился';
+  const current=(t.questions||[]).find(q=>q.id==='f02025')?.answer,previous=(t.questions||[]).find(q=>q.id==='f02024')?.answer;
+  let liquidity='';if(Number.isFinite(current)&&Number.isFinite(previous))liquidity=' Текущая ликвидность: '+current+' в 2025 году и '+previous+' в 2024 году; по округлённым значениям показатель '+direction(current-previous)+'.';
+  const metric=(i)=>{const a=(t.questions||[]).find(q=>q.id==='f'+i+'2025')?.answer,b=(t.questions||[]).find(q=>q.id==='f'+i+'2024')?.answer;return Number.isFinite(a)&&Number.isFinite(b)?{a,b}:null;};
+  const describe=(i,name,unit='')=>{const m=metric(i);return m?name+': '+m.b+' в 2024 году и '+m.a+' в 2025 году ('+(m.a>m.b?'рост':m.a<m.b?'снижение':'без изменений')+')'+unit+'. ':'';};
+  const detailed=(t.questions||[]).length>=40?'\n\nЛиквидность и платёжеспособность. '+describe(0,'Текущая ликвидность')+describe(2,'Быстрая ликвидность')+describe(1,'Абсолютная ликвидность')+describe(3,'Обеспеченность собственными оборотными средствами')+'Риск: оценка способности платить зависит также от сроков поступления дебиторской задолженности. Рекомендация: следить за денежными средствами и сроками расчётов.\n\nДеловая активность. '+describe(4,'Оборачиваемость активов',' оборота')+describe(8,'Оборачиваемость запасов',' оборота')+describe(9,'Фондоотдача')+describe(12,'Период погашения дебиторской задолженности',' дней')+'Риск: длительный период расчётов с покупателями может задерживать поступление денег. Рекомендация: контролировать сроки оплаты и уровень запасов.\n\nФинансовая устойчивость. '+describe(16,'Коэффициент автономии')+describe(17,'Финансовая зависимость')+describe(18,'Соотношение заёмных и собственных средств')+describe(19,'Манёвренность капитала')+'Риск: оценку долговой нагрузки и доступности собственных средств нужно проводить вместе. Рекомендация: контролировать обязательства и оборотный капитал.\n\nРентабельность. '+describe(21,'Рентабельность активов','%')+describe(22,'Рентабельность продаж','%')+describe(23,'Рентабельность собственного капитала','%')+'Риск: снижение показателей может указывать на ухудшение отдачи. Рекомендация: анализировать доходы, расходы и использование активов.\n\nОбщий вывод: сопоставь динамику ликвидности, устойчивости, оборачиваемости и прибыльности; причины изменений требуют дополнительной проверки. Нормативы зависят от методики и отрасли.':'';
+  return {example:'Выручка в 2025 году составила '+newer['2110']+' тыс. руб., в 2024 году — '+older['2110']+' тыс. руб.; показатель '+direction(revChange)+'. Чистый финансовый результат в 2025 году — '+newer['2400']+' тыс. руб., в 2024 году — '+older['2400']+' тыс. руб.; показатель '+direction(profitChange)+'.'+liquidity+' Выводы по коэффициентам зависят от выбранной методики.'+detailed};
+ }
+ return null;
+}
+function review(t,raw){
+ const text=String(raw||'').toLowerCase().replace(/ё/g,'е').trim(),f=facts(t);
+ if(!f)return 'Для этого раздела автоматическая проверка вывода пока не реализована.';
+ if(!text)return 'Сначала напиши вывод.';
+ const notices=[];
+ if(t.kind==='budget'){
+  const terms=['профицит','дефицит','сбалансирован'];
+  const used=terms.filter(x=>text.includes(x));
+  if(!used.length)notices.push('Укажи, бюджет профицитный, дефицитный или сбалансированный.');
+  else if(used.length>1)notices.push('Упомянуто несколько результатов. Проверь, нет ли противоречия; автоматическая проверка контекста ограничена.');
+  else if(!used.includes(f.status))notices.push('Проверь тип результата: сравни фактические доходы и расходы.');
+  else if(new RegExp('(?:не|нет|без)\\s+'+f.status).test(text))notices.push('Обнаружено возможное отрицание результата — проверь формулировку.');
+  else notices.push('Название результата встречается в тексте; смысл и отрицания проверь самостоятельно.');
+  if(!/доход/.test(text)||!/расход/.test(text))notices.push('Упомяни доходы и расходы и сравни их.');
+  for(const [label,expected] of [['доход',t.summary['Доход'].actual],['расход',t.summary['Расход'].actual]]){
+   // Only flag the simple unambiguous form “доходы 1200 тыс.”. Other number formats remain unverified.
+   const m=new RegExp(label+'[а-я]*\\s*[:—–-]?\\s*(\\d+(?:[.,]\\d+)?)\\s*тыс\\.','i').exec(text);
+   if(m && Math.abs(Number(m[1].replace(',','.'))-expected)>.01)notices.push('Проверь сумму: если указаны фактические '+label+'ы, она не совпадает с итогом задания.');
+  }
+ } else if(t.kind==='nmck'){
+  if(!/нмцк|цен[аыуе].*контракт/.test(text))notices.push('Укажи НМЦК контракта.');
+  if(!/вариац|однород/.test(text))notices.push('Добавь вывод об однородности цен и коэффициенте вариации.');
+  if(f.indexes?.length){const m=/предложени[еяюи]*\s*№\s*(\d+)/i.exec(text);if(m&&!f.indexes.includes(Number(m[1])))notices.push('Проверь номер выбранного предложения: оно должно быть ближайшим строго ниже средней цены.');else if(m)notices.push('Номер выбранного предложения распознан и совпадает с расчётом.');}
+  if(f.problematic.length)notices.push('Проверь позиции, где коэффициент вариации превышает 33%; цены могут быть неоднородны.');
+  if(!f.problematic.length&&/неоднород/.test(text))notices.push('Проверь утверждение о неоднородности: в учебном расчёте коэффициенты не превышают 33%.');
+ } else {
+  if(!/выручк/.test(text))notices.push('Упомяни выручку и сравни её по годам.');
+  if(!/прибыл|убыт|финансов.*результат/.test(text))notices.push('Упомяни чистую прибыль или убыток.');
+  notices.push('Направления изменений и суммы в финансовом выводе автоматически не проверены.');
+ }
+ notices.push('Числа и смысл текста не проверяются полностью; отрицания и контекст могут быть распознаны неверно. Сверь вывод с таблицей и примером.');
+ return notices.join(' ');
+}
+const api={facts,review};root.ExamWrittenReview=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+if(typeof document==='undefined')return;
+const el=id=>document.getElementById(id),section=el('written-review'),input=el('review-text'),out=el('review-result');
+function task(){try{return JSON.parse(localStorage.getItem('examSheetsDraft')||'null')?.task||null;}catch(_){return null;}}
+let id='';function refresh(){const t=task();section.hidden=!t||!['budget','nmck','financial'].includes(t.kind)||el('work').hidden;if(section.hidden)return;if(id!==t.id){id=t.id;try{input.value=localStorage.getItem('exam-review-'+id)||'';}catch(_){}out.textContent='';}}
+input.addEventListener('input',()=>{try{localStorage.setItem('exam-review-'+id,input.value);}catch(_){}});
+el('review-check').addEventListener('click',()=>{const t=task();if(t)out.textContent=review(t,input.value);});
+el('review-example').addEventListener('click',()=>{const t=task();if(t)out.textContent='Пример: '+facts(t).example;});
+['start','again','back'].forEach(x=>el(x).addEventListener('click',()=>setTimeout(refresh,0)));refresh();
+})(typeof globalThis!=='undefined'?globalThis:this);
+
+</script></body></html>
