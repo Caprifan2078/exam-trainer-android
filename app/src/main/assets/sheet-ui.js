@@ -28,7 +28,7 @@ const bar=node('div',undefined,'excel-formula-bar');
 const address=node('span','A1','excel-addr');address.setAttribute('aria-label','Адрес выбранной ячейки');
 const fx=node('span','fx','excel-fx');
 const input=node('input',undefined,'excel-input');input.type='text';input.autocomplete='off';input.spellcheck=false;input.placeholder='Введи число или формулу =…';
-input.setAttribute('aria-label','Ввод формул');
+input.setAttribute('aria-label','Ввод формул');input.maxLength=300;
 const commit=node('button','✓','excel-commit');commit.type='button';commit.setAttribute('aria-label','Применить формулу');
 const undo=node('button','↶','excel-undo');undo.type='button';undo.setAttribute('aria-label','Отменить последнюю формулу');undo.disabled=true;
 bar.append(address,fx,input,undo,commit);
@@ -172,7 +172,7 @@ function flush(){if(pendingReference)restoreReference(null);if(!w||!active||!sel
  if(String(previous)!==String(input.value)){history.push({sheet:active,addr:selected,raw:previous});if(history.length>30)history.shift();}
  undo.disabled=!history.length;
  editDirty=false;closeInline();invalidateCheck();refreshValues();saveDraft();updateProgress();info.textContent='Формула сохранена. Выбери следующую ячейку или проверь работу.';}catch(e){info.textContent=e.message;}}
-function refreshValues(){if(!w)return;for(const cell of gridbox.querySelectorAll('td[data-addr]')){const v=w.sheets[active].values[cell.dataset.addr];cell.textContent=v&&String(v.raw).trim()!==''?fmt(S.value(w,active,cell.dataset.addr)):'';cell.classList.remove('excel-pass','excel-fail','excel-needs');}
+function refreshValues(){if(!w)return;for(const cell of gridbox.querySelectorAll('td[data-addr]')){const v=w.sheets[active].values[cell.dataset.addr];if(cell!==inlineCell)cell.textContent=v&&String(v.raw).trim()!==''?fmt(S.value(w,active,cell.dataset.addr)):'';cell.classList.remove('excel-pass','excel-fail','excel-needs');}
  if(checked)for(const r of checked.results)if(r.sheet===active){const el=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(x=>x.dataset.addr===r.addr);if(el)el.classList.add(r.status==='ok'?'excel-pass':r.status==='need-formula'?'excel-needs':'excel-fail');}}
 function check(){
  flush();checked=S.grade(w);refreshValues();
@@ -203,7 +203,8 @@ function saveDraft(){
  try{
  if(!w)return;
  viewMemory[active]={selected,scrollLeft:gridbox.scrollLeft,scrollTop:gridbox.scrollTop};
- localStorage.setItem('examSheetsDraft',JSON.stringify({task,entries:S.save(w),active,viewMemory}));
+ const entries=S.save(w);if(editDirty&&!pendingReference&&w.sheets[active]?.editable[selected])entries[active][selected]=input.value;
+ localStorage.setItem('examSheetsDraft',JSON.stringify({task,entries,active,viewMemory}));
  }catch(e){}
 }
 function restoreDraft(){try{const v=JSON.parse(localStorage.getItem('examSheetsDraft')||'null');if(!v?.task?.kind||!Array.isArray(v.task.questions))return;task=v.task;w=S.create(task);S.load(w,v.entries);active=w.sheets[v.active]?v.active:w.order[0];Object.assign(viewMemory,v.viewMemory||{});selected=viewMemory[active]?.selected||'';showWork();}catch(e){}}
@@ -224,7 +225,8 @@ gridbox.addEventListener('keydown',e=>{
  const cell=gridbox.querySelector('td[data-addr="'+S.addr(c,r)+'"]');if(cell){e.preventDefault();cell.click();}
 });
 input.addEventListener('click',e=>e.stopPropagation());
-input.addEventListener('input',()=>{editDirty=true;showSuggestions();});input.addEventListener('click',showSuggestions);input.addEventListener('keydown',e=>{
+let draftTimer;input.addEventListener('input',()=>{editDirty=true;showSuggestions();clearTimeout(draftTimer);draftTimer=setTimeout(saveDraft,400);});
+window.addEventListener('pagehide',()=>{if(editDirty)saveDraft();});document.addEventListener('visibilitychange',()=>{if(editDirty&&document.visibilityState==='hidden')saveDraft();});input.addEventListener('click',showSuggestions);input.addEventListener('keydown',e=>{
  if(suggestions&&e.key==='ArrowDown'){e.preventDefault();moveSuggestion(1);return;}
  if(suggestions&&e.key==='ArrowUp'){e.preventDefault();moveSuggestion(-1);return;}
  if(suggestions&&(e.key==='Enter'||e.key==='Tab')){e.preventDefault();acceptSuggestion(suggestionIndex);return;}
@@ -233,7 +235,7 @@ input.addEventListener('input',()=>{editDirty=true;showSuggestions();});input.ad
   const cells=Array.from(gridbox.querySelectorAll('td.excel-editable[data-addr]')),index=cells.findIndex(c=>c.dataset.addr===selected),next=index+(e.shiftKey?-1:1);
   if(index>=0&&next>=0&&next<cells.length){e.preventDefault();flush();cells[next].click();input.focus();}return;
  }
- if(e.key==='Enter'){e.preventDefault();flush();input.blur();}else if(e.key==='Escape'){e.preventDefault();select(selected);}});
+ if(e.key==='Enter'){e.preventDefault();flush();input.blur();}else if(e.key==='Escape'){e.preventDefault();editDirty=false;closeSuggestions();select(selected);saveDraft();}});
 commit.addEventListener('click',flush);
 undo.addEventListener('click',()=>{
  if(pendingReference)restoreReference(null);

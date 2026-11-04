@@ -45,7 +45,7 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ExamTrainer-0.9.22-Android-QA
+          name: ExamTrainer-0.9.23-Android-QA
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
   windows:
@@ -67,7 +67,7 @@ jobs:
         run: npm run dist:win
       - uses: actions/upload-artifact@v4
         with:
-          name: ExamTrainer-0.9.22-Windows-QA
+          name: ExamTrainer-0.9.23-Windows-QA
           path: desktop/dist/*.exe
           if-no-files-found: error
 
@@ -76,10 +76,10 @@ jobs:
         run: npm run dist:dir
       - name: Pack Windows folder
         shell: pwsh
-        run: Compress-Archive -Path desktop/dist/win-unpacked/* -DestinationPath desktop/dist/ExamTrainer-0.9.22-Windows-Folder.zip
+        run: Compress-Archive -Path desktop/dist/win-unpacked/* -DestinationPath desktop/dist/ExamTrainer-0.9.23-Windows-Folder.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: ExamTrainer-0.9.22-Windows-Folder-QA
-          path: desktop/dist/ExamTrainer-0.9.22-Windows-Folder.zip
+          name: ExamTrainer-0.9.23-Windows-Folder-QA
+          path: desktop/dist/ExamTrainer-0.9.23-Windows-Folder.zip
           if-no-files-found: error
 
