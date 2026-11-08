@@ -30,6 +30,21 @@ const assert=require('node:assert/strict');
   assert.equal(await input.inputValue(),'=Баланс!C3');
   await page.locator('.excel-tab').filter({hasText:'ОФР'}).click();await page.reload();
   assert.equal(await input.inputValue(),'=Баланс!C3','Draft must survive switching sheets and reload');
+  // Regression: a full/blocked storage backend must never be reported as an autosave success.
+  await page.evaluate(()=>localStorage.clear());await page.reload();
+  await page.evaluate(()=>{
+    const original=Storage.prototype.setItem;
+    Storage.prototype.setItem=function(key,value){
+      if(key==='examSheetsDraft')throw new DOMException('Storage quota exceeded','QuotaExceededError');
+      return original.call(this,key,value);
+    };
+  });
+  await page.locator('#start').click();
+  assert.match(await page.locator('#task-notes').innerText(),/не удалось сохранить черновик/i,
+    'Storage write errors must be visible before the user closes the application');
+  assert.equal(await page.evaluate(()=>localStorage.getItem('examSheetsDraft')),null,
+    'A failed save must not pretend to persist a draft');
+  console.log('PASS: storage quota error is visible and not falsely reported as saved');
   assert.deepEqual(errors,[]);
   console.log('PASS: function suggestion, same-sheet reference, save, cross-sheet reference, draft restore');
  }finally{await app.close();}
