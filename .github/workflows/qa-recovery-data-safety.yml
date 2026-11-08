@@ -1,0 +1,22 @@
+name: ExamTrainer recovery QA — data safety
+on:
+  push:
+    branches: [qa/recovery-audit-20261109]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-storage-regression:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing Electron test dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+      - name: Check Electron editor and autosave failure handling
+        working-directory: desktop
+        run: node ui-test.cjs
