@@ -113,3 +113,24 @@ jobs:
         run: |
           node ui-test.cjs
           node exam-timer-test.cjs
+      - name: Build Windows portable EXE with the three-hour exam
+        working-directory: desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: npm run dist:win
+      - name: Verify portable EXE and embedded offline exam assets
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem desktop/dist -Filter '*.exe' | Where-Object { $_.Length -gt 30000000 } | Select-Object -First 1
+          if (-not $exe) { throw 'Portable Windows EXE missing or implausibly small' }
+          $assets = 'desktop/dist/win-unpacked/resources/assets'
+          if (-not (Test-Path "$assets/index.html")) { throw 'Packaged offline index.html missing' }
+          if (-not (Select-String -Path "$assets/index.html" -SimpleMatch 'Экзамен — все 3 задания, 3 часа')) { throw '3h exam label absent from packaged HTML' }
+          if (-not (Select-String -Path "$assets/sheet-ui.js" -SimpleMatch 'EXAM_DURATION_MS=3*60*60*1000')) { throw '3h shared timer absent from packaged code' }
+          Get-FileHash $exe.FullName -Algorithm SHA256 | Format-List
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ExamTrainer-0.9.26-ThreeHour-Windows-Portable-EXE
+          path: desktop/dist/*.exe
+          if-no-files-found: error
+          retention-days: 30
