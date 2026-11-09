@@ -45,6 +45,11 @@ const assert=require('node:assert/strict');
     'Storage write errors must be visible before the user closes the application');
   assert.equal(await page.evaluate(()=>localStorage.getItem('examSheetsDraft')),null,
     'A failed save must not pretend to persist a draft');
+  // The written conclusion must use the active task even when the draft cannot be stored.
+  await page.locator('#written-review').waitFor({state:'visible',timeout:3000});
+  await page.locator('#review-check').click();
+  assert.match(await page.locator('#review-result').innerText(),/сначала напиши вывод/i,
+    'Written feedback must remain available for the current unsaved task');
   await page.evaluate(()=>{Storage.prototype.setItem=window.__originalExamSetItem;});
   await page.locator('td[data-addr="E6"]').click();
   await page.locator('.excel-input').fill('123');
