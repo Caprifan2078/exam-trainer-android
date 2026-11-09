@@ -26,6 +26,13 @@ class DevTools {
     this.ws=ws;this.id=0;this.pending=new Map();
     ws.addEventListener('message',event=>{
       let obj;try{obj=JSON.parse(event.data.toString());}catch(_){return;}
+      // CDP pauses Runtime.evaluate during the application's real confirmation dialog.
+      // Accept through the browser protocol rather than replacing window.confirm.
+      if(obj.method==='Page.javascriptDialogOpening'){
+        this.call('Page.handleJavaScriptDialog',{accept:true})
+          .catch(e=>console.error('Could not handle Android WebView confirmation: '+e.message));
+        return;
+      }
       const p=this.pending.get(obj.id);if(!p)return;
       this.pending.delete(obj.id);
       if(obj.error)p.reject(Error(obj.error.message||JSON.stringify(obj.error)));
@@ -75,6 +82,7 @@ async function connect() {
     socket.addEventListener('error',e=>{clearTimeout(timer);reject(Error('CDP websocket error'));},{once:true});
   });
   browser=new DevTools(ws);
+  await browser.call('Page.enable');
   await until(()=>browser.eval(
     'document.readyState==="complete" && !!window.ExamSheets && !!document.getElementById("start")'),
     'fully initialized WebView');
