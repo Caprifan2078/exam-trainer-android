@@ -144,6 +144,7 @@ const assert=require('node:assert/strict');
   const resumed=await page.evaluate(()=>JSON.parse(localStorage.getItem('examSheetsDraft')).session);
   assert.equal(resumed.deadline,beginning.deadline,'Restart must not reset time');
   assert.equal(resumed.index,1);
+  await page.locator('#review-text').fill('Вывод о бюджете для завершения по времени');
   await page.evaluate(()=>{
     const draft=JSON.parse(localStorage.getItem('examSheetsDraft'));
     draft.session.deadline=Date.now()-1000;
@@ -159,6 +160,9 @@ const assert=require('node:assert/strict');
   });
   assert(expired.finished&&expired.timedOut,'Expired exam must end automatically');
   assert.equal(expired.results.length,3,'Unopened exercises must count in final result');
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('examSheetsDraft')).session.results[1].snapshot.reviewText),
+    'Вывод о бюджете для завершения по времени',
+    'Written conclusion must survive auto-finishing during initial page reload');
   assert(expired.results.every(r=>r.total>0),'All three exercise totals must count');
   assert.equal(expired.results[2].notStarted,true);
   assert(expired.locked&&expired.reviewLocked,'Expired exercise must be read-only');

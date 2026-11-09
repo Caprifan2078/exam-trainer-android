@@ -293,7 +293,11 @@ function lockFinishedExam(){
 function captureExamStage(result){
  return {passed:result.passed,total:result.total,help:!!task.helpUsed,
   snapshot:{task,entries:S.save(w),active,viewMemory:JSON.parse(JSON.stringify(viewMemory)),
-    reviewText:$('review-text').value}};
+    // On initial reload, the review.js module is loaded after sheet-ui.js. Use the
+    // persisted text if an expired draft is finalized before that module hydrates.
+    reviewText:(!window.ExamWrittenReview
+      ? (()=>{try{return localStorage.getItem('exam-review-'+task.id)??$('review-text').value;}catch(_){return $('review-text').value;}})()
+      : $('review-text').value)}};
 }
 function finishTimedExam(){
  if(!session||session.finished||Date.now()<session.deadline)return false;
