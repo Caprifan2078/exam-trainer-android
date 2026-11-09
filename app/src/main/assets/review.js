@@ -73,8 +73,48 @@ function task(){
  if(current&&['budget','nmck','financial'].includes(current.kind)&&Array.isArray(current.questions))return current;
  try{return JSON.parse(localStorage.getItem('examSheetsDraft')||'null')?.task||null;}catch(_){return null;}
 }
-let id='';function refresh(){const t=task();section.hidden=!t||!['budget','nmck','financial'].includes(t.kind)||el('work').hidden;if(section.hidden)return;if(id!==t.id){id=t.id;try{input.value=localStorage.getItem('exam-review-'+id)||'';}catch(_){}out.textContent='';}}
-input.addEventListener('input',()=>{try{localStorage.setItem('exam-review-'+id,input.value);}catch(_){}});
+// Keep an unsaved conclusion in memory until the storage backend accepts it.
+const unsaved=new Map();
+const saveStatus=document.createElement('p');
+saveStatus.id='review-save-status';
+saveStatus.className='note';
+saveStatus.setAttribute('role','alert');
+saveStatus.hidden=true;
+section.insertBefore(saveStatus,el('review-check'));
+const saveFailure='Не удалось сохранить письменный вывод. Текст останется только до закрытия приложения. Освободи место и измени текст для повторного сохранения.';
+function showSaveError(message){saveStatus.textContent=message||'';saveStatus.hidden=!message;}
+let id='';
+function persistReview(){
+ if(!id)return;
+ try{
+  localStorage.setItem('exam-review-'+id,input.value);
+  unsaved.delete(id);
+  showSaveError('');
+ }catch(_){
+  unsaved.set(id,input.value);
+  showSaveError(saveFailure);
+ }
+}
+function refresh(){
+ const t=task();
+ section.hidden=!t||!['budget','nmck','financial'].includes(t.kind)||el('work').hidden;
+ if(section.hidden||id===t.id)return;
+ id=t.id;
+ if(unsaved.has(id)){
+  input.value=unsaved.get(id);
+  persistReview(); // Retry after returning to a previous exercise.
+ }else{
+  try{
+   input.value=localStorage.getItem('exam-review-'+id)||'';
+   showSaveError('');
+  }catch(_){
+   input.value='';
+   showSaveError('Не удалось прочитать сохранённый письменный вывод. Данные в хранилище не удалены.');
+  }
+ }
+ out.textContent='';
+}
+input.addEventListener('input',persistReview);
 el('review-check').addEventListener('click',()=>{const t=task();if(t)out.textContent=review(t,input.value);});
 el('review-example').addEventListener('click',()=>{const t=task();if(t)out.textContent='Пример: '+facts(t).example;});
 ['start','again','back'].forEach(x=>el(x).addEventListener('click',()=>setTimeout(refresh,0)));window.addEventListener('exam-restored',refresh);refresh();
