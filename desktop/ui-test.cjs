@@ -34,6 +34,7 @@ const assert=require('node:assert/strict');
   await page.evaluate(()=>localStorage.clear());await page.reload();
   await page.evaluate(()=>{
     const original=Storage.prototype.setItem;
+    window.__originalExamSetItem=original;
     Storage.prototype.setItem=function(key,value){
       if(key==='examSheetsDraft')throw new DOMException('Storage quota exceeded','QuotaExceededError');
       return original.call(this,key,value);
@@ -44,7 +45,15 @@ const assert=require('node:assert/strict');
     'Storage write errors must be visible before the user closes the application');
   assert.equal(await page.evaluate(()=>localStorage.getItem('examSheetsDraft')),null,
     'A failed save must not pretend to persist a draft');
-  console.log('PASS: storage quota error is visible and not falsely reported as saved');
+  await page.evaluate(()=>{Storage.prototype.setItem=window.__originalExamSetItem;});
+  await page.locator('td[data-addr="E6"]').click();
+  await page.locator('.excel-input').fill('123');
+  await page.locator('.excel-commit').click();
+  assert.match(await page.locator('#task-notes').innerText(),/черновик сохраняется автоматически/i,
+    'A successful retry must clear the save error');
+  assert(await page.evaluate(()=>!!localStorage.getItem('examSheetsDraft')),
+    'A successful retry must persist the active draft');
+  console.log('PASS: storage failure is visible; successful retry clears warning and persists the draft');
   assert.deepEqual(errors,[]);
   console.log('PASS: function suggestion, same-sheet reference, save, cross-sheet reference, draft restore');
  }finally{await app.close();}

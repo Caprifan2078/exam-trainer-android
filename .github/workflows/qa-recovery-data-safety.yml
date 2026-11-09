@@ -2,6 +2,10 @@ name: ExamTrainer recovery QA — data safety
 on:
   push:
     branches: [qa/recovery-audit-20261109]
+    paths:
+      - 'app/src/main/assets/sheet-ui.js'
+      - 'desktop/ui-test.cjs'
+      - '.github/workflows/qa-recovery-data-safety.yml'
   workflow_dispatch:
 permissions:
   contents: read

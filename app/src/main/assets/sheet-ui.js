@@ -226,19 +226,33 @@ function check(){
  saveStats(checked.percent);$('results').scrollIntoView({block:'start',behavior:'smooth'});
 }
 function showAnswers(){if(!hintsAllowed())return;const box=$('hints');box.replaceChildren();for(const r of (checked?.results||[])){const el=node('p',r.sheet+'!'+r.addr+' — '+r.label+': '+fmt(r.answer)+(r.hint?' · '+r.hint:''),'excel-answer');box.appendChild(el);}box.hidden=false;}
+// An autosave failure must never be silently presented as successful.
+const draftSuccessMessage='Жёлтые ячейки — для формул. Черновик сохраняется автоматически.';
+const draftFailureMessage='Не удалось сохранить черновик. Последние изменения пропадут при закрытии приложения. Экспортируй работу в XLSX или освободи место в хранилище и повтори сохранение.';
+let draftStorageFailed=false;
+function setDraftStorageState(failed){
+ if(draftStorageFailed===failed)return;
+ draftStorageFailed=failed;
+ const note=$('task-notes');
+ if(!note)return;
+ note.textContent=failed?draftFailureMessage:draftSuccessMessage;
+ if(failed)note.setAttribute('role','alert');else note.removeAttribute('role');
+}
 function saveDraft(){
+ if(!w)return false;
  try{
- if(!w)return;
  viewMemory[active]={selected,scrollLeft:gridbox.scrollLeft,scrollTop:gridbox.scrollTop};
  const entries=S.save(w);if(editDirty&&!pendingReference&&w.sheets[active]?.editable[selected])entries[active][selected]=input.value;
  localStorage.setItem('examSheetsDraft',JSON.stringify({task,entries,active,viewMemory,session}));
- }catch(e){}
+ setDraftStorageState(false);
+ return true;
+ }catch(e){setDraftStorageState(true);return false;}
 }
 function restoreDraft(){try{const v=JSON.parse(localStorage.getItem('examSheetsDraft')||'null');if(!v?.task?.kind||!Array.isArray(v.task.questions))return;task=v.task;session=v.session||null;window.ExamCurrentTask=task;w=S.create(task);S.load(w,v.entries);active=w.sheets[v.active]?v.active:w.order[0];Object.assign(viewMemory,v.viewMemory||{});selected=viewMemory[active]?.selected||'';showWork();}catch(e){}}
 function saveStats(pct){try{const old=JSON.parse(localStorage.getItem('examStats')||'{"count":0,"best":0}');old.count++;old.best=Math.max(old.best,pct);localStorage.setItem('examStats',JSON.stringify(old));$('stats').textContent=`Проверено работ: ${old.count} · Лучший результат ${old.best}%`;}catch(e){}}
 function showWork(){$('work').hidden=false;$('home').hidden=true;document.body.classList.add('exam-solving');$('task-title').textContent=task.title+' · Таблицы';$('task-org').textContent=task.company;
  $('task-meta').textContent=task.questions.length+' исходных вопросов · '+w.targets.length+' ячеек для проверки · '+w.order.length+' лист(а)';
- $('task-notes').textContent='Жёлтые ячейки — для формул. Черновик сохраняется автоматически.';
+ $('task-notes').textContent=draftStorageFailed?draftFailureMessage:draftSuccessMessage;
  $('results').hidden=true;checked=null;nextSession.hidden=true;$('exam-stage-results')?.remove();footer.replaceChildren();gridbox.inert=!!session?.finished;$('check').disabled=!!session?.finished;applyMode();renderGrid();updateProgress();updateSession();if(session?.finished)showSessionResult();window.scrollTo(0,0);}
 function start(){if(w)flush();if(w&&Object.values(S.save(w)).some(x=>Object.keys(x).length)&&!confirm('Создать новый вариант? Черновик предыдущего будет заменён.'))return;
  try{const choice=$('mode').value;session=choice==='full_exam'?{tasks:['nmck','budget','financial'].map(k=>{const t=E.generate(k,$('level').value);t.practiceMode='exam';t.helpUsed=false;return t;}),index:0,results:[],deadline:Date.now()+90*60*1000,finished:false}:null;task=session?session.tasks[0]:E.generate($('kind').value,$('level').value);task.practiceMode=choice==='learning'?'learning':'exam';task.helpUsed=false;window.ExamCurrentTask=task;w=S.create(task);history.length=0;for(const key of Object.keys(viewMemory))delete viewMemory[key];undo.disabled=true;active=w.order[w.order.length-1];selected='';showWork();saveDraft();}catch(e){alert('Ошибка создания таблицы: '+e.message);}}
