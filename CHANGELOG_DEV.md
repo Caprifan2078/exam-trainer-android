@@ -38,3 +38,11 @@
 - `77c81a7`: исходный функционал; `ed62314`: сохранение письменного вывода при истечении срока во время восстановления; дальнейшие коммиты по тестовой инфраструктуре.
 - GREEN CI `42604794799`, ветка `qa/recovery-audit-20261109`, контрольный код `f708642`; 3/3 jobs success. APK artifact `13666379494`.
 - Android Back на эмуляторе имеет независимый WARN, не выдавать за проверенный. Production/`main` не менялись.
+
+## 2026-11-09 — готовые Windows EXE и Android APK с трёхчасовым экзаменом
+- [GitHub Actions run 42615041676](https://github.com/Caprifan2078/exam-trainer-android/actions/runs/42615041676): три jobs SUCCESS — Windows/Electron tests + `electron-builder --win portable --x64`, Android Gradle+математика, Android WebView на эмуляторе API 30.
+- Windows: artifact `13671723075`, ZIP `ExamTrainer-0.9.26-ThreeHour-Windows-Portable-EXE`, SHA256 ZIP `20aac37851f9eb6be848497db7454ec75a092b233d8cc300e24caf224fa10056`. EXE `ExamTrainer-0.9.26-Windows-QA.exe`: 69 942 983 bytes, SHA256 `966b5485c8ec0fcdd95e4a91c625f0d5190b9abf07e5b97c6452ac92fd400f9f`. CI verified `win-unpacked/resources/assets/index.html` and `sheet-ui.js` contain 3-hour exam implementation; ZIP CRC and EXE PE/MZ signature checked locally. Test on owner's PC still not performed.
+- Android: artifact `13671802765`, ZIP `ExamTrainer-0.9.26-Recovery-Android-QA`, SHA256 ZIP `94de6ddfb650d48158299d452b4d72f89565564fc6875396dbca3f147b06732e`. Extracted APK 103 714 bytes, SHA256 `f48694cf2111c496490ed24ee11189a785d581213005650c9531c9ff144f3963`. APK ZIP CRC verified, both assets contain new exam configuration.
+- Time expiration confirmed by simulated clock advancement (not a 3-hour wall-clock wait); remaining time persists after restart, three results graded, editor locked. Learning remains unlimited.
+- Remaining risks: debug APK signature may differ on future builds; do not uninstall old app without saving data. Physical Android and owner Windows startup not tested. Native Android Back has WARN; in-app Back passed.
+- Code: no changes from `f70864214b80aa5533fad68b05893fed94d6217c`; CI-only commit `6008fa3735fd7db1cf4429b033da883eba60181a`. Main untouched.
