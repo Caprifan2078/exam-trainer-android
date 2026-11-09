@@ -8,6 +8,7 @@ on:
       - 'scripts/android-webview-regression.cjs'
       - 'app/src/main/assets/review.js'
       - 'desktop/ui-test.cjs'
+      - 'desktop/exam-timer-test.cjs'
       - '.github/workflows/qa-recovery-data-safety.yml'
   workflow_dispatch:
 permissions:
@@ -109,4 +110,6 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Check Electron editor and autosave failure handling
         working-directory: desktop
-        run: node ui-test.cjs
+        run: |
+          node ui-test.cjs
+          node exam-timer-test.cjs
