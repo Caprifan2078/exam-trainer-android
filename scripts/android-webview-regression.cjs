@@ -195,8 +195,19 @@ async function exportPicker() {
   await until(()=>evaluate('!document.getElementById("work").hidden'),'return from system file picker',10000);
 }
 async function androidBack() {
-  adb('shell','input','keyevent','4');
-  await until(()=>evaluate('!document.getElementById("home").hidden'),'Android hardware Back returns to home',10000);
+  // The system may consume the first Back to dismiss the IME or DocumentsUI.
+  // Confirm the app actually returned to its own task selector, not just that the WebView stayed alive.
+  for(let attempt=0;attempt<3;attempt++){
+    adb('shell','input','keyevent','4');
+    try{
+      await until(()=>evaluate('!document.getElementById("home").hidden'),
+        'Android hardware Back returns to home',2500);
+      if(attempt)console.log('DIAGNOSTIC: Android Back needed '+(attempt+1)+' presses to dismiss system UI');
+      return;
+    }catch(error){
+      if(attempt===2)throw error;
+    }
+  }
 }
 (async()=>{
   try{
