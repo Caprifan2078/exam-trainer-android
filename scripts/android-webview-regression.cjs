@@ -139,7 +139,7 @@ async function writtenAndSave(kind) {
     'document.getElementById("review-check").click();' +
     'var stored=localStorage.getItem("exam-review-"+id);' +
     'var save=document.getElementById("check").previousElementSibling;' +
-    'if(!save || !save.textContent.includes("работ"))return {error:"Save control not found"};' +
+    'if(!save || save.tagName!=="BUTTON")return {error:"Save control not found"};' +
     'save.click();var works=JSON.parse(localStorage.getItem("examSavedWorks")||"[]");' +
     'return {id,stored,feedback:document.getElementById("review-result").textContent,' +
     'works:works.length,reviewInSnapshot:works[0]?.snapshot?.reviewText};})()');
