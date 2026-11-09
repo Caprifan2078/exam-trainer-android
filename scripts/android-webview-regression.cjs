@@ -219,6 +219,46 @@ async function androidBack() {
         console.log('PASS: Android hardware Back returns to task selection');
       }
     }
+    // Shared three-hour exam timer is exercised in the real Android WebView, not mocked app logic.
+    const exam=await evaluate('(function(){'+
+      'document.getElementById("mode").value="exam";document.getElementById("start").click();'+
+      'var s=JSON.parse(localStorage.getItem("examSheetsDraft")).session;'+
+      'return {kind:window.ExamCurrentTask.kind,deadline:s?.deadline,now:Date.now(),'+
+      'types:s?.tasks?.map(x=>x.kind),label:document.querySelector(".session-status").textContent};})()');
+    assert.deepEqual(exam.types,['nmck','budget','financial']);
+    assert(Math.abs(exam.deadline-exam.now-3*60*60*1000)<10000);
+    assert.match(exam.label,/0[23]:[0-5]\\d:[0-5]\\d/);
+    const switched=await evaluate('(function(){'+
+      'document.getElementById("check").click();'+
+      'var b=[...document.querySelectorAll("button")].find(x=>x.textContent==="Следующее задание →");'+
+      'if(!b)return {error:"no next stage button"};b.click();'+
+      'var s=JSON.parse(localStorage.getItem("examSheetsDraft")).session;'+
+      'return {index:s.index,deadline:s.deadline,kind:window.ExamCurrentTask.kind};})()');
+    assert.equal(switched.index,1);
+    assert.equal(switched.deadline,exam.deadline,'Switching exam stage cannot reset the timer');
+    assert.equal(switched.kind,'budget');
+    await restart();
+    const resumed=await evaluate('(function(){'+
+      'var s=JSON.parse(localStorage.getItem("examSheetsDraft")).session;'+
+      'return {index:s.index,deadline:s.deadline,kind:window.ExamCurrentTask?.kind};})()');
+    assert.equal(resumed.deadline,exam.deadline,'Restarting app must retain the shared deadline');
+    assert.equal(resumed.index,1);
+    assert.equal(resumed.kind,'budget');
+    await evaluate('(function(){'+
+      'var s=JSON.parse(localStorage.getItem("examSheetsDraft")).session;'+
+      'Date.now=()=>s.deadline+1000;return true;})()');
+    await until(()=>evaluate('(function(){var s=JSON.parse(localStorage.getItem("examSheetsDraft")).session;'+
+      'return s.finished===true&&s.timedOut===true;})()'),'3-hour auto-finish');
+    const expired=await evaluate('(function(){'+
+      'var s=JSON.parse(localStorage.getItem("examSheetsDraft")).session;'+
+      'return {results:s.results.length,checkLocked:document.getElementById("check").disabled,'+
+      'reviewLocked:document.getElementById("review-text").readOnly,'+
+      'status:document.querySelector(".session-status").textContent};})()');
+    assert.equal(expired.results,3);
+    assert.equal(expired.checkLocked,true);
+    assert.equal(expired.reviewLocked,true);
+    assert.match(expired.status,/00:00:00/);
+    console.log('PASS: Android shared 3-hour exam timer across 3 tasks, stable across restart, auto-finish and edit lock');
     adb('exec-out','screencap','-p');
     console.log('PASS: Android WebView functional regression completed without app test stubs');
   }finally{if(browser)browser.close();}
