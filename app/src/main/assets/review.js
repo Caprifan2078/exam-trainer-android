@@ -84,17 +84,31 @@ section.insertBefore(saveStatus,el('review-check'));
 const saveFailure='Не удалось сохранить письменный вывод. Текст останется только до закрытия приложения. Освободи место и измени текст для повторного сохранения.';
 function showSaveError(message){saveStatus.textContent=message||'';saveStatus.hidden=!message;}
 let id='';
-function persistReview(){
- if(!id)return;
+function persistForTask(key,value){
  try{
-  localStorage.setItem('exam-review-'+id,input.value);
-  unsaved.delete(id);
-  showSaveError('');
+  localStorage.setItem('exam-review-'+key,value);
+  unsaved.delete(key);
+  return true;
  }catch(_){
-  unsaved.set(id,input.value);
-  showSaveError(saveFailure);
+  unsaved.set(key,value);
+  return false;
  }
 }
+function persistReview(){
+ if(!id)return;
+ showSaveError(persistForTask(id,input.value)?'':saveFailure);
+}
+// Restore the conclusion from an existing saved-work or exam-stage snapshot
+// without requiring the auxiliary browser-storage key to be writable.
+api.restoreTextFromSnapshot=function(taskId,text){
+ const key=String(taskId??'');
+ if(!key)return false;
+ const value=String(text??'');
+ if(String(id)===key)input.value=value;
+ const saved=persistForTask(key,value);
+ if(String(id)===key)showSaveError(saved?'':saveFailure);
+ return saved;
+};
 function refresh(){
  const t=task();
  section.hidden=!t||!['budget','nmck','financial'].includes(t.kind)||el('work').hidden;
