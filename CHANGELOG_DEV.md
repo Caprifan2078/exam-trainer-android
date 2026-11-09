@@ -18,3 +18,10 @@
 - `4f3dd2f8`: общий браузерный API восстановления текста из снимка; два пути `sheet-ui.js` (сохранённая работа, завершённый пробный экзамен), **GREEN** `42539767805`.
 - `1cbc15ac`: подключён существующий `scripts/android-smoke.sh` для Android API 30 к восстановительному CI; **GREEN** `42539955041`.
 - Android APK `0.9.26-qa` (версия не повышалась) проверен подписью, пакетом, математическими тестами, инсталляцией и стартом в эмуляторе. На физическом устройстве не испытан. Публичный Release не создавался.
+
+## 2026-11-09 — расширенные Android-интеграционные тесты
+- `2a6b6d8`: Debug-only WebView DevTools в `MainActivity.java`, CDP-сценарий `scripts/android-webview-regression.cjs` для Android API 30.
+- `da4fee3`: добавлено диагностическое различение неуспевшей синхронизации DOM storage и восстановления после задержки 1,8 с.
+- `eaece5a`: обрабатывает реальный JS confirm через CDP `Page.handleJavaScriptDialog` вместо тестовой подмены `window.confirm`.
+- Полный CI `42546955988`: Windows, Android build и Android emulator integration — SUCCESS, тестовые логи по трём разделам, формуле, выводам, сохранению и восстановлению, Android picker и Back.
+- Никаких изменений учебной бизнес-логики, версии, production или `main`; публичный release не создавался.
