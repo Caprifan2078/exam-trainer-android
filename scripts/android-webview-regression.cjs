@@ -138,8 +138,9 @@ async function writtenAndSave(kind) {
     'field.dispatchEvent(new Event("input",{bubbles:true}));' +
     'document.getElementById("review-check").click();' +
     'var stored=localStorage.getItem("exam-review-"+id);' +
-    'var save=[...document.querySelectorAll("button")].find(x=>x.textContent.includes("Сохранить эту работу"));' +
-    'save?.click();var works=JSON.parse(localStorage.getItem("examSavedWorks")||"[]");' +
+    'var save=document.getElementById("check").previousElementSibling;' +
+    'if(!save || !save.textContent.includes("работ"))return {error:"Save control not found"};' +
+    'save.click();var works=JSON.parse(localStorage.getItem("examSavedWorks")||"[]");' +
     'return {id,stored,feedback:document.getElementById("review-result").textContent,' +
     'works:works.length,reviewInSnapshot:works[0]?.snapshot?.reviewText};})()');
   assert.equal(r.stored,'Тестовый вывод: '+kind+' 2025 2024');
