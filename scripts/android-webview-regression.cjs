@@ -80,6 +80,9 @@ async function connect() {
     'fully initialized WebView');
 }
 async function restart() {
+  // Android WebView commits DOM storage to disk asynchronously. Allow a bounded flush
+  // before simulating a process death; later investigate abrupt-kill durability separately.
+  await pause(1800);
   if(browser){browser.close();browser=null;}
   adb('shell','am','force-stop',PKG);
   adb('shell','am','start','-W','-n',PKG+'/'+ACTIVITY);
@@ -144,8 +147,12 @@ async function verifyRestoreFromRestart(expectedKind) {
   const r=await evaluate('(function(){' +
     'var draft=JSON.parse(localStorage.getItem("examSheetsDraft")||"null");' +
     'return {kind:window.ExamCurrentTask?.kind,work:!document.getElementById("work").hidden,' +
+    'draftKind:draft?.task?.kind,keys:Object.keys(localStorage),' +
+    'savedWorkCount:JSON.parse(localStorage.getItem("examSavedWorks")||"[]").length,' +
     'review:document.getElementById("review-text").value,' +
     'entries:draft?.entries};})()');
+  console.log('DIAGNOSTIC: Android restart '+JSON.stringify({kind:r.kind,draftKind:r.draftKind,
+    work:r.work,keys:r.keys,savedWorkCount:r.savedWorkCount}));
   assert.equal(r.kind,expectedKind,'Wrong exercise after process restart');
   assert(r.work,'Exercise not restored after process restart');
   assert.equal(r.review,'Тестовый вывод: '+expectedKind+' 2025 2024',
