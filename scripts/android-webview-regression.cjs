@@ -147,9 +147,12 @@ async function writtenAndSave(kind) {
   assert.equal(r.reviewInSnapshot,r.stored,'Saved copy missing written conclusion: '+kind);
   return r;
 }
-async function resetDraftAndRestart() {
-  await evaluate('localStorage.removeItem("examSheetsDraft");true');
-  await restart();
+async function resetBetweenIndependentModules() {
+  // This is fixture setup, not the separate persistence/restart assertion.
+  // Do not force-stop immediately after clearing the draft: WebView may still be
+  // asynchronously writing the previous DOM storage snapshot to disk.
+  await evaluate('(function(){document.getElementById("back").click();localStorage.removeItem("examSheetsDraft");return true;})()');
+  await until(()=>evaluate('!document.getElementById("home").hidden'),'home before independent module');
 }
 async function verifyRestoreFromRestart(expectedKind) {
   const r=await evaluate('(function(){' +
@@ -200,7 +203,7 @@ async function androidBack() {
     assert.equal(await evaluate('document.title'),'Экзаменатор');
     console.log('PASS: Android WebView CDP connects to loaded QA application');
     for(const kind of ['nmck','budget','financial']){
-      if(kind!=='nmck')await resetDraftAndRestart();
+      if(kind!=='nmck')await resetBetweenIndependentModules();
       const start=await startModule(kind);
       const edited=await editAndCheck(kind);
       const saved=await writtenAndSave(kind);
