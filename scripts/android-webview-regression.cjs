@@ -227,7 +227,7 @@ async function androidBack() {
       'types:s?.tasks?.map(x=>x.kind),label:document.querySelector(".session-status").textContent};})()');
     assert.deepEqual(exam.types,['nmck','budget','financial']);
     assert(Math.abs(exam.deadline-exam.now-3*60*60*1000)<10000);
-    assert.match(exam.label,/0[23]:[0-5]\\d:[0-5]\\d/);
+    assert.match(exam.label,/0[23]:[0-5]\d:[0-5]\d/);
     const switched=await evaluate('(function(){'+
       'document.getElementById("check").click();'+
       'var b=[...document.querySelectorAll("button")].find(x=>x.textContent==="Следующее задание →");'+
