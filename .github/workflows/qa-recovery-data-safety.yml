@@ -4,6 +4,8 @@ on:
     branches: [qa/recovery-audit-20261109]
     paths:
       - 'app/src/main/assets/sheet-ui.js'
+      - 'app/src/main/java/io/github/caprifan2078/examtrainer/MainActivity.java'
+      - 'scripts/android-webview-regression.cjs'
       - 'app/src/main/assets/review.js'
       - 'desktop/ui-test.cjs'
       - '.github/workflows/qa-recovery-data-safety.yml'
@@ -64,6 +66,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - uses: android-actions/setup-android@v3
         with:
           packages: platform-tools
@@ -81,7 +86,9 @@ jobs:
           arch: x86_64
           profile: pixel_2
           disable-animations: true
-          script: bash scripts/android-smoke.sh
+          script: |
+            bash scripts/android-smoke.sh
+            node scripts/android-webview-regression.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -23,6 +23,10 @@ public final class MainActivity extends Activity {
         super.onCreate(state);
         getWindow().setStatusBarColor(Color.rgb(13,20,35));
         getWindow().setNavigationBarColor(Color.rgb(13,20,35));
+        // CDP inspection is allowed only for debuggable QA builds, never release builds.
+        if ((getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
         webView=new WebView(this);
         webView.setBackgroundColor(Color.rgb(13,20,35));
         WebSettings s=webView.getSettings();
