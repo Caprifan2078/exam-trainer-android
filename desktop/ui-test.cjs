@@ -95,6 +95,27 @@ const assert=require('node:assert/strict');
   assert.equal(await page.locator('#review-text').inputValue(),savedConclusion,
     'Conclusion must survive application reload after successful retry');
   console.log('PASS: conclusion storage failure warning, in-memory retention and recovery after reload');
+  // Opening an existing saved work must not depend on writing an auxiliary conclusion key.
+  await page.getByRole('button',{name:'Сохранить эту работу'}).click();
+  await page.locator('#back').click();
+  await page.evaluate(()=>{
+    window.__savedWorkSetItem=Storage.prototype.setItem;
+    Storage.prototype.setItem=function(key,value){
+      if(key.startsWith('exam-review-'))throw new DOMException('Storage quota exceeded','QuotaExceededError');
+      return window.__savedWorkSetItem.call(this,key,value);
+    };
+  });
+  page.once('dialog',dialog=>dialog.accept());
+  await page.locator('#saved-list .saved-open').first().click();
+  assert.equal(await page.locator('#work').isVisible(),true,
+    'Saved work must reopen even when the auxiliary conclusion key is unwritable');
+  assert.equal(await page.locator('#review-text').inputValue(),savedConclusion,
+    'Saved conclusion from snapshot must be presented without writable local storage');
+  assert.match(await page.locator('#review-save-status').innerText(),/не удалось сохранить письменный вывод/i);
+  await page.evaluate(()=>{Storage.prototype.setItem=window.__savedWorkSetItem;});
+  await page.locator('#review-text').fill(savedConclusion+' — восстановлено');
+  assert.equal(await page.locator('#review-save-status').isVisible(),false);
+  console.log('PASS: saved work reopens despite failed conclusion storage and recovers when writable');
   assert.deepEqual(errors,[]);
   console.log('PASS: function suggestion, same-sheet reference, save, cross-sheet reference, draft restore');
  }finally{await app.close();}
