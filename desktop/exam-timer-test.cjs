@@ -20,6 +20,22 @@ const { _electron: electron }=require('playwright-core');
     'One common three-hour deadline is required');
   assert.match(started.clock,/0[23]:[0-5]\d:[0-5]\d/,
     'The exam countdown must show hours, minutes and seconds');
+  // Device clock rollback must not give extra exam time.
+  await page.evaluate(()=>{
+    window.__realDateNow=Date.now;
+    Date.now=()=>window.__realDateNow()-10*60*1000;
+  });
+  await page.waitForFunction(()=>document.querySelector('.session-status')
+    .textContent.includes('Изменение времени'),null,{timeout:4000});
+  const protectedTime=await page.evaluate(()=>{
+    const last=JSON.parse(localStorage.getItem('examSheetsDraft')).session;
+    return {warning:document.querySelector('.session-status').textContent,
+      clockNow:last.lastSeenAt,deadline:last.deadline};
+  });
+  assert(protectedTime.deadline-protectedTime.clockNow<=3*60*60*1000,
+    'Rolling device time back must never extend the session deadline');
+  await page.evaluate(()=>{Date.now=window.__realDateNow;});
+  console.log('PASS: device-clock rollback warning and monotonic three-hour deadline');
   await page.locator('td.excel-editable[data-addr]').first().click();
   await page.locator('.excel-input').fill('=1+1');
   await page.locator('.excel-commit').click();

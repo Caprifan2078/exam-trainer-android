@@ -225,7 +225,7 @@ function flush(){if(pendingReference)restoreReference(null);if(!w||!active||!sel
 function refreshValues(){if(!w)return;for(const cell of gridbox.querySelectorAll('td[data-addr]')){const v=w.sheets[active].values[cell.dataset.addr];if(cell!==inlineCell)cell.textContent=v&&String(v.raw).trim()!==''?fmt(S.value(w,active,cell.dataset.addr)):'';cell.classList.remove('excel-pass','excel-fail','excel-needs');}
  if(checked)for(const r of checked.results)if(r.sheet===active){const el=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(x=>x.dataset.addr===r.addr);if(el)el.classList.add(r.status==='ok'?'excel-pass':r.status==='need-formula'?'excel-needs':'excel-fail');}}
 function check(){
- if(session && !session.finished && Date.now()>=session.deadline){finishTimedExam();return;}
+ if(session && !session.finished && examNow()>=session.deadline){finishTimedExam();return;}
  if(session?.finished||stageSubmitted())return;
  if(activeExam()){
   // Grade privately. Never display wrong cells, marks, or review feedback before
@@ -306,6 +306,26 @@ function showWork(){$('work').hidden=false;$('home').hidden=true;document.body.c
  }
  window.scrollTo(0,0);}
 const EXAM_DURATION_MS=3*60*60*1000; // One shared, absolute deadline for all three exercises.
+// The wall clock may be moved backwards. Keep a monotonic in-process floor,
+// and persist a recent time watermark for recovery after application restart.
+// This is tamper detection, not trusted-time attestation for an offline exam.
+let clockOwner=null,clockMono=0,clockFloor=0,lastClockPersistMono=0;
+function examNow(){
+ const wall=Date.now();
+ if(!session)return wall;
+ const mono=typeof performance!=='undefined'&&performance.now?performance.now():0;
+ if(clockOwner!==session){
+  clockOwner=session;clockMono=mono;
+  clockFloor=Math.max(wall,Number.isFinite(session.lastSeenAt)?session.lastSeenAt:wall);
+  if(wall+5000<clockFloor)session.clockWarning=true;
+ }else{
+  const expected=clockFloor+Math.max(0,mono-clockMono);
+  if(wall+5000<expected)session.clockWarning=true;
+  clockFloor=Math.max(wall,expected);clockMono=mono;
+ }
+ session.lastSeenAt=clockFloor;
+ return clockFloor;
+}
 function start(){
  if(w)flush();
  // A timed exam is valuable even before the first answer is entered.
@@ -331,7 +351,7 @@ function captureExamStage(result){
       : $('review-text').value)}};
 }
 function finishTimedExam(){
- if(!session||session.finished||Date.now()<session.deadline)return false;
+ if(!session||session.finished||examNow()<session.deadline)return false;
  // Capture the last unfinished editor value, then grade current and unopened exercises.
  if(!session.results[session.index]){
   flush();session.results[session.index]=captureExamStage(S.grade(w));
@@ -350,20 +370,28 @@ function finishTimedExam(){
 function updateSession(){
  sessionStatus.hidden=!session;
  if(!session)return;
- if(!session.finished&&Date.now()>=session.deadline){finishTimedExam();return;}
- const seconds=Math.max(0,Math.ceil((session.deadline-Date.now())/1000));
+ const now=examNow();
+ if(!session.finished&&now>=session.deadline){finishTimedExam();return;}
+ // A small periodic snapshot limits how much timing history can be lost
+ // if the app is killed while idle, without writing localStorage every second.
+ if(!session.finished){
+  const mono=typeof performance!=='undefined'&&performance.now?performance.now():0;
+  if(mono-lastClockPersistMono>=30000){lastClockPersistMono=mono;saveDraft();}
+ }
+ const seconds=Math.max(0,Math.ceil((session.deadline-now)/1000));
  const clock=[Math.floor(seconds/3600),Math.floor((seconds%3600)/60),seconds%60]
   .map(v=>String(v).padStart(2,'0')).join(':');
  sessionStatus.textContent=session.finished
   ?(session.timedOut?'Экзамен · 00:00:00 · время вышло, работа завершена':'Экзамен завершён')
   :'Экзамен · задание '+(session.index+1)+' из 3 · осталось '+clock;
+ if(session.clockWarning)sessionStatus.textContent+=' · ⚠ Изменение времени устройства обнаружено';
 }
 setInterval(updateSession,1000);
 window.addEventListener('focus',updateSession);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')updateSession();});
 function showSessionResult(){const results=session.results||[],passed=results.reduce((a,r)=>a+r.passed,0),total=results.reduce((a,r)=>a+r.total,0);$('results').hidden=false;$('score').textContent='Экзамен: '+passed+' из '+total+' ('+(total?Math.round(passed/total*100):0)+'%)';$('message').textContent=(session.timedOut?'Три часа истекли. Экзамен автоматически завершён. ':'')+results.map((r,i)=>['НМЦК','Бюджет','Финансовый анализ'][i]+': '+r.passed+'/'+r.total+(r.notStarted?' (не начато)':r.help?' (с подсказками)':'')).join(' · ')+'. Оценены ячейки таблиц; письменные выводы проверяются отдельно.';nextSession.hidden=true;$('hints-button').hidden=true;let stageBox=$('exam-stage-results');if(!stageBox){stageBox=node('div',undefined,'exam-stage-results');stageBox.id='exam-stage-results';$('results').appendChild(stageBox);}stageBox.replaceChildren();results.forEach((r,i)=>{if(!r.snapshot)return;const b=node('button','Посмотреть: '+['НМЦК','Бюджет','Финансовый анализ'][i],'secondary');b.type='button';b.addEventListener('click',()=>{const v=r.snapshot;task=v.task;window.ExamCurrentTask=task;w=S.create(task);S.load(w,v.entries);active=w.sheets[v.active]?v.active:w.order[0];for(const key of Object.keys(viewMemory))delete viewMemory[key];Object.assign(viewMemory,v.viewMemory||{});selected=viewMemory[active]?.selected||'';editDirty=false;window.ExamWrittenReview.restoreTextFromSnapshot(task.id,v.reviewText||'');showWork();saveDraft();window.dispatchEvent(new Event('exam-restored'));});stageBox.appendChild(b);});}
 nextSession.addEventListener('click',()=>{
- if(session&&!session.finished&&Date.now()>=session.deadline){finishTimedExam();return;}
+ if(session&&!session.finished&&examNow()>=session.deadline){finishTimedExam();return;}
  if(!activeExam()||!stageSubmitted())return;
  if(session.index===2){session.finished=true;session.timedOut=false;
   lockFinishedExam();updateSession();showSessionResult();saveDraft();return;}

@@ -262,6 +262,11 @@ async function androidBack() {
     assert.deepEqual(exam.types,['nmck','budget','financial']);
     assert(Math.abs(exam.deadline-exam.now-3*60*60*1000)<10000);
     assert.match(exam.label,/0[23]:[0-5]\d:[0-5]\d/);
+    await evaluate('(function(){window.__realDateNow=Date.now;Date.now=()=>window.__realDateNow()-600000;return true;})()');
+    await until(()=>evaluate('document.querySelector(".session-status").textContent.includes("Изменение времени")'),
+      'Android clock rollback warning',5000);
+    await evaluate('Date.now=window.__realDateNow;true');
+    console.log('PASS: Android detects rollback of device wall clock without extending exam');
     const switched=await evaluate('(function(){'+
       'document.getElementById("check").click();'+
       'var noLeak=document.getElementById("results").hidden;'+
