@@ -67,7 +67,12 @@ function review(t,raw){
 const api={facts,review};root.ExamWrittenReview=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(typeof document==='undefined')return;
 const el=id=>document.getElementById(id),section=el('written-review'),input=el('review-text'),out=el('review-result');
-function task(){try{return JSON.parse(localStorage.getItem('examSheetsDraft')||'null')?.task||null;}catch(_){return null;}}
+// The active exercise is the source of truth. Storage can be full or temporarily unavailable.
+function task(){
+ const current=root.ExamCurrentTask;
+ if(current&&['budget','nmck','financial'].includes(current.kind)&&Array.isArray(current.questions))return current;
+ try{return JSON.parse(localStorage.getItem('examSheetsDraft')||'null')?.task||null;}catch(_){return null;}
+}
 let id='';function refresh(){const t=task();section.hidden=!t||!['budget','nmck','financial'].includes(t.kind)||el('work').hidden;if(section.hidden)return;if(id!==t.id){id=t.id;try{input.value=localStorage.getItem('exam-review-'+id)||'';}catch(_){}out.textContent='';}}
 input.addEventListener('input',()=>{try{localStorage.setItem('exam-review-'+id,input.value);}catch(_){}});
 el('review-check').addEventListener('click',()=>{const t=task();if(t)out.textContent=review(t,input.value);});
