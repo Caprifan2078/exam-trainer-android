@@ -11,6 +11,49 @@ on:
 permissions:
   contents: read
 jobs:
+  android-regression-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check exercises and formulas
+        run: |
+          node qa_tests/budget-codes.cjs
+          node qa_tests/nmck-legal.cjs
+          node qa_tests/request0918.cjs
+          node qa_tests/full_solve.cjs
+          node qa_tests/nmck.cjs
+          node qa_tests/statements.cjs
+          node qa_tests/independent.cjs
+          node qa_tests/review-regression.cjs
+          node qa_tests/review-generated.cjs
+          node qa_tests/autocomplete.cjs
+          for f in app/src/main/assets/*.js; do node --check "$f"; done
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - run: gradle --no-daemon assembleDebug
+      - name: Verify APK signature and package
+        run: |
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | grep "package: name='io.github.caprifan2078.examtrainer.qa0926'"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ExamTrainer-0.9.26-Recovery-Android-QA
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
   windows-storage-regression:
     runs-on: windows-latest
     timeout-minutes: 15
