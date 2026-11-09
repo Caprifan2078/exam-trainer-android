@@ -228,10 +228,19 @@ async function androidBack() {
         console.log('PASS: Android process-kill recovery of formula, conclusion and saved work');
       }
       if(kind==='financial'){
-        await exportPicker();
-        console.log('PASS: Android native XLSX save picker opens');
+        // Keep Android Back and DocumentsUI tests independent. A picker or soft keyboard
+        // can consume physical Back presses without navigating the application's WebView.
         await androidBack();
         console.log('PASS: Android hardware Back returns to task selection');
+        const opened=await evaluate('(function(){' +
+          'document.querySelector("#saved-list .saved-open")?.click();' +
+          'return {kind:window.ExamCurrentTask?.kind,work:!document.getElementById("work").hidden};})()');
+        assert.equal(opened.kind,'financial');
+        assert(opened.work,'Saved financial exercise did not reopen for export test');
+        await exportPicker();
+        console.log('PASS: Android native XLSX save picker opens');
+        // Return to home using the in-app control for the next, independent exam test.
+        await evaluate('document.getElementById("back").click();true');
       }
     }
     // Shared three-hour exam timer is exercised in the real Android WebView, not mocked app logic.
