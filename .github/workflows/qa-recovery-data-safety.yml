@@ -54,6 +54,41 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
+  android-emulator-smoke:
+    needs: android-regression-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - uses: actions/download-artifact@v4
+        with:
+          name: ExamTrainer-0.9.26-Recovery-Android-QA
+          path: app/build/outputs/apk/debug/
+      - name: Enable emulator acceleration when available
+        run: |
+          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
+      - name: Install and launch the exact QA APK in Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          script: bash scripts/android-smoke.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ExamTrainer-0.9.26-Emulator-Smoke-Screenshot
+          path: emulator-home.png
+          if-no-files-found: ignore
+
   windows-storage-regression:
     runs-on: windows-latest
     timeout-minutes: 15
