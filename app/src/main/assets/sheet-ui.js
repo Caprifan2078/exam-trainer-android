@@ -28,6 +28,22 @@ unlockHelp.type='button';modePanel.append(modeStatus,unlockHelp);
 window.ExamMode={allowHints:hintsAllowed,cellHint:(sheet,addr)=>hintsAllowed()?w?.targets.find(t=>t.sheet===sheet&&t.addr===addr)?.hint:null};
 const sessionStatus=node('div','','session-status'),nextSession=node('button','Следующее задание →','secondary');sessionStatus.hidden=true;nextSession.hidden=true;nextSession.type='button';
 const saveWorkButton=node('button','Сохранить эту работу','secondary');saveWorkButton.type='button';
+const resumeExamButton=node('button','Продолжить экзамен','secondary');
+resumeExamButton.type='button';resumeExamButton.hidden=true;
+$('start').insertAdjacentElement('afterend',resumeExamButton);
+function updateExamControls(){
+ const timed=$('mode').value==='exam'||$('mode').value==='full_exam';
+ $('kind').hidden=timed;
+ const label=document.querySelector('label[for="kind"]');if(label)label.hidden=timed;
+ resumeExamButton.hidden=!session;
+ resumeExamButton.textContent=session?.finished?'Посмотреть результат экзамена':'Продолжить экзамен';
+}
+$('mode').addEventListener('change',updateExamControls);
+resumeExamButton.addEventListener('click',()=>{
+ if(!session||!w)return;
+ showWork();saveDraft();
+});
+updateExamControls();
 const mobileCard=node('div',undefined,'mobile-cell-card'),mobileLabel=node('label','Выбранная ячейка','mobile-cell-label'),mobileInput=node('input'),mobileApply=node('button','Сохранить ввод','mobile-cell-apply');
 mobileInput.type='text';mobileInput.maxLength=300;mobileInput.setAttribute('aria-label','Ввод в выбранную ячейку');mobileApply.type='button';mobileCard.append(mobileLabel,mobileInput,mobileApply);
 const toolbar=node('div',undefined,'excel-tool');
@@ -223,7 +239,7 @@ function check(){
    b.addEventListener('click',()=>jumpTo(r));footer.appendChild(b);
   }
  }
- nextSession.hidden=!session||session.finished;nextSession.textContent=session&&session.index===2?'Завершить пробный экзамен':'Следующее задание →';
+ nextSession.hidden=!session||session.finished;nextSession.textContent=session&&session.index===2?'Завершить экзамен':'Следующее задание →';
  saveStats(checked.percent);$('results').scrollIntoView({block:'start',behavior:'smooth'});
 }
 function showAnswers(){if(!hintsAllowed())return;const box=$('hints');box.replaceChildren();for(const r of (checked?.results||[])){const el=node('p',r.sheet+'!'+r.addr+' — '+r.label+': '+fmt(r.answer)+(r.hint?' · '+r.hint:''),'excel-answer');box.appendChild(el);}box.hidden=false;}
@@ -251,7 +267,7 @@ function saveDraft(){
 }
 function restoreDraft(){try{const v=JSON.parse(localStorage.getItem('examSheetsDraft')||'null');if(!v?.task?.kind||!Array.isArray(v.task.questions))return;task=v.task;session=v.session||null;window.ExamCurrentTask=task;w=S.create(task);S.load(w,v.entries);active=w.sheets[v.active]?v.active:w.order[0];Object.assign(viewMemory,v.viewMemory||{});selected=viewMemory[active]?.selected||'';showWork();}catch(e){}}
 function saveStats(pct){try{const old=JSON.parse(localStorage.getItem('examStats')||'{"count":0,"best":0}');old.count++;old.best=Math.max(old.best,pct);localStorage.setItem('examStats',JSON.stringify(old));$('stats').textContent=`Проверено работ: ${old.count} · Лучший результат ${old.best}%`;}catch(e){}}
-function showWork(){$('work').hidden=false;$('home').hidden=true;document.body.classList.add('exam-solving');$('task-title').textContent=task.title+' · Таблицы';$('task-org').textContent=task.company;
+function showWork(){$('work').hidden=false;$('home').hidden=true;document.body.classList.add('exam-solving');updateExamControls();$('task-title').textContent=task.title+' · Таблицы';$('task-org').textContent=task.company;
  $('task-meta').textContent=task.questions.length+' исходных вопросов · '+w.targets.length+' ячеек для проверки · '+w.order.length+' лист(а)';
  $('task-notes').textContent=draftStorageFailed?draftFailureMessage:draftSuccessMessage;
  $('results').hidden=true;checked=null;nextSession.hidden=true;$('exam-stage-results')?.remove();footer.replaceChildren();gridbox.inert=!!session?.finished;$('check').disabled=!!session?.finished;
@@ -260,7 +276,11 @@ function showWork(){$('work').hidden=false;$('home').hidden=true;document.body.c
  applyMode();renderGrid();updateProgress();updateSession();
  if(session?.finished){lockFinishedExam();showSessionResult();}window.scrollTo(0,0);}
 const EXAM_DURATION_MS=3*60*60*1000; // One shared, absolute deadline for all three exercises.
-function start(){if(w)flush();if(w&&Object.values(S.save(w)).some(x=>Object.keys(x).length)&&!confirm('Создать новый вариант? Черновик предыдущего будет заменён.'))return;
+function start(){
+ if(w)flush();
+ // A timed exam is valuable even before the first answer is entered.
+ if(session&&!session.finished&&!confirm('Начать новый вариант? Текущий экзамен и его общий таймер будут заменены.'))return;
+ if(w&&!session&&Object.values(S.save(w)).some(x=>Object.keys(x).length)&&!confirm('Создать новый вариант? Черновик предыдущего будет заменён.'))return;
  try{const choice=$('mode').value;session=(choice==='exam'||choice==='full_exam')?{tasks:['nmck','budget','financial'].map(k=>{const t=E.generate(k,$('level').value);t.practiceMode='exam';t.helpUsed=false;return t;}),index:0,results:[],deadline:Date.now()+EXAM_DURATION_MS,finished:false}:null;task=session?session.tasks[0]:E.generate($('kind').value,$('level').value);task.practiceMode=choice==='learning'?'learning':'exam';task.helpUsed=false;window.ExamCurrentTask=task;w=S.create(task);history.length=0;for(const key of Object.keys(viewMemory))delete viewMemory[key];undo.disabled=true;active=w.order[w.order.length-1];selected='';showWork();saveDraft();}catch(e){alert('Ошибка создания таблицы: '+e.message);}}
 function lockFinishedExam(){
  gridbox.inert=true;
@@ -305,7 +325,7 @@ function updateSession(){
 setInterval(updateSession,1000);
 window.addEventListener('focus',updateSession);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')updateSession();});
-function showSessionResult(){const results=session.results||[],passed=results.reduce((a,r)=>a+r.passed,0),total=results.reduce((a,r)=>a+r.total,0);$('results').hidden=false;$('score').textContent='Пробный экзамен: '+passed+' из '+total+' ('+(total?Math.round(passed/total*100):0)+'%)';$('message').textContent=(session.timedOut?'Три часа истекли. Экзамен автоматически завершён. ':'')+results.map((r,i)=>['НМЦК','Бюджет','Финансовый анализ'][i]+': '+r.passed+'/'+r.total+(r.notStarted?' (не начато)':r.help?' (с подсказками)':'')).join(' · ')+'. Оценены ячейки таблиц; письменные выводы проверяются отдельно.';nextSession.hidden=true;$('hints-button').hidden=true;let stageBox=$('exam-stage-results');if(!stageBox){stageBox=node('div',undefined,'exam-stage-results');stageBox.id='exam-stage-results';$('results').appendChild(stageBox);}stageBox.replaceChildren();results.forEach((r,i)=>{if(!r.snapshot)return;const b=node('button','Посмотреть: '+['НМЦК','Бюджет','Финансовый анализ'][i],'secondary');b.type='button';b.addEventListener('click',()=>{const v=r.snapshot;task=v.task;window.ExamCurrentTask=task;w=S.create(task);S.load(w,v.entries);active=w.sheets[v.active]?v.active:w.order[0];for(const key of Object.keys(viewMemory))delete viewMemory[key];Object.assign(viewMemory,v.viewMemory||{});selected=viewMemory[active]?.selected||'';editDirty=false;window.ExamWrittenReview.restoreTextFromSnapshot(task.id,v.reviewText||'');showWork();saveDraft();window.dispatchEvent(new Event('exam-restored'));});stageBox.appendChild(b);});}
+function showSessionResult(){const results=session.results||[],passed=results.reduce((a,r)=>a+r.passed,0),total=results.reduce((a,r)=>a+r.total,0);$('results').hidden=false;$('score').textContent='Экзамен: '+passed+' из '+total+' ('+(total?Math.round(passed/total*100):0)+'%)';$('message').textContent=(session.timedOut?'Три часа истекли. Экзамен автоматически завершён. ':'')+results.map((r,i)=>['НМЦК','Бюджет','Финансовый анализ'][i]+': '+r.passed+'/'+r.total+(r.notStarted?' (не начато)':r.help?' (с подсказками)':'')).join(' · ')+'. Оценены ячейки таблиц; письменные выводы проверяются отдельно.';nextSession.hidden=true;$('hints-button').hidden=true;let stageBox=$('exam-stage-results');if(!stageBox){stageBox=node('div',undefined,'exam-stage-results');stageBox.id='exam-stage-results';$('results').appendChild(stageBox);}stageBox.replaceChildren();results.forEach((r,i)=>{if(!r.snapshot)return;const b=node('button','Посмотреть: '+['НМЦК','Бюджет','Финансовый анализ'][i],'secondary');b.type='button';b.addEventListener('click',()=>{const v=r.snapshot;task=v.task;window.ExamCurrentTask=task;w=S.create(task);S.load(w,v.entries);active=w.sheets[v.active]?v.active:w.order[0];for(const key of Object.keys(viewMemory))delete viewMemory[key];Object.assign(viewMemory,v.viewMemory||{});selected=viewMemory[active]?.selected||'';editDirty=false;window.ExamWrittenReview.restoreTextFromSnapshot(task.id,v.reviewText||'');showWork();saveDraft();window.dispatchEvent(new Event('exam-restored'));});stageBox.appendChild(b);});}
 nextSession.addEventListener('click',()=>{
  if(session&&!session.finished&&Date.now()>=session.deadline){finishTimedExam();return;}
  if(!session||session.finished||!checked)return;
@@ -354,7 +374,7 @@ undo.addEventListener('click',()=>{
 });
 $('start').addEventListener('click',start);$('again').addEventListener('click',start);$('check').addEventListener('click',check);
 $('hints-button').addEventListener('click',showAnswers);
-$('back').addEventListener('click',()=>{flush();saveDraft();$('work').hidden=true;$('home').hidden=false;document.body.classList.remove('exam-solving');renderSaved();window.scrollTo(0,0);});
+$('back').addEventListener('click',()=>{flush();saveDraft();updateExamControls();$('work').hidden=true;$('home').hidden=false;document.body.classList.remove('exam-solving');renderSaved();window.scrollTo(0,0);});
 helpButton.addEventListener('click',()=>{if(!hintsAllowed())return;flush();if(sheetHelp.hidden)showHelp(kindGuides[task.kind]);else sheetHelp.hidden=true;});
 formulaExample.addEventListener('click',()=>{if(!hintsAllowed())return;showHelp(['Доступные функции: СУММ, СРЗНАЧ, СТАНДОТКЛОН.В, ОКРУГЛ, КОРЕНЬ, ЕСЛИ, СУММЕСЛИ, СЧЁТ, МИН, МАКС, АБС.',
 'Поддерживаются ссылки на одну ячейку, диапазон A1:C8 и другие листы: =Баланс!C5+Баланс!D5. В формулах используй ; между аргументами.',
