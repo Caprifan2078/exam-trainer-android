@@ -59,6 +59,42 @@ const assert=require('node:assert/strict');
   assert(await page.evaluate(()=>!!localStorage.getItem('examSheetsDraft')),
     'A successful retry must persist the active draft');
   console.log('PASS: storage failure is visible; successful retry clears warning and persists the draft');
+  // Regression: written conclusions must never be silently lost when their separate storage key fails.
+  await page.evaluate(()=>{
+    localStorage.removeItem('exam-review-'+window.ExamCurrentTask.id);
+    const original=Storage.prototype.setItem;
+    window.__originalReviewSetItem=original;
+    Storage.prototype.setItem=function(key,value){
+      if(key.startsWith('exam-review-'))throw new DOMException('Storage quota exceeded','QuotaExceededError');
+      return original.call(this,key,value);
+    };
+  });
+  const conclusion='Проверяем ручной вывод: доходы и расходы, 2025 и 2024 годы';
+  await page.locator('#review-text').fill(conclusion);
+  assert.match(await page.locator('#review-save-status').innerText(),/не удалось сохранить письменный вывод/i,
+    'User must see a warning when conclusion persistence fails');
+  assert.equal(await page.evaluate(()=>localStorage.getItem('exam-review-'+window.ExamCurrentTask.id)),null);
+  await page.evaluate(()=>{
+    window.__originalReviewTask=window.ExamCurrentTask;
+    window.ExamCurrentTask={...window.ExamCurrentTask,id:'test-other-review-task'};
+    window.dispatchEvent(new Event('exam-restored'));
+  });
+  await page.evaluate(()=>{
+    window.ExamCurrentTask=window.__originalReviewTask;
+    window.dispatchEvent(new Event('exam-restored'));
+  });
+  assert.equal(await page.locator('#review-text').inputValue(),conclusion,
+    'Unsaved conclusion must survive task switching within the same running application');
+  await page.evaluate(()=>{Storage.prototype.setItem=window.__originalReviewSetItem;});
+  const savedConclusion=conclusion+' — исправленный и сохранённый';
+  await page.locator('#review-text').fill(savedConclusion);
+  assert.equal(await page.locator('#review-save-status').isVisible(),false,
+    'Successful retry must remove the conclusion storage warning');
+  assert.equal(await page.evaluate(()=>localStorage.getItem('exam-review-'+window.ExamCurrentTask.id)),savedConclusion);
+  await page.reload();
+  assert.equal(await page.locator('#review-text').inputValue(),savedConclusion,
+    'Conclusion must survive application reload after successful retry');
+  console.log('PASS: conclusion storage failure warning, in-memory retention and recovery after reload');
   assert.deepEqual(errors,[]);
   console.log('PASS: function suggestion, same-sheet reference, save, cross-sheet reference, draft restore');
  }finally{await app.close();}
