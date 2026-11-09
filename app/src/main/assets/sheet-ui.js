@@ -22,10 +22,12 @@ $('questions').replaceChildren();$('questions').hidden=true;
 $('check').textContent='Проверить таблицу ✓';
 $('hints-button').textContent='Показать правильные значения (после проверки)';
 $('task-notes').textContent='';
-function hintsAllowed(){return !!task&&(task.practiceMode!=='exam'||!!task.helpUsed);}
+function hintsAllowed(){return !!task&&(task.practiceMode!=='exam'||!!session?.finished||(!session&&!!task.helpUsed));}
+function activeExam(){return !!session&&!session.finished;}
+function stageSubmitted(){return activeExam()&&!!session.results[session.index];}
 const modePanel=node('div',undefined,'mode-panel'),modeStatus=node('span','','mode-status'),unlockHelp=node('button','Нужна помощь','mode-unlock');
 unlockHelp.type='button';modePanel.append(modeStatus,unlockHelp);
-window.ExamMode={allowHints:hintsAllowed,cellHint:(sheet,addr)=>hintsAllowed()?w?.targets.find(t=>t.sheet===sheet&&t.addr===addr)?.hint:null};
+window.ExamMode={allowHints:hintsAllowed,allowReviewFeedback:()=>!activeExam(),cellHint:(sheet,addr)=>hintsAllowed()?w?.targets.find(t=>t.sheet===sheet&&t.addr===addr)?.hint:null};
 const sessionStatus=node('div','','session-status'),nextSession=node('button','Следующее задание →','secondary');sessionStatus.hidden=true;nextSession.hidden=true;nextSession.type='button';
 const saveWorkButton=node('button','Сохранить эту работу','secondary');saveWorkButton.type='button';
 const resumeExamButton=node('button','Продолжить экзамен','secondary');
@@ -103,6 +105,10 @@ const formulaExample=node('button','Примеры формул','secondary');fo
 controls.append(helpButton,formulaExample,exportButton);
 toolbar.append(tabs,bar,suggestBox,cellContext,mobileCard,gridbox,info,controls,sheetHelp);
 $('results').appendChild(nextSession);$('check').insertAdjacentElement('beforebegin',saveWorkButton);
+$('check').insertAdjacentElement('afterend',nextSession);
+const submissionNotice=node('p','Задание сдано. Ответы зафиксированы. Ошибки и баллы будут доступны после завершения всего экзамена.','note');
+submissionNotice.hidden=true;submissionNotice.setAttribute('role','status');
+nextSession.insertAdjacentElement('afterend',submissionNotice);
 sheetRoot.replaceChildren(toolbar);
 const explainButton=node('button','Разобрать ошибки','secondary'),explanations=node('div',undefined,'error-explanations');explainButton.type='button';explainButton.hidden=true;explanations.hidden=true;$('message').insertAdjacentElement('afterend',explainButton);explainButton.insertAdjacentElement('afterend',explanations);
 explainButton.addEventListener('click',()=>{if(!checked||!hintsAllowed())return;explanations.replaceChildren();const issues=checked.results.filter(x=>x.status!=='ok');if(!issues.length)explanations.appendChild(node('p','Ошибок в таблице не найдено.'));for(const x of issues.slice(0,12)){let advice=x.status==='empty'?'Заполни эту ячейку.':x.status==='need-formula'?'Результат верный, но здесь нужна формула со ссылками на ячейки.':task.kind==='budget'?'Проверь, доход это или расход, а также выбранные строки и единицы измерения.':task.kind==='financial'?'Проверь показатель в числителе и знаменателе, год и среднюю величину за два года.':'Проверь диапазон предложений, количество и нужное промежуточное значение.';explanations.appendChild(node('p',x.sheet+'!'+x.addr+' · '+x.label+': '+advice));}explanations.hidden=false;});
@@ -119,8 +125,11 @@ function updateProgress(){
 function applyMode(){
  const exam=task?.practiceMode==='exam',allowed=hintsAllowed();
  modeStatus.textContent=exam?(allowed?'Экзамен · с подсказками':'Экзамен · без подсказок'):'Обучение · подсказки доступны';
- unlockHelp.hidden=!exam||allowed||!!session?.finished;helpButton.hidden=!allowed;formulaExample.hidden=!allowed;
- $('review-example').hidden=!allowed;$('hints-button').hidden=!allowed;explainButton.hidden=!allowed||!checked;if(!allowed)explanations.hidden=true;
+ unlockHelp.hidden=!exam||allowed||!!session;helpButton.hidden=!allowed;formulaExample.hidden=!allowed;
+ $('review-example').hidden=!allowed;$('review-check').hidden=activeExam();
+ $('hints-button').hidden=!allowed;explainButton.hidden=!allowed||!checked;
+ $('again').hidden=!!session;
+ if(!allowed)explanations.hidden=true;
  if(!allowed){sheetHelp.hidden=true;$('hints').hidden=true;closeSuggestions();}
  window.dispatchEvent(new Event('exam-mode-change'));
 }
@@ -128,7 +137,7 @@ unlockHelp.addEventListener('click',()=>{
  if(!task||task.practiceMode!=='exam'||task.helpUsed||session?.finished)return;
  if(!confirm('Открыть подсказки и ответы? В этой работе результат будет отмечен как выполненный с помощью.'))return;
  task.helpUsed=true;applyMode();saveDraft();
- if(checked)$('score').textContent='Проверка: '+checked.passed+' из '+checked.total+' ('+checked.percent+'%) · с подсказками';
+ if(checked&&!session)$('score').textContent='Проверка: '+checked.passed+' из '+checked.total+' ('+checked.percent+'%) · с подсказками';
 });
 function invalidateCheck(){checked=null;$('results').hidden=true;explainButton.hidden=true;explanations.hidden=true;footer.replaceChildren();}
 function jumpTo(t){
@@ -217,7 +226,18 @@ function refreshValues(){if(!w)return;for(const cell of gridbox.querySelectorAll
  if(checked)for(const r of checked.results)if(r.sheet===active){const el=Array.from(gridbox.querySelectorAll('td[data-addr]')).find(x=>x.dataset.addr===r.addr);if(el)el.classList.add(r.status==='ok'?'excel-pass':r.status==='need-formula'?'excel-needs':'excel-fail');}}
 function check(){
  if(session && !session.finished && Date.now()>=session.deadline){finishTimedExam();return;}
- if(session?.finished)return;
+ if(session?.finished||stageSubmitted())return;
+ if(activeExam()){
+  // Grade privately. Never display wrong cells, marks, or review feedback before
+  // all three exercises are handed in or the common deadline expires.
+  flush();
+  session.results[session.index]=captureExamStage(S.grade(w));
+  checked=null;$('results').hidden=true;
+  lockSubmittedStage();submissionNotice.hidden=false;
+  nextSession.hidden=false;nextSession.textContent=session.index===2?'Завершить экзамен':'Следующее задание →';
+  saveDraft();
+  return;
+ }
  flush();checked=S.grade(w);refreshValues();
  $('results').hidden=false;$('hints').hidden=true;explainButton.hidden=!hintsAllowed();explanations.hidden=true;
  $('score').textContent='Проверка: '+checked.passed+' из '+checked.total+' ('+checked.percent+'%)'+(task.practiceMode==='exam'?(task.helpUsed?' · с подсказками':' · самостоятельно'):' · обучение');
@@ -270,11 +290,21 @@ function saveStats(pct){try{const old=JSON.parse(localStorage.getItem('examStats
 function showWork(){$('work').hidden=false;$('home').hidden=true;document.body.classList.add('exam-solving');updateExamControls();$('task-title').textContent=task.title+' · Таблицы';$('task-org').textContent=task.company;
  $('task-meta').textContent=task.questions.length+' исходных вопросов · '+w.targets.length+' ячеек для проверки · '+w.order.length+' лист(а)';
  $('task-notes').textContent=draftStorageFailed?draftFailureMessage:draftSuccessMessage;
- $('results').hidden=true;checked=null;nextSession.hidden=true;$('exam-stage-results')?.remove();footer.replaceChildren();gridbox.inert=!!session?.finished;$('check').disabled=!!session?.finished;
- $('review-text').readOnly=!!session?.finished;$('review-check').disabled=!!session?.finished;
- mobileInput.disabled=!!session?.finished;mobileApply.disabled=!!session?.finished;
+ $('verification-title').textContent=session?'02 · Сдача задания':'02 · Проверь свою работу';
+ $('check').textContent=session?'Сдать задание ✓':'Проверить таблицу ✓';
+ $('results').hidden=true;checked=null;nextSession.hidden=true;submissionNotice.hidden=true;
+ $('exam-stage-results')?.remove();footer.replaceChildren();
+ // A completed exercise can be followed by training; do not inherit old disabled controls.
+ gridbox.inert=false;input.disabled=false;commit.disabled=false;undo.disabled=!history.length;
+ mobileInput.disabled=false;mobileApply.disabled=false;$('check').disabled=false;$('check').hidden=false;
+ $('review-text').readOnly=false;$('review-check').disabled=false;
  applyMode();renderGrid();updateProgress();updateSession();
- if(session?.finished){lockFinishedExam();showSessionResult();}window.scrollTo(0,0);}
+ if(session?.finished){lockFinishedExam();showSessionResult();}
+ else if(stageSubmitted()){
+  lockSubmittedStage();submissionNotice.hidden=false;nextSession.hidden=false;
+  nextSession.textContent=session.index===2?'Завершить экзамен':'Следующее задание →';
+ }
+ window.scrollTo(0,0);}
 const EXAM_DURATION_MS=3*60*60*1000; // One shared, absolute deadline for all three exercises.
 function start(){
  if(w)flush();
@@ -282,13 +312,14 @@ function start(){
  if(session&&!session.finished&&!confirm('Начать новый вариант? Текущий экзамен и его общий таймер будут заменены.'))return;
  if(w&&!session&&Object.values(S.save(w)).some(x=>Object.keys(x).length)&&!confirm('Создать новый вариант? Черновик предыдущего будет заменён.'))return;
  try{const choice=$('mode').value;session=(choice==='exam'||choice==='full_exam')?{tasks:['nmck','budget','financial'].map(k=>{const t=E.generate(k,$('level').value);t.practiceMode='exam';t.helpUsed=false;return t;}),index:0,results:[],deadline:Date.now()+EXAM_DURATION_MS,finished:false}:null;task=session?session.tasks[0]:E.generate($('kind').value,$('level').value);task.practiceMode=choice==='learning'?'learning':'exam';task.helpUsed=false;window.ExamCurrentTask=task;w=S.create(task);history.length=0;for(const key of Object.keys(viewMemory))delete viewMemory[key];undo.disabled=true;active=w.order[w.order.length-1];selected='';showWork();saveDraft();}catch(e){alert('Ошибка создания таблицы: '+e.message);}}
-function lockFinishedExam(){
- gridbox.inert=true;
- input.disabled=true;commit.disabled=true;undo.disabled=true;
+function lockSubmittedStage(){
+ gridbox.inert=true;input.disabled=true;commit.disabled=true;undo.disabled=true;
  mobileInput.disabled=true;mobileApply.disabled=true;
- $('check').disabled=true;
+ $('check').disabled=true;$('check').hidden=true;
  $('review-text').readOnly=true;$('review-check').disabled=true;
- nextSession.hidden=true;
+}
+function lockFinishedExam(){
+ lockSubmittedStage();submissionNotice.hidden=true;nextSession.hidden=true;
 }
 function captureExamStage(result){
  return {passed:result.passed,total:result.total,help:!!task.helpUsed,
@@ -302,8 +333,9 @@ function captureExamStage(result){
 function finishTimedExam(){
  if(!session||session.finished||Date.now()<session.deadline)return false;
  // Capture the last unfinished editor value, then grade current and unopened exercises.
- flush();
- session.results[session.index]=captureExamStage(S.grade(w));
+ if(!session.results[session.index]){
+  flush();session.results[session.index]=captureExamStage(S.grade(w));
+ }
  for(let i=session.index+1;i<session.tasks.length;i++){
   const grade=S.grade(S.create(session.tasks[i]));
   session.results[i]={passed:grade.passed,total:grade.total,help:false,notStarted:true};
@@ -332,13 +364,21 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 function showSessionResult(){const results=session.results||[],passed=results.reduce((a,r)=>a+r.passed,0),total=results.reduce((a,r)=>a+r.total,0);$('results').hidden=false;$('score').textContent='Экзамен: '+passed+' из '+total+' ('+(total?Math.round(passed/total*100):0)+'%)';$('message').textContent=(session.timedOut?'Три часа истекли. Экзамен автоматически завершён. ':'')+results.map((r,i)=>['НМЦК','Бюджет','Финансовый анализ'][i]+': '+r.passed+'/'+r.total+(r.notStarted?' (не начато)':r.help?' (с подсказками)':'')).join(' · ')+'. Оценены ячейки таблиц; письменные выводы проверяются отдельно.';nextSession.hidden=true;$('hints-button').hidden=true;let stageBox=$('exam-stage-results');if(!stageBox){stageBox=node('div',undefined,'exam-stage-results');stageBox.id='exam-stage-results';$('results').appendChild(stageBox);}stageBox.replaceChildren();results.forEach((r,i)=>{if(!r.snapshot)return;const b=node('button','Посмотреть: '+['НМЦК','Бюджет','Финансовый анализ'][i],'secondary');b.type='button';b.addEventListener('click',()=>{const v=r.snapshot;task=v.task;window.ExamCurrentTask=task;w=S.create(task);S.load(w,v.entries);active=w.sheets[v.active]?v.active:w.order[0];for(const key of Object.keys(viewMemory))delete viewMemory[key];Object.assign(viewMemory,v.viewMemory||{});selected=viewMemory[active]?.selected||'';editDirty=false;window.ExamWrittenReview.restoreTextFromSnapshot(task.id,v.reviewText||'');showWork();saveDraft();window.dispatchEvent(new Event('exam-restored'));});stageBox.appendChild(b);});}
 nextSession.addEventListener('click',()=>{
  if(session&&!session.finished&&Date.now()>=session.deadline){finishTimedExam();return;}
- if(!session||session.finished||!checked)return;
- session.results[session.index]=captureExamStage(checked);
+ if(!activeExam()||!stageSubmitted())return;
  if(session.index===2){session.finished=true;session.timedOut=false;
   lockFinishedExam();updateSession();showSessionResult();saveDraft();return;}
- session.index++;task=session.tasks[session.index];window.ExamCurrentTask=task;w=S.create(task);history.length=0;for(const key of Object.keys(viewMemory))delete viewMemory[key];active=w.order[w.order.length-1];selected='';showWork();saveDraft();window.dispatchEvent(new Event('exam-restored'));
+ session.index++;task=session.tasks[session.index];window.ExamCurrentTask=task;w=S.create(task);
+ history.length=0;for(const key of Object.keys(viewMemory))delete viewMemory[key];
+ active=w.order[w.order.length-1];selected='';showWork();saveDraft();window.dispatchEvent(new Event('exam-restored'));
 });
-function renderSaved(){const host=$('saved-list');host.replaceChildren();let items=[];try{items=JSON.parse(localStorage.getItem('examSavedWorks')||'[]');}catch(e){}if(!Array.isArray(items)||!items.length){host.appendChild(node('p','Пока нет сохранённых работ.'));return;}items.forEach((item,i)=>{const row=node('div',undefined,'saved-row'),open=node('button',item.title,'saved-open'),del=node('button','Удалить','saved-delete');open.type=del.type='button';open.addEventListener('click',()=>{if(w&&!confirm('Открыть сохранённую работу? Текущий черновик будет заменён.'))return;try{const v=item.snapshot;task=v.task;session=v.session||null;window.ExamCurrentTask=task;w=S.create(task);S.load(w,v.entries);active=w.sheets[v.active]?v.active:w.order[0];for(const key of Object.keys(viewMemory))delete viewMemory[key];Object.assign(viewMemory,v.viewMemory||{});selected=viewMemory[active]?.selected||'';editDirty=false;history.length=0;window.ExamWrittenReview.restoreTextFromSnapshot(task.id,v.reviewText||'');showWork();saveDraft();window.dispatchEvent(new Event('exam-restored'));}catch(e){alert('Не удалось открыть работу. Текущие сохранения не удалены.');}});del.addEventListener('click',()=>{if(!confirm('Удалить эту сохранённую копию?'))return;try{const a=JSON.parse(localStorage.getItem('examSavedWorks')||'[]');a.splice(i,1);localStorage.setItem('examSavedWorks',JSON.stringify(a));renderSaved();}catch(e){alert('Не удалось удалить копию.');}});row.append(open,del);host.appendChild(row);});}
+function renderSaved(){const host=$('saved-list');host.replaceChildren();let items=[];try{items=JSON.parse(localStorage.getItem('examSavedWorks')||'[]');}catch(e){}if(!Array.isArray(items)||!items.length){host.appendChild(node('p','Пока нет сохранённых работ.'));return;}items.forEach((item,i)=>{const row=node('div',undefined,'saved-row'),open=node('button',item.title,'saved-open'),del=node('button','Удалить','saved-delete');open.type=del.type='button';open.addEventListener('click',()=>{if(w&&!confirm('Открыть сохранённую работу? Текущий черновик будет заменён.'))return;try{const v=item.snapshot;
+ // A saved checkpoint must never roll an active exam back to an earlier stage.
+ if(v.session&&session&&v.session.deadline===session.deadline&&
+    (session.finished||session.index>v.session.index||
+     (session.results?.length||0)>(v.session.results?.length||0))){
+   alert('Нельзя отменить уже сданные задания через старую сохранённую копию. Для продолжения выбери «Продолжить экзамен».');return;
+ }
+ task=v.task;session=v.session||null;window.ExamCurrentTask=task;w=S.create(task);S.load(w,v.entries);active=w.sheets[v.active]?v.active:w.order[0];for(const key of Object.keys(viewMemory))delete viewMemory[key];Object.assign(viewMemory,v.viewMemory||{});selected=viewMemory[active]?.selected||'';editDirty=false;history.length=0;window.ExamWrittenReview.restoreTextFromSnapshot(task.id,v.reviewText||'');showWork();saveDraft();window.dispatchEvent(new Event('exam-restored'));}catch(e){alert('Не удалось открыть работу. Текущие сохранения не удалены.');}});del.addEventListener('click',()=>{if(!confirm('Удалить эту сохранённую копию?'))return;try{const a=JSON.parse(localStorage.getItem('examSavedWorks')||'[]');a.splice(i,1);localStorage.setItem('examSavedWorks',JSON.stringify(a));renderSaved();}catch(e){alert('Не удалось удалить копию.');}});row.append(open,del);host.appendChild(row);});}
 saveWorkButton.addEventListener('click',()=>{if(!w)return;flush();try{const all=JSON.parse(localStorage.getItem('examSavedWorks')||'[]');if(all.length>=30){alert('Можно сохранить до 30 работ. Удали ненужную копию на главном экране.');return;}const snapshot={task,entries:S.save(w),active,viewMemory,session,reviewText:$('review-text').value};all.unshift({title:task.title+' · '+new Date().toLocaleString('ru-RU'),snapshot});localStorage.setItem('examSavedWorks',JSON.stringify(all));renderSaved();saveWorkButton.textContent='Работа сохранена ✓';setTimeout(()=>{saveWorkButton.textContent='Сохранить эту работу';},2000);}catch(e){alert('Не удалось сохранить работу: возможно, на устройстве не хватает места.');}});
 renderSaved();
 function syncMobileCaret(){if(input.disabled)return;usingMobileCard=true;input.setSelectionRange(mobileInput.selectionStart,mobileInput.selectionEnd);}

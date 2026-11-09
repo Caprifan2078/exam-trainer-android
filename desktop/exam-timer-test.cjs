@@ -23,7 +23,28 @@ const { _electron: electron }=require('playwright-core');
   await page.locator('td.excel-editable[data-addr]').first().click();
   await page.locator('.excel-input').fill('=1+1');
   await page.locator('.excel-commit').click();
+  assert.equal(await page.locator('#review-check').isVisible(),false,
+    'No written-review feedback is available while the timed exam is running');
+  assert.equal(await page.locator('.mode-unlock').isVisible(),false,
+    'Exam cannot unlock hints during a live three-exercise session');
   await page.locator('#check').click();
+  assert.equal(await page.locator('#results').isVisible(),false,
+    'Submission must not reveal errors or grades before exam ends');
+  assert.equal(await page.locator('.excel-input').isDisabled(),true,
+    'Submitted exercise must be non-editable');
+  assert.equal(await page.locator('#review-text').isEditable(),false);
+  assert.match(await page.locator('.session-status').innerText(),/Экзамен/);
+  const firstSnapshot=await page.evaluate(()=>{
+    const s=JSON.parse(localStorage.getItem('examSheetsDraft')).session;
+    return {length:s.results.length,raw:s.results[0]?.snapshot?.entries,
+      resultHidden:document.getElementById('results').hidden};
+  });
+  assert.equal(firstSnapshot.length,1);
+  assert.equal(firstSnapshot.resultHidden,true);
+  await page.reload();
+  assert.equal(await page.locator('#results').isVisible(),false);
+  assert.equal(await page.locator('.excel-input').isDisabled(),true);
+  assert.equal(await page.getByRole('button',{name:'Следующее задание →'}).isVisible(),true);
   await page.getByRole('button',{name:'Следующее задание →'}).click();
   const second=await page.evaluate(()=>{
     const s=JSON.parse(localStorage.getItem('examSheetsDraft')).session;
@@ -77,7 +98,26 @@ const { _electron: electron }=require('playwright-core');
   assert.equal(await page.locator('#check').isDisabled(),true,'Expired exam stays locked after reload');
   await page.locator('#back').click();
   assert.equal(await page.getByRole('button',{name:'Посмотреть результат экзамена'}).isVisible(),true);
-  console.log('PASS: shared 03:00:00 timer in exam mode, no reset after next task/reload, timeout auto-finalizes all 3, locks and saves');
+  console.log('PASS: confidential stage submission, persistent edit lock and 03:00:00 auto-finish all 3');
+  // Completing the three exercises normally is the only other moment grades may appear.
+  await page.evaluate(()=>localStorage.clear());await page.reload();
+  await page.locator('#mode').selectOption('exam');await page.locator('#start').click();
+  for(let i=0;i<3;i++){
+    assert.equal(await page.locator('#results').isVisible(),false);
+    await page.locator('#check').click();
+    assert.equal(await page.locator('#results').isVisible(),false);
+    await page.locator('.session-status').waitFor({state:'visible'});
+    await page.getByRole('button',{name:i===2?'Завершить экзамен':'Следующее задание →'}).click();
+  }
+  assert.equal(await page.locator('#results').isVisible(),true,
+    'Overall exam results must only be revealed after all three exercises');
+  assert.match(await page.locator('#score').innerText(),/^Экзамен:/);
+  await page.locator('#back').click();
+  await page.locator('#mode').selectOption('learning');
+  await page.locator('#start').click();
+  assert.equal(await page.locator('.excel-input').isDisabled(),false,
+    'Learning after finished exam must regain editable cells');
+  console.log('PASS: 3-stage manual completion reveals final summary; subsequent learning stays editable');
   // Expiring while the page is loading must not lose the persisted written conclusion.
   await page.evaluate(()=>localStorage.clear());await page.reload();
   await page.locator('#mode').selectOption('exam');

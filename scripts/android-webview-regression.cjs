@@ -264,10 +264,16 @@ async function androidBack() {
     assert.match(exam.label,/0[23]:[0-5]\d:[0-5]\d/);
     const switched=await evaluate('(function(){'+
       'document.getElementById("check").click();'+
+      'var noLeak=document.getElementById("results").hidden;'+
+      'var locked=document.querySelector(".excel-input").disabled;'+
+      'var reviewHidden=document.getElementById("review-check").hidden;'+
       'var b=[...document.querySelectorAll("button")].find(x=>x.textContent==="Следующее задание →");'+
       'if(!b)return {error:"no next stage button"};b.click();'+
       'var s=JSON.parse(localStorage.getItem("examSheetsDraft")).session;'+
-      'return {index:s.index,deadline:s.deadline,kind:window.ExamCurrentTask.kind};})()');
+      'return {index:s.index,deadline:s.deadline,kind:window.ExamCurrentTask.kind,noLeak,locked,reviewHidden};})()');
+    assert.equal(switched.noLeak,true,'Android submission must not reveal grades');
+    assert.equal(switched.locked,true,'Android submitted cells must lock');
+    assert.equal(switched.reviewHidden,true,'Android review feedback must stay hidden');
     assert.equal(switched.index,1);
     assert.equal(switched.deadline,exam.deadline,'Switching exam stage cannot reset the timer');
     assert.equal(switched.kind,'budget');

@@ -129,7 +129,10 @@ function refresh(){
  out.textContent='';
 }
 input.addEventListener('input',persistReview);
-el('review-check').addEventListener('click',()=>{const t=task();if(t)out.textContent=review(t,input.value);});
+el('review-check').addEventListener('click',()=>{
+ if(root.ExamMode?.allowReviewFeedback&&!root.ExamMode.allowReviewFeedback())return;
+ const t=task();if(t)out.textContent=review(t,input.value);
+});
 el('review-example').addEventListener('click',()=>{const t=task();if(t)out.textContent='Пример: '+facts(t).example;});
 ['start','again','back'].forEach(x=>el(x).addEventListener('click',()=>setTimeout(refresh,0)));window.addEventListener('exam-restored',refresh);refresh();
 })(typeof globalThis!=='undefined'?globalThis:this);
