@@ -116,66 +116,6 @@ const assert=require('node:assert/strict');
   await page.locator('#review-text').fill(savedConclusion+' — восстановлено');
   assert.equal(await page.locator('#review-save-status').isVisible(),false);
   console.log('PASS: saved work reopens despite failed conclusion storage and recovers when writable');
-  // Exam: one absolute three-hour timer shared by NMCK, Budget, Financial.
-  await page.evaluate(()=>localStorage.clear());await page.reload();
-  await page.locator('#mode').selectOption('exam');
-  assert.equal(await page.locator('#kind').isVisible(),false);
-  await page.locator('#start').click();
-  const beginning=await page.evaluate(()=>{
-    const s=JSON.parse(localStorage.getItem('examSheetsDraft')).session;
-    return {kinds:s.tasks.map(t=>t.kind),left:s.deadline-Date.now(),deadline:s.deadline,index:s.index};
-  });
-  assert.deepEqual(beginning.kinds,['nmck','budget','financial']);
-  assert(beginning.left>10790000&&beginning.left<=10800000,'Exam timer must be three hours total');
-  assert.equal(beginning.index,0);
-  assert.match(await page.locator('.session-status').innerText(),/02:59:|03:00:00/);
-  await page.locator('#check').click();
-  await page.getByRole('button',{name:'Следующее задание'}).click();
-  const second=await page.evaluate(()=>{
-    const s=JSON.parse(localStorage.getItem('examSheetsDraft')).session;
-    return {index:s.index,deadline:s.deadline,kind:window.ExamCurrentTask.kind};
-  });
-  assert.equal(second.index,1);assert.equal(second.kind,'budget');
-  assert.equal(second.deadline,beginning.deadline,'Next exercise must not reset time');
-  await page.locator('#back').click();
-  assert.equal(await page.getByRole('button',{name:'Продолжить экзамен'}).isVisible(),true);
-  await page.getByRole('button',{name:'Продолжить экзамен'}).click();
-  await page.reload();
-  const resumed=await page.evaluate(()=>JSON.parse(localStorage.getItem('examSheetsDraft')).session);
-  assert.equal(resumed.deadline,beginning.deadline,'Restart must not reset time');
-  assert.equal(resumed.index,1);
-  await page.locator('#review-text').fill('Вывод о бюджете для завершения по времени');
-  await page.evaluate(()=>{
-    const draft=JSON.parse(localStorage.getItem('examSheetsDraft'));
-    draft.session.deadline=Date.now()-1000;
-    localStorage.setItem('examSheetsDraft',JSON.stringify(draft));
-  });
-  await page.reload();
-  const expired=await page.evaluate(()=>{
-    const s=JSON.parse(localStorage.getItem('examSheetsDraft')).session;
-    return {finished:s.finished,timedOut:s.timedOut,
-      results:s.results.map(r=>({total:r.total,passed:r.passed,notStarted:!!r.notStarted})),
-      locked:document.getElementById('check').disabled,
-      reviewLocked:document.getElementById('review-text').readOnly};
-  });
-  assert(expired.finished&&expired.timedOut,'Expired exam must end automatically');
-  assert.equal(expired.results.length,3,'Unopened exercises must count in final result');
-  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('examSheetsDraft')).session.results[1].snapshot.reviewText),
-    'Вывод о бюджете для завершения по времени',
-    'Written conclusion must survive auto-finishing during initial page reload');
-  assert(expired.results.every(r=>r.total>0),'All three exercise totals must count');
-  assert.equal(expired.results[2].notStarted,true);
-  assert(expired.locked&&expired.reviewLocked,'Expired exercise must be read-only');
-  assert.match(await page.locator('.session-status').innerText(),/время вышло/);
-  await page.reload();
-  assert.equal(await page.locator('#check').isDisabled(),true,'Lockout must persist across reload');
-  await page.locator('#back').click();
-  assert.equal(await page.getByRole('button',{name:'Посмотреть результат экзамена'}).isVisible(),true);
-  await page.locator('#mode').selectOption('learning');
-  await page.locator('#start').click();
-  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('examSheetsDraft')).session),null);
-  assert.equal(await page.locator('.session-status').isVisible(),false);
-  console.log('PASS: one 3h deadline for three tasks, step, resume, reload, expiry, frozen results, learning untimed');
   assert.deepEqual(errors,[]);
   console.log('PASS: function suggestion, same-sheet reference, save, cross-sheet reference, draft restore');
  }finally{await app.close();}

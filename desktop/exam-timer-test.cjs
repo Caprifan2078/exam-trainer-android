@@ -33,6 +33,9 @@ const { _electron: electron }=require('playwright-core');
   assert.equal(second.deadline,started.deadline,'Time must never reset between exercises');
   assert.equal(second.results,1);
   assert.equal(second.kind,'budget');
+  await page.locator('#back').click();
+  assert.equal(await page.getByRole('button',{name:'Продолжить экзамен'}).isVisible(),true);
+  await page.getByRole('button',{name:'Продолжить экзамен'}).click();
   await page.reload();
   const afterReload=await page.evaluate(()=>{
     const s=JSON.parse(localStorage.getItem('examSheetsDraft')).session;
@@ -72,7 +75,30 @@ const { _electron: electron }=require('playwright-core');
   assert(expired.scores.every(([p,t])=>Number.isFinite(p)&&t>0));
   await page.reload();
   assert.equal(await page.locator('#check').isDisabled(),true,'Expired exam stays locked after reload');
+  await page.locator('#back').click();
+  assert.equal(await page.getByRole('button',{name:'Посмотреть результат экзамена'}).isVisible(),true);
   console.log('PASS: shared 03:00:00 timer in exam mode, no reset after next task/reload, timeout auto-finalizes all 3, locks and saves');
+  // Expiring while the page is loading must not lose the persisted written conclusion.
+  await page.evaluate(()=>localStorage.clear());await page.reload();
+  await page.locator('#mode').selectOption('exam');
+  assert.equal(await page.locator('#kind').isVisible(),false);
+  await page.locator('#start').click();
+  await page.locator('#review-text').fill('НМЦК: вывод до истечения времени');
+  await page.evaluate(()=>{
+    const draft=JSON.parse(localStorage.getItem('examSheetsDraft'));
+    draft.session.deadline=Date.now()-1000;
+    localStorage.setItem('examSheetsDraft',JSON.stringify(draft));
+  });
+  await page.reload();
+  const expiredOnLoad=await page.evaluate(()=>{
+    const s=JSON.parse(localStorage.getItem('examSheetsDraft')).session;
+    return {finished:s.finished,timedOut:s.timedOut,
+      reviewText:s.results?.[0]?.snapshot?.reviewText,results:s.results?.length};
+  });
+  assert(expiredOnLoad.finished&&expiredOnLoad.timedOut);
+  assert.equal(expiredOnLoad.results,3);
+  assert.equal(expiredOnLoad.reviewText,'НМЦК: вывод до истечения времени');
+  console.log('PASS: deadline expired during reload retains the original written conclusion');
   await page.evaluate(()=>localStorage.clear());await page.reload();
   await page.locator('#mode').selectOption('learning');
   await page.locator('#kind').selectOption('financial');

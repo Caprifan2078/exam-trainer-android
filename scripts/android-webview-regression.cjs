@@ -237,6 +237,15 @@ async function androidBack() {
     assert.equal(switched.index,1);
     assert.equal(switched.deadline,exam.deadline,'Switching exam stage cannot reset the timer');
     assert.equal(switched.kind,'budget');
+    const resumedFromHome=await evaluate('(function(){' +
+      'document.getElementById("back").click();' +
+      'var button=[...document.querySelectorAll("button")].find(x=>x.textContent==="Продолжить экзамен");' +
+      'if(!button)return {found:false};button.click();' +
+      'var s=JSON.parse(localStorage.getItem("examSheetsDraft")).session;' +
+      'return {found:true,visible:!document.getElementById("work").hidden,deadline:s.deadline};})()');
+    assert.equal(resumedFromHome.found,true);
+    assert.equal(resumedFromHome.visible,true);
+    assert.equal(resumedFromHome.deadline,exam.deadline);
     await restart();
     const resumed=await evaluate('(function(){'+
       'var s=JSON.parse(localStorage.getItem("examSheetsDraft")).session;'+
@@ -260,23 +269,6 @@ async function androidBack() {
     assert.match(expired.status,/00:00:00/);
     console.log('PASS: Android shared 3-hour exam timer across 3 tasks, stable across restart, auto-finish and edit lock');
     adb('exec-out','screencap','-p');
-    // Test the new timed Exam mode on the real Android WebView after learning scenarios.
-    const examStart=await evaluate('(function(){' +
-      'document.getElementById("mode").value="exam";' +
-      'document.getElementById("mode").dispatchEvent(new Event("change"));' +
-      'document.getElementById("start").click();' +
-      'var s=JSON.parse(localStorage.getItem("examSheetsDraft")).session;' +
-      'return {kinds:s.tasks.map(t=>t.kind),deadline:s.deadline,left:s.deadline-Date.now()};})()');
-    assert.deepEqual(examStart.kinds,['nmck','budget','financial']);
-    assert(examStart.left>10780000&&examStart.left<=10800000);
-    await evaluate('document.getElementById("check").click();true');
-    const step=await evaluate('(function(){' +
-      'var b=[...document.querySelectorAll("button")].find(x=>x.textContent==="Следующее задание →");' +
-      'b.click();var s=JSON.parse(localStorage.getItem("examSheetsDraft")).session;' +
-      'return {index:s.index,deadline:s.deadline};})()');
-    assert.equal(step.index,1);
-    assert.equal(step.deadline,examStart.deadline);
-    console.log('PASS: Android exam mode shared three-hour timer persists across task transition');
     console.log('PASS: Android WebView functional regression completed without app test stubs');
   }finally{if(browser)browser.close();}
 })().catch(error=>{console.error('FAIL: Android WebView regression — '+error.stack);process.exitCode=1;});
