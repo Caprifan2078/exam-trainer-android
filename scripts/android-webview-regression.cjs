@@ -308,11 +308,13 @@ async function restoreAndroidJsonBackup(){
   console.log('DIAGNOSTIC: after first JSON tap '+JSON.stringify(
     firstTapNodes.filter(n=>n.text?.includes('.json')||/OPEN|SELECT|Открыть|Выбрать/i.test(n.text||''))
       .map(n=>({text:n.text,bounds:n.bounds,enabled:n.enabled}))));
-  const still=firstTapNodes.find(n=>/^ExamTrainer-backup-.*\\.json$/.test(n.text));
+  const still=firstTapNodes.find(n=>n.text?.startsWith('ExamTrainer-backup-')&&n.text.endsWith('.json'));
   if(still){
     // Some DocumentsUI list layouts require activating the selected row.
     clickNode(still);
-    adb('shell','input','keyevent','66');
+    await pause(600);
+    if(pickerNodes().some(n=>n.text?.startsWith('ExamTrainer-backup-')&&n.text.endsWith('.json')))
+      adb('shell','input','keyevent','66');
   }
   await pause(1100);
   try{
