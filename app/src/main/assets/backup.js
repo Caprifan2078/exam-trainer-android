@@ -108,5 +108,17 @@ picker.addEventListener('change',async()=>{
  }catch(e){setStatus('Не удалось восстановить: '+e.message,true);}
  finally{picker.value='';}
 });
+root.addEventListener('exam-native-save',event=>{
+ const detail=event.detail||{};
+ if(detail.format!=='json')return;
+ const messages={
+  saved:'Резервная копия действительно сохранена. Найди JSON-файл в выбранной папке.',
+  cancelled:'Сохранение резервной копии отменено.',
+  error:'Android не смог записать резервную копию. Выбери другую папку и повтори попытку.',
+  busy:'Дождись завершения предыдущего сохранения.'
+ };
+ setStatus(messages[detail.status]||'Неизвестный результат сохранения.',
+   detail.status==='error'||detail.status==='busy');
+});
 root.ExamBackup={collect,validate};
 })(typeof globalThis!=='undefined'?globalThis:this);

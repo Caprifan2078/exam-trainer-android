@@ -103,6 +103,15 @@ const sheetHelp=node('div',undefined,'excel-help');sheetHelp.hidden=true;
 const exportButton=node('button','Скачать XLSX','secondary');exportButton.type='button';
 const formulaExample=node('button','Примеры формул','secondary');formulaExample.type='button';
 controls.append(helpButton,formulaExample,exportButton);
+const exportFeedback=node('span','','note');controls.appendChild(exportFeedback);
+window.addEventListener('exam-native-save',event=>{
+ const detail=event.detail||{};
+ if(detail.format!=='xlsx')return;
+ exportFeedback.textContent=detail.status==='saved'
+  ?'Excel-файл успешно записан в выбранную папку.'
+  :detail.status==='cancelled'?'Сохранение Excel отменено.'
+  :'Не удалось записать Excel. Попробуй другую папку.';
+});
 toolbar.append(tabs,bar,suggestBox,cellContext,mobileCard,gridbox,info,controls,sheetHelp);
 $('results').appendChild(nextSession);$('check').insertAdjacentElement('beforebegin',saveWorkButton);
 $('check').insertAdjacentElement('afterend',nextSession);

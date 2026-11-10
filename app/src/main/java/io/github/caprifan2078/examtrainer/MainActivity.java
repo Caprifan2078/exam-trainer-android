@@ -16,12 +16,15 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.view.ViewGroup;
 import java.io.OutputStream;
+import java.io.IOException;
+import org.json.JSONObject;
 
 public final class MainActivity extends Activity {
     private static final int SAVE_XLSX = 1204;
     private static final int OPEN_BACKUP = 1205;
     private WebView webView;
     private byte[] pendingFile;
+    private String pendingFormat;
     private ValueCallback<Uri[]> fileChooserCallback;
     @Override public void onCreate(Bundle state){
         super.onCreate(state);
@@ -81,16 +84,21 @@ public final class MainActivity extends Activity {
             final byte[] bytes=Base64.decode(base64,Base64.DEFAULT);
             if(bytes.length<100||bytes.length>5000000)throw new IllegalArgumentException("Bad file size");
             runOnUiThread(()->{
-                if(pendingFile!=null){Log.e("ExamTrainer","Another save is in progress");return;}
-                pendingFile=bytes;
+                if(pendingFile!=null){Log.e("ExamTrainer","Another save is in progress");notifyDocumentStatus(".json".equals(extension)?"json":"xlsx","busy");return;}
+                pendingFile=bytes;pendingFormat=".json".equals(extension)?"json":"xlsx";
                 Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType(mime);
                 intent.putExtra(Intent.EXTRA_TITLE,filename!=null&&filename.endsWith(extension)?filename:fallback);
                 try{startActivityForResult(intent,SAVE_XLSX);}
-                catch(Exception e){pendingFile=null;Log.e("ExamTrainer","Cannot open save picker",e);}
+                catch(Exception e){pendingFile=null;pendingFormat=null;Log.e("ExamTrainer","Cannot open save picker",e);notifyDocumentStatus(".json".equals(extension)?"json":"xlsx","error");}
             });
         }catch(Exception e){Log.e("ExamTrainer","Could not prepare document",e);}
+    }
+    private void notifyDocumentStatus(String format,String status){
+        if(webView==null)return;
+        webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('exam-native-save',{detail:{format:"+
+            JSONObject.quote(format)+",status:"+JSONObject.quote(status)+"}}));",null);
     }
     @Override protected void onActivityResult(int req,int result,Intent data){
         super.onActivityResult(req,result,data);
@@ -102,20 +110,36 @@ public final class MainActivity extends Activity {
           return;
         }
         if(req==SAVE_XLSX){
-          if(result==RESULT_OK && data!=null && data.getData()!=null && pendingFile!=null){
-            try(OutputStream stream=getContentResolver().openOutputStream(data.getData())){
-              if(stream!=null)stream.write(pendingFile);
-            }catch(Exception e){Log.e("ExamTrainer","Cannot write workbook",e);}
+          final String format=pendingFormat==null?"unknown":pendingFormat;
+          String outcome="cancelled";
+          try{
+            if(result==RESULT_OK){
+              if(data==null||data.getData()==null||pendingFile==null)
+                throw new IOException("Missing document destination or data");
+              try(OutputStream stream=getContentResolver().openOutputStream(data.getData(),"w")){
+                if(stream==null)throw new IOException("Document provider returned null stream");
+                stream.write(pendingFile);
+                stream.flush();
+              }
+              outcome="saved";
+            }
+          }catch(Exception e){
+            Log.e("ExamTrainer","Cannot save "+format+" to selected document",e);
+            outcome="error";
+          }finally{
+            pendingFile=null;pendingFormat=null;
+            notifyDocumentStatus(format,outcome);
           }
-          pendingFile=null;
         }
     }
     @Override public void onBackPressed(){
         if(webView==null){super.onBackPressed();return;}
-        webView.evaluateJavascript("!!document.getElementById('work')&&!document.getElementById('work').hidden",v->{
-            if("true".equals(v))webView.evaluateJavascript("document.getElementById('back').click()",null);
-            else finish();
-        });
+        Log.i("ExamTrainer","Native Back invoked");
+        // One JS transaction rather than two asynchronous evaluations: the system
+        // Back closes the keyboard first; a later Back returns to the task picker.
+        webView.evaluateJavascript("(function(){var w=document.getElementById('work');"+
+          "var b=document.getElementById('back');if(w&&!w.hidden&&b){b.click();return true;}"+
+          "return false;})()",v->{if(!"true".equals(v))finish();});
     }
     @Override protected void onDestroy(){
         if(webView!=null){((ViewGroup)webView.getParent()).removeView(webView);webView.destroy();webView=null;}
