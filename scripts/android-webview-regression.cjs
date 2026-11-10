@@ -302,8 +302,21 @@ async function restoreAndroidJsonBackup(){
   }
   if(!backup)throw Error('The JSON backup is not visible in the Android file picker');
   clickNode(backup);
+  await pause(1800);
+  try{
+   const state=await evaluate('(function(){var f=document.getElementById("backup-file");'+
+     'return {status:document.getElementById("backup-status").textContent,'+
+     'files:f.files?.length||0,keys:Object.keys(localStorage),'+
+     'ready:document.readyState,review:document.getElementById("review-text")?.value};})()');
+   console.log('DIAGNOSTIC: JSON chooser after file tap '+JSON.stringify(state));
+  }catch(e){console.warn('DIAGNOSTIC: chooser prevented CDP page query: '+e.message);}
+  console.log('DIAGNOSTIC: JSON chooser UI after file tap '+JSON.stringify(
+    pickerNodes().filter(n=>n.text||n.desc).map(n=>({text:n.text,desc:n.desc})).slice(0,22)));
+  console.log('DIAGNOSTIC: Java native chooser logs '+
+    adb('logcat','-d','-s','ExamTrainer:I','ExamTrainer:E','*:S').split('\\n')
+      .filter(x=>/file|backup|choose|cannot|Cannot|document/i.test(x)).slice(-12).join(' '));
   await until(()=>evaluate('!!localStorage.getItem("examSheetsDraft")'),
-    'Android JSON backup import recreated stored work',20000);
+    'Android JSON backup import recreated stored work',17000);
   await until(()=>evaluate('window.ExamCurrentTask?.kind==="financial"'),
     'Android restored the original financial worksheet',20000);
   const restored=await evaluate('(function(){var s=localStorage.getItem("examSheetsDraft");'+
