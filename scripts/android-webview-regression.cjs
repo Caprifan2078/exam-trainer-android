@@ -268,8 +268,7 @@ async function restoreAndroidJsonBackup(){
   const before=await evaluate('JSON.parse(localStorage.getItem("examSheetsDraft")||"null")?.task?.kind');
   assert.equal(before,'financial','Backup must capture the current workbook');
   await evaluate('localStorage.clear();location.reload();true');
-  await until(()=>evaluate('document.readyState==="complete" && !!window.ExamBackup &&
-    !document.getElementById("home").hidden'),'clean app before backup restore');
+  await until(()=>evaluate('document.readyState==="complete" && !!window.ExamBackup && !document.getElementById("home").hidden'),'clean app before backup restore');
   await evaluate('window.confirm=()=>true;document.getElementById("backup-import").click();true');
   await until(()=>{
     const activities=adb('shell','dumpsys','activity','activities');
