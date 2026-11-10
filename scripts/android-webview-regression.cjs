@@ -2,7 +2,10 @@
 // Run only against the isolated GitHub Actions Android emulator and debug APK.
 // Uses the Android WebView's own Chrome DevTools protocol; no application test hooks.
 const assert = require('node:assert/strict');
-const {execFileSync} = require('node:child_process');
+const {execFileSync,spawnSync} = require('node:child_process');
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
 
 const PKG = 'io.github.caprifan2078.examtrainer.qa0926';
 const ACTIVITY = 'io.github.caprifan2078.examtrainer.MainActivity';
@@ -182,21 +185,90 @@ async function checkSavedWorkReopen(kind) {
   assert(r.visible,'Saved exercise failed to reopen');
   assert.equal(r.review,'Тестовый вывод: '+kind+' 2025 2024');
 }
-async function exportPicker() {
-  const triggered=await evaluate('(function(){' +
-    'var b=[...document.querySelectorAll("button")].find(x=>x.textContent==="Скачать XLSX");' +
-    'if(!b)return false;b.click();return true;})()');
-  assert.equal(triggered,true,'XLSX export control is missing');
+
+function pickerNodes(){
+  adb('shell','uiautomator','dump','/sdcard/examtrainer-window.xml');
+  const xml=adb('shell','cat','/sdcard/examtrainer-window.xml');
+  return [...xml.matchAll(/<node\b[^>]*?\/>/g)].map(m=>{
+    const raw=m[0],field=k=>raw.match(new RegExp(k+'="([^"]*)"'))?.[1]||'';
+    return {text:field('text'),desc:field('content-desc'),id:field('resource-id'),
+      enabled:field('enabled'),bounds:field('bounds')};
+  });
+}
+function clickNode(n){
+  const a=[...n.bounds.matchAll(/\d+/g)].map(x=>Number(x[0]));
+  if(a.length!==4)throw Error('Malformed Android UI bounds '+JSON.stringify(n));
+  adb('shell','input','tap',String(Math.floor((a[0]+a[2])/2)),
+    String(Math.floor((a[1]+a[3])/2)));
+}
+function matchNode(n,p){return p.test([n.text,n.desc,n.id].join(' '));}
+async function savePickerToDownloads(){
   await until(()=>{
     const activities=adb('shell','dumpsys','activity','activities');
-    return /com\.(android|google)\.android\.documentsui|com\.google\.android\.documentsui|DocumentsUI/i.test(activities);
-  },'Android ACTION_CREATE_DOCUMENT picker',12000);
-  adb('shell','input','keyevent','4');
-  await until(()=>evaluate('!document.getElementById("work").hidden'),'return from system file picker',10000);
+    return /com\.(android|google)\.android\.documentsui|DocumentsUI/i.test(activities);
+  },'Android ACTION_CREATE_DOCUMENT picker',15000);
+  let nodes=pickerNodes();
+  console.log('DIAGNOSTIC: save picker UI '+JSON.stringify(nodes.filter(n=>n.text||n.desc)
+    .map(n=>({text:n.text,desc:n.desc,id:n.id,enabled:n.enabled})).slice(0,36)));
+  let download=nodes.find(n=>matchNode(n,/Downloads|Загрузки/i));
+  if(!download){
+    const nav=nodes.find(n=>matchNode(n,/Show roots|navigation drawer|Browse|Навигаци|Обзор|Показать корни/i));
+    if(nav){clickNode(nav);await pause(800);nodes=pickerNodes();}
+    download=nodes.find(n=>matchNode(n,/Downloads|Загрузки/i));
+  }
+  if(download){clickNode(download);await pause(800);nodes=pickerNodes();}
+  console.log('DIAGNOSTIC: after selecting Downloads '+JSON.stringify(nodes.filter(n=>n.text||n.desc)
+    .map(n=>({text:n.text,desc:n.desc,id:n.id,enabled:n.enabled})).slice(0,36)));
+  const save=nodes.find(n=>n.enabled!=='false' && 
+    (/^(SAVE|Save|Сохранить)$/i.test(n.text)||/id\/save\b/.test(n.id)));
+  if(!save)throw Error('No enabled SAVE control in Android DocumentsUI');
+  clickNode(save);
+  await pause(700);
+}
+async function checkRealExport(ext){
+  const names=await until(()=>{
+    const listing=adb('shell','ls','-1','/sdcard/Download');
+    return listing.split(/\r?\n/).filter(n=>n.endsWith('.'+ext)&&
+      (ext==='xlsx'?n.startsWith('exam-training-financial-'):n.startsWith('ExamTrainer-backup-')));
+  },'actual '+ext+' file written into Android Downloads',15000);
+  const filename=names[names.length-1];
+  const buf=execFileSync(process.env.ANDROID_HOME+'/platform-tools/adb',
+    ['exec-out','cat','/sdcard/Download/'+filename],{timeout:15000});
+  assert(buf.length>100,'Saved Android '+ext+' is empty');
+  if(ext==='xlsx'){
+    assert.equal(buf.subarray(0,2).toString(),'PK','Saved workbook is not a ZIP');
+    const target=path.join(os.tmpdir(),'examtrainer-android-saved.xlsx');
+    fs.writeFileSync(target,buf);
+    const check=spawnSync('unzip',['-t',target],{encoding:'utf8'});
+    assert.equal(check.status,0,'Saved XLSX ZIP has damaged entries: '+check.stderr);
+    assert.match(check.stdout,/xl\/workbook.xml/,'Saved XLSX missing workbook.xml');
+  }else{
+    const backup=JSON.parse(buf.toString('utf8'));
+    assert.equal(backup.format,'examtrainer-offline-backup');
+    assert.equal(backup.version,1);
+    assert(backup.data.examSheetsDraft,'Android backup must include latest draft');
+  }
+  console.log('PASS: Android DocumentsUI physically wrote a valid '+ext+
+    ' to shared Downloads: '+filename+', bytes='+buf.length);
+}
+async function exportPicker(){
+  const triggered=await evaluate('(function(){'+
+    'var b=[...document.querySelectorAll("button")].find(x=>x.textContent==="Скачать XLSX");'+
+    'if(!b)return false;b.click();return true;})()');
+  assert.equal(triggered,true,'XLSX export control is missing');
+  await savePickerToDownloads();
+  await checkRealExport('xlsx');
+}
+async function backupPicker(){
+  await evaluate('document.getElementById("backup-export").click();true');
+  await savePickerToDownloads();
+  await checkRealExport('json');
 }
 async function androidBack() {
   // A platform-level Back test is reported independently of the three-hour exam test.
   // Do not pretend it passed when the IME, OS, or Activity consumed Back.
+  // The first Android Back when a keyboard is open closes the IME, not the app.
+  await evaluate('document.activeElement?.blur();true');
   for(let attempt=0;attempt<3;attempt++){
     adb('shell','input','keyevent','4');
     try{
@@ -255,9 +327,13 @@ async function androidBack() {
         assert.equal(opened.kind,'financial');
         assert(opened.work,'Saved financial exercise did not reopen for export test');
         await exportPicker();
-        console.log('PASS: Android native XLSX save picker opens');
+        console.log('PASS: Android native XLSX picker saved an intact workbook');
         // Return to home using the in-app control for the next, independent exam test.
         await evaluate('document.getElementById("back").click();true');
+        await until(()=>evaluate('!document.getElementById("home").hidden'),
+          'home before JSON backup export');
+        await backupPicker();
+        console.log('PASS: Android JSON backup was created in shared Downloads');
       }
     }
     // Shared three-hour exam timer is exercised in the real Android WebView, not mocked app logic.
