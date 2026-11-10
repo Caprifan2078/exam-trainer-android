@@ -45,6 +45,25 @@ const { _electron: electron }=require('playwright-core');
   assert.equal(recovered.draft,before.draft);
   assert.equal(recovered.works,before.works);
   assert.equal(recovered.review,before.review);
+  // Simulate app termination halfway through restoring a backup.
+  await page.evaluate(()=>{
+   const previous={};
+   for(let i=0;i<localStorage.length;i++){
+    const key=localStorage.key(i);
+    if(['examSheetsDraft','examSavedWorks','examStats'].includes(key)||key.startsWith('exam-review-'))
+     previous[key]=localStorage.getItem(key);
+   }
+   localStorage.setItem('examtrainer-restore-journal-v1',JSON.stringify(previous));
+   localStorage.removeItem('examSheetsDraft');
+   localStorage.setItem('examSavedWorks','[]');
+  });
+  await page.reload();
+  await page.waitForFunction(()=>!!localStorage.getItem('examSheetsDraft') &&
+    JSON.parse(localStorage.getItem('examSavedWorks')||'[]').length>0,null,{timeout:12000});
+  assert.equal(await page.evaluate(()=>localStorage.getItem('examSheetsDraft')),before.draft);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('examtrainer-restore-journal-v1')),null,
+    'Recovery journal must be deleted after successful rollback');
+  console.log('PASS: interrupted JSON import auto-rolls back to original saved work');
   assert.deepEqual(errors,[]);
   console.log('PASS: offline backup validates allowed keys; export snapshot; JSON import restores draft, saved work and written conclusion');
  }finally{await app.close();}

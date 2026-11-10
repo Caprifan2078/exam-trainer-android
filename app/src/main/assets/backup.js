@@ -3,6 +3,7 @@
 const storagePrefix='exam-review-';
 const coreKeys=['examSheetsDraft','examSavedWorks','examStats'];
 const MAX_BYTES=5*1024*1024;
+const RESTORE_JOURNAL='examtrainer-restore-journal-v1';
 const $=id=>document.getElementById(id);
 const status=$('backup-status'),picker=$('backup-file');
 function managedKey(key){return coreKeys.includes(key)||/^exam-review-[a-zA-Z0-9_-]{1,128}$/.test(key);}
@@ -50,6 +51,46 @@ function validate(payload){
  }
  return pairs;
 }
+function currentManagedData(){
+ const result=Object.create(null);
+ for(let i=0;i<localStorage.length;i++){
+  const key=localStorage.key(i);
+  if(managedKey(key))result[key]=localStorage.getItem(key);
+ }
+ return result;
+}
+function overwriteManagedData(data){
+ if(!data||typeof data!=='object'||Array.isArray(data)||
+    Object.entries(data).some(([k,v])=>!managedKey(k)||typeof v!=='string'))
+  throw Error('Недопустимое содержимое восстановительного журнала.');
+ const keys=[];
+ for(let i=0;i<localStorage.length;i++){
+  const key=localStorage.key(i);
+  if(managedKey(key))keys.push(key);
+ }
+ for(const key of keys)localStorage.removeItem(key);
+ for(const [key,value] of Object.entries(data))localStorage.setItem(key,value);
+}
+// Recover the last complete state if the app was force-stopped mid-import.
+// The journal is not part of exported backups and is cleared only on success.
+function recoverInterruptedImport(){
+ let raw;
+ try{raw=localStorage.getItem(RESTORE_JOURNAL);}catch(_){return;}
+ if(!raw)return;
+ try{
+  const previous=JSON.parse(raw);
+  if(raw.length>MAX_BYTES||!previous||typeof previous!=='object')
+   throw Error('Журнал восстановления повреждён.');
+  overwriteManagedData(previous);
+  localStorage.removeItem(RESTORE_JOURNAL);
+  setStatus('Прерванное восстановление отменено, прежние данные сохранены.',false);
+  location.reload();
+ }catch(e){
+  setStatus('Обнаружено прерванное восстановление. Автоматический откат не удался: '+
+    e.message+'. Не удаляй данные приложения; используй отдельный резервный файл.',true);
+ }
+}
+recoverInterruptedImport();
 function asBase64(text){
  const bytes=new TextEncoder().encode(text);
  let binary='';
@@ -84,24 +125,27 @@ picker.addEventListener('change',async()=>{
   if(file.size>MAX_BYTES)throw Error('Файл больше 5 МБ.');
   const pairs=validate(JSON.parse(await file.text()));
   if(!confirm('Восстановление ЗАМЕНИТ текущий черновик, работы и письменные выводы на данные из файла. Текущий экзамен и его время тоже будут заменены. Продолжить?'))return;
-  const previous=Object.create(null);
-  for(let i=0;i<localStorage.length;i++){
-   const key=localStorage.key(i);if(managedKey(key))previous[key]=localStorage.getItem(key);
-  }
-  const existing=Object.keys(previous);
+  const previous=currentManagedData();
+  const journal=JSON.stringify(previous);
+  if(new TextEncoder().encode(journal).length>MAX_BYTES)
+   throw Error('Для безопасного восстановления недостаточно места под копию текущих данных.');
+  // Must be written successfully before touching a single existing answer.
+  try{localStorage.setItem(RESTORE_JOURNAL,journal);}
+  catch(_){throw Error('Не удалось создать страховочную копию текущей работы. Импорт отменён без удаления данных.');}
   try{
-   for(const key of existing)localStorage.removeItem(key);
-   for(const [key,value] of pairs)localStorage.setItem(key,value);
+   overwriteManagedData(Object.fromEntries(pairs));
+   localStorage.removeItem(RESTORE_JOURNAL);
   }catch(e){
-   // Best-effort rollback. Warn if storage is no longer writable.
-   let restored=true;
+   let restored=false;
    try{
-    for(let i=localStorage.length-1;i>=0;i--){
-     const key=localStorage.key(i);if(managedKey(key))localStorage.removeItem(key);
-    }
-    for(const [key,value] of Object.entries(previous))localStorage.setItem(key,value);
-   }catch(_){restored=false;}
-   throw Error('Ошибка записи данных. '+(restored?'Предыдущее состояние восстановлено.':'Восстановление прежних данных не гарантировано.')+' '+e.message);
+    overwriteManagedData(previous);
+    localStorage.removeItem(RESTORE_JOURNAL);
+    restored=true;
+   }catch(_){}
+   throw Error('Ошибка записи данных. '+(restored?
+     'Предыдущее состояние восстановлено.':
+     'Остался восстановительный журнал для автоматического отката при следующем запуске.')+
+     ' '+e.message);
   }
   setStatus('Резервная копия восстановлена. Открываем сохранённую работу.',false);
   location.reload();
