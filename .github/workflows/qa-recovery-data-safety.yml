@@ -7,6 +7,7 @@ on:
       - 'app/src/main/assets/index.html'
       - 'app/src/main/assets/backup.js'
       - 'desktop/backup-test.cjs'
+      - 'desktop/performance-smoke.cjs'
       - 'app/src/main/java/io/github/caprifan2078/examtrainer/MainActivity.java'
       - 'scripts/android-webview-regression.cjs'
       - 'app/src/main/assets/review.js'
@@ -121,6 +122,7 @@ jobs:
           node ui-test.cjs
           node exam-timer-test.cjs
           node backup-test.cjs
+          node performance-smoke.cjs
       - name: Build Windows portable EXE with the three-hour exam
         working-directory: desktop
         env:
