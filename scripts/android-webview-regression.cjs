@@ -301,8 +301,20 @@ async function restoreAndroidJsonBackup(){
     backup=activeNodes.find(n=>/^ExamTrainer-backup-.*\.json$/.test(n.text));
   }
   if(!backup)throw Error('The JSON backup is not visible in the Android file picker');
+  console.log('DIAGNOSTIC: selected JSON row bounds='+backup.bounds);
   clickNode(backup);
-  await pause(1800);
+  await pause(700);
+  const firstTapNodes=pickerNodes();
+  console.log('DIAGNOSTIC: after first JSON tap '+JSON.stringify(
+    firstTapNodes.filter(n=>n.text?.includes('.json')||/OPEN|SELECT|Открыть|Выбрать/i.test(n.text||''))
+      .map(n=>({text:n.text,bounds:n.bounds,enabled:n.enabled}))));
+  const still=firstTapNodes.find(n=>/^ExamTrainer-backup-.*\\.json$/.test(n.text));
+  if(still){
+    // Some DocumentsUI list layouts require activating the selected row.
+    clickNode(still);
+    adb('shell','input','keyevent','66');
+  }
+  await pause(1100);
   try{
    const state=await evaluate('(function(){var f=document.getElementById("backup-file");'+
      'return {status:document.getElementById("backup-status").textContent,'+
