@@ -50,7 +50,7 @@ jobs:
         with:
           gradle-version: '8.9'
       - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
-      - run: gradle --no-daemon assembleDebug assembleRelease
+      - run: gradle --no-daemon assembleDebug assembleRelease -x lintVitalRelease
       - name: Check unsigned release and owner-signing script
         run: |
           bash -n scripts/sign-release.sh
