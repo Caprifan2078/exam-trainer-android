@@ -89,6 +89,10 @@ async function connect() {
   await until(()=>browser.eval(
     'document.readyState==="complete" && !!window.ExamSheets && !!document.getElementById("start")'),
     'fully initialized WebView');
+  // Test fixture: accept app confirmation dialogs before clicking saved-work entries.
+  // Otherwise the native WebView JS confirm modal consumes hardware Back and picker taps,
+  // making independent navigation/file tests falsely report defects.
+  await browser.eval('window.__qaConfirmations=[];window.confirm=function(m){window.__qaConfirmations.push(String(m));return true;};true');
 }
 async function restart() {
   // Android WebView commits DOM storage to disk asynchronously. Allow a bounded flush
