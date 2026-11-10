@@ -264,6 +264,65 @@ async function backupPicker(){
   await savePickerToDownloads();
   await checkRealExport('json');
 }
+async function restoreAndroidJsonBackup(){
+  const before=await evaluate('JSON.parse(localStorage.getItem("examSheetsDraft")||"null")?.task?.kind');
+  assert.equal(before,'financial','Backup must capture the current workbook');
+  await evaluate('localStorage.clear();location.reload();true');
+  await until(()=>evaluate('document.readyState==="complete" && !!window.ExamBackup &&
+    !document.getElementById("home").hidden'),'clean app before backup restore');
+  await evaluate('window.confirm=()=>true;document.getElementById("backup-import").click();true');
+  await until(()=>{
+    const activities=adb('shell','dumpsys','activity','activities');
+    return /DocumentsUI/i.test(activities);
+  },'Android ACTION_GET_CONTENT JSON picker',15000);
+  let nodes=pickerNodes();
+  console.log('DIAGNOSTIC: import picker UI '+JSON.stringify(nodes.filter(n=>n.text||n.desc)
+    .map(n=>({text:n.text,desc:n.desc,id:n.id})).slice(0,30)));
+  let backup=nodes.find(n=>/^ExamTrainer-backup-.*\.json$/.test(n.text));
+  if(!backup){
+    const download=nodes.find(n=>/^(Downloads|Загрузки)$/.test(n.text));
+    if(download){clickNode(download);await pause(600);nodes=pickerNodes();}
+    backup=nodes.find(n=>/^ExamTrainer-backup-.*\.json$/.test(n.text));
+  }
+  if(!backup)throw Error('The JSON backup is not visible in the Android file picker');
+  clickNode(backup);
+  await until(()=>evaluate('!!localStorage.getItem("examSheetsDraft")'),
+    'Android JSON backup import recreated stored work',20000);
+  await until(()=>evaluate('window.ExamCurrentTask?.kind==="financial"'),
+    'Android restored the original financial worksheet',20000);
+  const restored=await evaluate('(function(){var s=localStorage.getItem("examSheetsDraft");'+
+    'var d=JSON.parse(s);return {kind:d.task.kind,works:JSON.parse(localStorage.getItem("examSavedWorks")||"[]").length,'+
+    'review:document.getElementById("review-text").value,'+
+    'formula:Object.values(d.entries||{}).some(x=>Object.values(x).includes("=1+1"))};})()');
+  assert(restored.works>=3,'Android import lost saved works');
+  assert.equal(restored.review,'Тестовый вывод: financial 2025 2024');
+  assert(restored.formula,'Android import lost a formula');
+  console.log('PASS: Android DocumentsUI JSON import restored real workbook, saved works and conclusion');
+  await evaluate('document.getElementById("back").click();true');
+  await until(()=>evaluate('!document.getElementById("home").hidden'),'home after Android JSON restore');
+}
+async function rotateAndVerify(){
+  const expected=await evaluate('(function(){var d=JSON.parse(localStorage.getItem("examSheetsDraft"));'+
+    'return {review:document.getElementById("review-text").value,'+
+    'formula:Object.values(d.entries||{}).some(x=>Object.values(x).includes("=1+1"))};})()');
+  adb('shell','settings','put','system','accelerometer_rotation','0');
+  adb('shell','settings','put','system','user_rotation','1');
+  try{
+    await until(()=>evaluate('window.innerWidth>window.innerHeight'),
+      'Android landscape rotation',16000);
+    const after=await evaluate('(function(){var d=JSON.parse(localStorage.getItem("examSheetsDraft"));'+
+      'return {review:document.getElementById("review-text").value,'+
+      'formula:Object.values(d.entries||{}).some(x=>Object.values(x).includes("=1+1"))};})()');
+    assert.equal(after.review,expected.review,'Rotation lost written conclusion');
+    assert.equal(after.formula,expected.formula,'Rotation lost entered formula');
+  }finally{
+    adb('shell','settings','put','system','user_rotation','0');
+    await until(()=>evaluate('window.innerHeight>window.innerWidth'),
+      'Android portrait rotation recovery',16000);
+    adb('shell','settings','put','system','accelerometer_rotation','1');
+  }
+  console.log('PASS: Android portrait→landscape→portrait preserves formula and conclusion');
+}
 async function androidBack() {
   // A platform-level Back test is reported independently of the three-hour exam test.
   // Do not pretend it passed when the IME, OS, or Activity consumed Back.
@@ -281,6 +340,9 @@ async function androidBack() {
   const focus=adb('shell','dumpsys','window','windows').split('\n')
     .filter(line=>/mCurrentFocus|mFocusedApp/.test(line)).slice(0,3);
   const pid=adb('shell','pidof',PKG);
+  const backLog=adb('logcat','-d','-s','ExamTrainer:I','*:S').split('\n')
+    .filter(x=>x.includes('Native Back invoked')).slice(-8);
+  console.warn('DIAGNOSTIC: Android native Back handler calls='+JSON.stringify(backLog));
   console.warn('WARN: Android hardware Back did not return to the app task selector; focus='+
     JSON.stringify(focus)+'; pid='+pid+'; investigate separately');
   // UI navigation below is test-fixture cleanup, not a successful native Back test.
@@ -309,6 +371,7 @@ async function androidBack() {
       const saved=await writtenAndSave(kind);
       console.log('PASS: Android '+kind+' worksheet, formula persistence, scoring, conclusion, saved snapshot '+
         JSON.stringify({cells:start.cells,cell:edited.address,savedWorks:saved.works}));
+      if(kind==='budget')await rotateAndVerify();
       if(kind==='nmck'){
         await restart();
         await verifyRestoreFromRestart(kind);
@@ -334,6 +397,7 @@ async function androidBack() {
           'home before JSON backup export');
         await backupPicker();
         console.log('PASS: Android JSON backup was created in shared Downloads');
+        await restoreAndroidJsonBackup();
       }
     }
     // Shared three-hour exam timer is exercised in the real Android WebView, not mocked app logic.
