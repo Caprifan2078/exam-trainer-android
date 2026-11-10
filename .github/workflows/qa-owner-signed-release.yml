@@ -1,0 +1,39 @@
+name: ExamTrainer owner-signed APK (requires private signing secrets)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owner-signed-android:
+    if: github.ref == 'refs/heads/qa/recovery-audit-20261109'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Compile non-debuggable release APK
+        run: gradle --no-daemon assembleRelease
+      - name: Owner signing and pinned-certificate verification
+        env:
+          EXAMTRAINER_KEYSTORE_B64: ${{ secrets.EXAMTRAINER_KEYSTORE_B64 }}
+          EXAMTRAINER_STORE_PASSWORD: ${{ secrets.EXAMTRAINER_STORE_PASSWORD }}
+          EXAMTRAINER_KEY_ALIAS: ${{ secrets.EXAMTRAINER_KEY_ALIAS }}
+          EXAMTRAINER_KEY_PASSWORD: ${{ secrets.EXAMTRAINER_KEY_PASSWORD }}
+          EXAMTRAINER_CERT_SHA256: ${{ secrets.EXAMTRAINER_CERT_SHA256 }}
+        run: bash scripts/sign-release.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ExamTrainer-Owner-Signed-Android-APK
+          path: app/build/outputs/apk/release/ExamTrainer-owner-signed.apk
+          if-no-files-found: error
+          retention-days: 30
