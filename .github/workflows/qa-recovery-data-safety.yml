@@ -4,6 +4,9 @@ on:
     branches: [qa/recovery-audit-20261109]
     paths:
       - 'app/src/main/assets/sheet-ui.js'
+      - 'app/src/main/assets/index.html'
+      - 'app/src/main/assets/backup.js'
+      - 'desktop/backup-test.cjs'
       - 'app/src/main/java/io/github/caprifan2078/examtrainer/MainActivity.java'
       - 'scripts/android-webview-regression.cjs'
       - 'app/src/main/assets/review.js'
@@ -113,6 +116,7 @@ jobs:
         run: |
           node ui-test.cjs
           node exam-timer-test.cjs
+          node backup-test.cjs
       - name: Build Windows portable EXE with the three-hour exam
         working-directory: desktop
         env:

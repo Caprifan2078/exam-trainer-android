@@ -222,6 +222,13 @@ async function androidBack() {
   try{
     await connect();
     assert.equal(await evaluate('document.title'),'Экзаменатор');
+    const backups=await evaluate('(function(){var x=window.ExamBackup.collect();return {'+
+      'present:!!document.getElementById("backup-export"),fileChooser:!!document.getElementById("backup-file"),'+
+      'format:x.format,version:x.version,nativeSave:typeof window.ExamNative.saveBackup};})()');
+    assert(backups.present&&backups.fileChooser);
+    assert.equal(backups.format,'examtrainer-offline-backup');
+    assert.equal(backups.nativeSave,'function');
+    console.log('PASS: Android backup module, native JSON export interface and import picker control');
     console.log('PASS: Android WebView CDP connects to loaded QA application');
     for(const kind of ['nmck','budget','financial']){
       if(kind!=='nmck')await resetBetweenIndependentModules();
