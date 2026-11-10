@@ -49,7 +49,11 @@ jobs:
         with:
           gradle-version: '8.9'
       - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
-      - run: gradle --no-daemon assembleDebug
+      - run: gradle --no-daemon assembleDebug assembleRelease
+      - name: Check unsigned release and owner-signing script
+        run: |
+          bash -n scripts/sign-release.sh
+          test -s app/build/outputs/apk/release/app-release-unsigned.apk
       - name: Verify APK signature and package
         run: |
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
