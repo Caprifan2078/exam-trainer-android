@@ -273,19 +273,32 @@ async function restoreAndroidJsonBackup(){
   assert.equal(before,'financial','Backup must capture the current workbook');
   await evaluate('localStorage.clear();location.reload();true');
   await until(()=>evaluate('document.readyState==="complete" && !!window.ExamBackup && !document.getElementById("home").hidden'),'clean app before backup restore');
-  await evaluate('window.confirm=()=>true;document.getElementById("backup-import").click();true');
-  await until(()=>{
-    const activities=adb('shell','dumpsys','activity','activities');
-    return /DocumentsUI/i.test(activities);
-  },'Android ACTION_GET_CONTENT JSON picker',15000);
-  let nodes=pickerNodes();
-  console.log('DIAGNOSTIC: import picker UI '+JSON.stringify(nodes.filter(n=>n.text||n.desc)
+  await evaluate('window.confirm=()=>true;true');
+  // File-input pickers on Android require a trusted user gesture. Calling
+  // element.click() from Runtime.evaluate can be ignored by WebView.
+  const pos=await evaluate('(function(){var b=document.getElementById("backup-import");'+
+    'b.scrollIntoView({block:"center"});var r=b.getBoundingClientRect();'+
+    'return {x:r.left+r.width/2,y:r.top+r.height/2};})()');
+  await browser.call('Input.dispatchMouseEvent',
+    {type:'mousePressed',x:pos.x,y:pos.y,button:'left',clickCount:1});
+  await browser.call('Input.dispatchMouseEvent',
+    {type:'mouseReleased',x:pos.x,y:pos.y,button:'left',clickCount:1});
+  const nodes=await until(()=>{
+    const current=pickerNodes();
+    if(current.length<3)return false;
+    return current.some(n=>matchNode(n,/Downloads|Загрузки|Recent|Files|OPEN|Открыть|JSON/i))?current:false;
+  },'visible Android JSON import picker',25000);
+  console.log('DIAGNOSTIC: chooser activity '+
+    adb('shell','dumpsys','activity','activities').split('\\n')
+      .filter(x=>/ResumedActivity|topResumed|mResumedActivity/.test(x)).slice(0,3).join(' '));
+  let activeNodes=nodes;
+  console.log('DIAGNOSTIC: import picker UI '+JSON.stringify(activeNodes.filter(n=>n.text||n.desc)
     .map(n=>({text:n.text,desc:n.desc,id:n.id})).slice(0,30)));
-  let backup=nodes.find(n=>/^ExamTrainer-backup-.*\.json$/.test(n.text));
+  let backup=activeNodes.find(n=>/^ExamTrainer-backup-.*\.json$/.test(n.text));
   if(!backup){
-    const download=nodes.find(n=>/^(Downloads|Загрузки)$/.test(n.text));
-    if(download){clickNode(download);await pause(600);nodes=pickerNodes();}
-    backup=nodes.find(n=>/^ExamTrainer-backup-.*\.json$/.test(n.text));
+    const download=activeNodes.find(n=>/^(Downloads|Загрузки)$/.test(n.text));
+    if(download){clickNode(download);await pause(600);activeNodes=pickerNodes();}
+    backup=activeNodes.find(n=>/^ExamTrainer-backup-.*\.json$/.test(n.text));
   }
   if(!backup)throw Error('The JSON backup is not visible in the Android file picker');
   clickNode(backup);
